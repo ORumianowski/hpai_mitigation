@@ -202,6 +202,8 @@ output <- data.frame(time = result$times,
                      R_sea = result$states[2, 4,],
                      D_sea = result$states[2, 5,])
 
+
+
 output_long <- melt(output, id = "time")
 
 # Plot results
@@ -223,3 +225,59 @@ plot_sea = ggplot(output_sea, aes(x = time, y = value, color = variable)) +
 
 plot_a 
 plot_sea
+
+
+summary_output = function(output){
+  
+  N_a = output[1, c("S_a", "I_a")] %>% sum()
+  
+  max_infected_a = max(output[, "I_a"]) 
+  prop_max_infected_a = max_infected_a / N_a
+  dead_a = output[nrow(output), "D_a"]
+  prop_dead_a = dead_a / N_a
+    
+  max_infected_sea = max(output[, "I_sea"]) 
+  dead_sea = output[nrow(output), "D_sea"]
+    
+  prop_non_exposed_from_a = (output[nrow(output), "S_a"] + output[nrow(output), "S_sea"] - output[1, "S_sea"] ) / N_a
+  
+  return( data.frame(
+    N_a = N_a,
+    max_infected_a = max_infected_a,
+    prop_max_infected_a = prop_max_infected_a,
+    dead_a = dead_a,
+    prop_dead_a = prop_dead_a,
+    max_infected_sea = max_infected_sea,
+    dead_sea = dead_sea,
+    prop_non_exposed_from_a = prop_non_exposed_from_a
+    
+  ))
+}
+
+summary_output(output)
+
+res = data.frame(
+)
+
+
+for (i in 1:10){
+
+  result <- gillespie_seir(param, initial_state, total_time)
+  
+  output <- data.frame(time = result$times,
+                       
+                       S_a = result$states[1, 1,],
+                       E_a = result$states[1, 2,],
+                       I_a = result$states[1, 3,],
+                       R_a = result$states[1, 4,],
+                       D_a = result$states[1, 5,],
+                       
+                       S_sea = result$states[2, 1,],
+                       E_sea = result$states[2, 2,],
+                       I_sea = result$states[2, 3,],
+                       R_sea = result$states[2, 4,],
+                       D_sea = result$states[2, 5,])
+  
+  res = rbind(res, summary_output(output))
+  
+}

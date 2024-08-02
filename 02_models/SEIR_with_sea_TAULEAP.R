@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------------
+# transition A to sea
+# -------------------------------------------------------------------------
+
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
@@ -7,155 +11,158 @@ library(cowplot)
 # Parameters
 total_time <- 160          # Simulation time
 
-sigma <- 1/5.2             # Rate of progression from exposed to infectious (inverse of incubation period)
-gamma <- 1/2.9             # Recovery rate (inverse of infectious period)
-eta <-  (1/5.2)*(0.1)*50   # Rate of progression from infectious to exposed
-mu <- (1/2.9) * 0.5        # Rate of mortality 
-
-beta_colony <- 0.01        # Transmission rate in a colony
-beta_sea <- 0.001          # Transmission rate at sea
-beta = c(beta_colony, beta_sea)
-
-
-tau = 0.000000             # Transition from colony A to the sea
+param <- list(
+  sigma = 1/5.2,            # Rate of progression from exposed to infectious (inverse of incubation period)
+  gamma = 1/2.9,            # Recovery rate (inverse of infectious period)
+  eta =  (1/5.2)*(0.1)*50,  # Rate of progression from infectious to exposed
+  mu = (1/2.9) * 0.5,       # Rate of mortality 
+  beta = c(0.01, 0.001),    # Transmission rate in a colony, at sea
+  zeta = 0.001              # Transition from colony A to the sea
+)
 
 # Initial state
 
 ## In colony A
-N_A <- 1000                  # Total population in colony A
+N_A <- 1000                # Total population in colony A
 initial_infected_A <- 1
-
-initial_exposed_A <- 0
-initial_recovered_A <- 0
-initial_susceptible_A <- N_A - initial_infected_A - initial_exposed_A - initial_recovered_A
-initial_dead_A <- 0
-
-initial_state_A <- c(S = initial_susceptible_A,
-                     E = initial_exposed_A,
+initial_state_A <- c(S = N_A - initial_infected_A,
+                     E = 0,
                      I = initial_infected_A,
-                     R = initial_recovered_A,
-                     D = initial_dead_A)
+                     R = 0,
+                     D = 0)
 
 ## At sea
-N_sea <- 50                  # Total population at sea
+N_sea <- 50                # Total population at sea
 initial_infected_sea <- 0
-
-initial_exposed_sea <- 0
-initial_recovered_sea <- 0
-initial_susceptible_sea <- N_sea - initial_infected_sea - initial_exposed_sea - initial_recovered_sea
-initial_dead_sea <- 0
-
-initial_state_sea <- c(S = initial_susceptible_sea,
-                       E = initial_exposed_sea,
+initial_state_sea <- c(S = N_sea - initial_infected_sea,
+                       E = 0,
                        I = initial_infected_sea,
-                       R = initial_recovered_sea,
-                       D = initial_dead_sea)
+                       R = 0,
+                       D = 0)
 
-initial_state = matrix(data = c(initial_state_A,
-                                initial_state_sea), 
-                       nrow = 2, ncol = 5, 
-                       byrow = T)
+initial_state <- matrix(c(initial_state_A,
+                          initial_state_sea),
+                        nrow = 2, byrow = TRUE)
 
 # τ-leap SEIR model function
-tau_leap_seir <- function(N, beta, sigma, gamma, initial_state, total_time, tau) {
-  times <- seq(0, total_time, by = tau)
-  num_steps <- length(times)
+tau_leap_seir <- function(param, initial_state, total_time, tau) {
   
-  states <- array(dim = c(2, 5, num_steps), data = NA)
-  states[,,1] <- initial_state
+  sigma <- param$sigma
+  gamma <- param$gamma
+  eta <- param$eta
+  mu <- param$mu
+  beta_colony <- param$beta[1]
+  beta_sea <- param$beta[2]
+  zeta <- param$zeta
   
-  for (t in 2:num_steps) {
-    S_a <- states[1, 1, t-1]
-    E_a <- states[1, 2, t-1]
-    I_a <- states[1, 3, t-1]
-    R_a <- states[1, 4, t-1]
-    D_a <- states[1, 5, t-1]
+  times <- c(0)
+  states <- array(dim = c(2, 5, 1), data = initial_state)
+  
+  while (times[length(times)] < total_time) {
     
-    S_sea <- states[2, 1, t-1]
-    E_sea <- states[2, 2, t-1]
-    I_sea <- states[2, 3, t-1]
-    R_sea <- states[2, 4, t-1]
-    D_sea <- states[2, 5, t-1]
+    S_a <- states[1, 1, dim(states)[3]]
+    E_a <- states[1, 2, dim(states)[3]]
+    I_a <- states[1, 3, dim(states)[3]]
+    R_a <- states[1, 4, dim(states)[3]]
+    D_a <- states[1, 5, dim(states)[3]]
+    
+    S_sea <- states[2, 1, dim(states)[3]]
+    E_sea <- states[2, 2, dim(states)[3]]
+    I_sea <- states[2, 3, dim(states)[3]]
+    R_sea <- states[2, 4, dim(states)[3]]
+    D_sea <- states[2, 5, dim(states)[3]]
     
     rates <- c(
-      "S_a_to_E_a" = beta[1] * S_a * I_a,
+      "S_a_to_E_a" = beta_colony * S_a * I_a,
       "E_a_to_S_a" = eta * E_a,
       "E_a_to_I_a" = sigma * E_a,
       "I_a_to_R_a" = gamma * I_a,
       "I_a_to_D_a" = mu * I_a,
       
-      "S_sea_to_E_sea" = beta[2] * S_sea * I_sea,
+      "S_sea_to_E_sea" = beta_sea * S_sea * I_sea,
       "E_sea_to_S_sea" = eta * E_sea,
       "E_sea_to_I_sea" = sigma * E_sea,
       "I_sea_to_R_sea" = gamma * I_sea,
       "I_sea_to_D_sea" = mu * I_sea,
       
-      "S_a_to_S_sea" = tau * S_a,
-      "E_a_to_E_sea" = tau * E_a,
-      "I_a_to_I_sea" = tau * I_a,
-      "R_a_to_R_sea" = tau * R_a
+      "S_a_to_S_sea" = zeta * S_a,
+      "E_a_to_E_sea" = zeta * E_a,
+      "I_a_to_I_sea" = zeta * I_a,
+      "R_a_to_R_sea" = zeta * R_a
     )
     
-    events <- rpois(length(rates), rates * tau)
+    total_rate <- sum(rates)
     
-    S_a <- S_a - events[1] + events[2] - events[11]
-    E_a <- E_a + events[1] - events[2] - events[3] - events[12]
-    I_a <- I_a + events[3] - events[4] - events[5] - events[13]
-    R_a <- R_a + events[4] - events[14]
-    D_a <- D_a + events[5]
+    if (total_rate == 0) {
+      break
+    }
     
-    S_sea <- S_sea + events[11] - events[6]
-    E_sea <- E_sea + events[12] + events[6] - events[7] - events[8]
-    I_sea <- I_sea + events[13] + events[8] - events[9] - events[10]
-    R_sea <- R_sea + events[14] + events[9]
-    D_sea <- D_sea + events[10]
+    time_step <- min(tau, (total_time - times[length(times)]))
+    times <- c(times, times[length(times)] + time_step)
     
-    new_state = matrix(data = c(S_a, E_a, I_a, R_a, D_a,
-                                S_sea, E_sea, I_sea, R_sea, D_sea), 
-                       nrow = 2, ncol = 5, 
-                       byrow = T)
+    transitions <- rpois(length(rates), rates * time_step) # juste ??
+    names(transitions) <- names(rates)
     
-    states[,,t] <- new_state
+
+    S_a <- S_a - transitions["S_a_to_E_a"] + transitions["E_a_to_S_a"] - transitions["S_a_to_S_sea"]
+    E_a <- E_a + transitions["S_a_to_E_a"] - transitions["E_a_to_S_a"] - transitions["E_a_to_I_a"] - transitions["E_a_to_E_sea"]
+    I_a <- I_a + transitions["E_a_to_I_a"] - transitions["I_a_to_R_a"] - transitions["I_a_to_D_a"] - transitions["I_a_to_I_sea"]
+    R_a <- R_a + transitions["I_a_to_R_a"] - transitions["R_a_to_R_sea"]
+    D_a <- D_a + transitions["I_a_to_D_a"]
+    
+    S_sea <- S_sea - transitions["S_sea_to_E_sea"] + transitions["E_sea_to_S_sea"] + transitions["S_a_to_S_sea"]
+    E_sea <- E_sea + transitions["S_sea_to_E_sea"] - transitions["E_sea_to_S_sea"] - transitions["E_sea_to_I_sea"] + transitions["E_a_to_E_sea"]
+    I_sea <- I_sea + transitions["E_sea_to_I_sea"] - transitions["I_sea_to_R_sea"] - transitions["I_sea_to_D_sea"] + transitions["I_a_to_I_sea"]
+    R_sea <- R_sea + transitions["I_sea_to_R_sea"] + transitions["R_a_to_R_sea"]
+    D_sea <- D_sea + transitions["I_sea_to_D_sea"]
+    
+    new_state <- matrix(c(S_a, E_a, I_a, R_a, D_a,
+                          S_sea, E_sea, I_sea, R_sea, D_sea),
+                        nrow = 2, byrow = TRUE)
+    
+    states <- abind(states, new_state)
   }
   
   return(list(times = times, states = states))
 }
 
 # Run simulation
-result <- tau_leap_seir(N, beta, sigma, gamma, initial_state, total_time, tau = 0.1)
+tau <- 0.1 # Set the tau value for τ-leap
+result <- tau_leap_seir(param, initial_state, total_time, tau)
 
 # Convert results to data frame for plotting
-output <- data.frame(time = result$times,
-                     
-                     S_a = result$states[1, 1,],
-                     E_a = result$states[1, 2,],
-                     I_a = result$states[1, 3,],
-                     R_a = result$states[1, 4,],
-                     D_a = result$states[1, 5,],
-                     
-                     S_sea = result$states[2, 1,],
-                     E_sea = result$states[2, 2,],
-                     I_sea = result$states[2, 3,],
-                     R_sea = result$states[2, 4,],
-                     D_sea = result$states[2, 5,])
+output <- data.frame(
+  time = result$times,
+  S_a = result$states[1, 1, ],
+  E_a = result$states[1, 2, ],
+  I_a = result$states[1, 3, ],
+  R_a = result$states[1, 4, ],
+  D_a = result$states[1, 5, ],
+  S_sea = result$states[2, 1, ],
+  E_sea = result$states[2, 2, ],
+  I_sea = result$states[2, 3, ],
+  R_sea = result$states[2, 4, ],
+  D_sea = result$states[2, 5, ]
+)
 
 output_long <- melt(output, id = "time")
 
 # Plot results
 
-output_a = output_long %>% subset(., variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
-plot_a = ggplot(output_a, aes(x = time, y = value, color = variable)) +
+output_a <- output_long %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+plot_a <- ggplot(output_a, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("τ-leap SEIR Model Simulation")
+  ggtitle("Stochastic SEIR Model Simulation (τ-leap Algorithm)")
 
-output_sea = output_long %>% subset(., variable %in% c("S_sea", "E_sea", "I_sea", "R_sea", "D_sea"))
-plot_sea = ggplot(output_sea, aes(x = time, y = value, color = variable)) +
+output_sea <- output_long %>% filter(variable %in% c("S_sea", "E_sea", "I_sea", "R_sea", "D_sea"))
+plot_sea <- ggplot(output_sea, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("τ-leap SEIR Model Simulation")
+  ggtitle("Stochastic SEIR Model Simulation (τ-leap Algorithm)")
 
+# Display plots
 plot_a 
 plot_sea
