@@ -20,24 +20,20 @@ library(cowplot)
 # Parameters
 total_time <- 160          # Simulation time
 
-sigma <- 1/5.2             # Rate of progression from exposed to infectious (inverse of incubation period)
-gamma <- 1/2.9             # Recovery rate (inverse of infectious period)
-eta <-  (1/5.2)*(0.1)*50   # Rate of progression from infectious to exposed
-mu <- (1/2.9) * 0.5        # Rate of mortality 
+param = list( sigma = 1/5.2,            # Rate of progression from exposed to infectious (inverse of incubation period)
+              gamma = 1/2.9,             # Recovery rate (inverse of infectious period)
+              eta =  (1/5.2)*(0.1)*50,   # Rate of progression from infectious to exposed
+              mu = (1/2.9) * 0.5,        # Rate of mortality 
+              beta = c(0.01, 0.001),     # Transmission rate in a colony, at sea
+              zeta = 0.001                # Transition from colony A to the sea
+)
 
-beta_colony <- 0.01        # Transmission rate in a colony
-beta_sea <- 0.001          # Transmission rate at sea
-beta = c(beta_colony, beta_sea)
-
-
-tau = 0.001                # Tansition from colony A to the sea
 
 # Initial state
 
 ## In colony A
 N <- 1000                  # Total population in colony A
 initial_infected <- 1
-
 initial_exposed <- 0
 initial_recovered <- 0
 initial_susceptible <- N - initial_infected - initial_exposed - initial_recovered
@@ -52,7 +48,6 @@ initial_state_A <- c(S = initial_susceptible,
 ## At sea
 N <- 50                  # Total population at sea
 initial_infected <- 0
-
 initial_exposed <- 0
 initial_recovered <- 0
 initial_susceptible <- N - initial_infected - initial_exposed - initial_recovered
@@ -72,7 +67,16 @@ initial_state = matrix(data = c(initial_state_A,
                        byrow = T)
 
 # Gillespie SEIR model function
-gillespie_seir <- function(N, beta, sigma, gamma, initial_state, total_time) {
+gillespie_seir <- function(param, initial_state, total_time) {
+  
+  sigma = param$sigma
+  gamma = param$gamma
+  eta = param$eta
+  mu = param$mu
+  beta_colony = param$beta[1]
+  beta_sea = param$beta[2]
+  zeta = param$zeta
+
   times <- c(0)
   states <- array(dim = c(2,5,1), data = initial_state)
   
@@ -91,22 +95,22 @@ gillespie_seir <- function(N, beta, sigma, gamma, initial_state, total_time) {
     D_sea <- states[2, 5, dim(states)[3]]
     
     rates <- c(
-      "S_a_to_E_a" = beta[1] * S_a * I_a,
+      "S_a_to_E_a" = beta_colony * S_a * I_a,
       "E_a_to_S_a" = eta * E_a,
       "E_a_to_I_a" = sigma * E_a,
       "I_a_to_R_a" = gamma * I_a,
       "I_a_to_D_a" = mu * I_a,
       
-      "S_sea_to_E_sea" = beta[2] * S_sea * I_sea,
+      "S_sea_to_E_sea" = beta_sea * S_sea * I_sea,
       "E_sea_to_S_sea" = eta * E_sea,
       "E_sea_to_I_sea" = sigma * E_sea,
       "I_sea_to_R_sea" = gamma * I_sea,
       "I_sea_to_D_sea" = mu * I_sea,
       
-      "S_a_to_S_sea" = tau * S_a,
-      "E_a_to_E_sea" = tau * E_a,
-      "I_a_to_I_sea" = tau * I_a,
-      "R_a_to_R_sea" = tau * R_a
+      "S_a_to_S_sea" = zeta * S_a,
+      "E_a_to_E_sea" = zeta * E_a,
+      "I_a_to_I_sea" = zeta * I_a,
+      "R_a_to_R_sea" = zeta * R_a
       
       
     )
@@ -181,7 +185,7 @@ gillespie_seir <- function(N, beta, sigma, gamma, initial_state, total_time) {
 
 
 # Run simulation
-result <- gillespie_seir(N, beta, sigma, gamma, initial_state, total_time)
+result <- gillespie_seir(param, initial_state, total_time)
 
 # Convert results to data frame for plotting
 output <- data.frame(time = result$times,
