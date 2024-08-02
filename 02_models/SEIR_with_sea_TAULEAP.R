@@ -1,5 +1,7 @@
 # -------------------------------------------------------------------------
-# transition A to sea
+
+#mettre un max
+
 # -------------------------------------------------------------------------
 
 library(tidyverse)
@@ -24,7 +26,7 @@ param <- list(
 
 ## In colony A
 N_A <- 1000                # Total population in colony A
-initial_infected_A <- 1
+initial_infected_A <- 5
 initial_state_A <- c(S = N_A - initial_infected_A,
                      E = 0,
                      I = initial_infected_A,
@@ -44,7 +46,11 @@ initial_state <- matrix(c(initial_state_A,
                           initial_state_sea),
                         nrow = 2, byrow = TRUE)
 
+
+
 # τ-leap SEIR model function
+tau <- 0.005 # Set the tau value for τ-leap
+
 tau_leap_seir <- function(param, initial_state, total_time, tau) {
   
   sigma <- param$sigma
@@ -91,6 +97,15 @@ tau_leap_seir <- function(param, initial_state, total_time, tau) {
       "R_a_to_R_sea" = zeta * R_a
     )
     
+    # if (any(is.na(rates))){
+    #   print(rates)
+    #   #print(states)
+    #   print(states[,,(dim(states)[3]-4):dim(states)[3]])
+    #   print(S_a)
+    #   print(S_sea)
+    # }
+    
+    
     total_rate <- sum(rates)
     
     if (total_rate == 0) {
@@ -100,9 +115,22 @@ tau_leap_seir <- function(param, initial_state, total_time, tau) {
     time_step <- min(tau, (total_time - times[length(times)]))
     times <- c(times, times[length(times)] + time_step)
     
-    transitions <- rpois(length(rates), rates * time_step) # juste ??
+    
+  
+    nb_events <- rpois(1, rates * time_step) 
+    whichevent = sample(1:length(rates), nb_events, prob = rates, replace = TRUE)
+    
+    
+    transitions = factor(whichevent, levels = 1:length(rates)) %>% 
+      table() %>% 
+      as.matrix() %>% 
+      t() %>% 
+      as.data.frame()
+    
+
     names(transitions) <- names(rates)
     
+  
 
     S_a <- S_a - transitions["S_a_to_E_a"] + transitions["E_a_to_S_a"] - transitions["S_a_to_S_sea"]
     E_a <- E_a + transitions["S_a_to_E_a"] - transitions["E_a_to_S_a"] - transitions["E_a_to_I_a"] - transitions["E_a_to_E_sea"]
@@ -123,32 +151,31 @@ tau_leap_seir <- function(param, initial_state, total_time, tau) {
     states <- abind(states, new_state)
   }
   
-  return(list(times = times, states = states))
+  output <- data.frame(
+    time = times,
+    S_a = states[1, 1, ],
+    E_a = states[1, 2, ],
+    I_a = states[1, 3, ],
+    R_a = states[1, 4, ],
+    D_a = states[1, 5, ],
+    S_sea = states[2, 1, ],
+    E_sea = states[2, 2, ],
+    I_sea = states[2, 3, ],
+    R_sea = states[2, 4, ],
+    D_sea = states[2, 5, ]
+  )
+  
+  return(output)
 }
 
 # Run simulation
-tau <- 0.1 # Set the tau value for τ-leap
-result <- tau_leap_seir(param, initial_state, total_time, tau)
 
-# Convert results to data frame for plotting
-output <- data.frame(
-  time = result$times,
-  S_a = result$states[1, 1, ],
-  E_a = result$states[1, 2, ],
-  I_a = result$states[1, 3, ],
-  R_a = result$states[1, 4, ],
-  D_a = result$states[1, 5, ],
-  S_sea = result$states[2, 1, ],
-  E_sea = result$states[2, 2, ],
-  I_sea = result$states[2, 3, ],
-  R_sea = result$states[2, 4, ],
-  D_sea = result$states[2, 5, ]
-)
+output <- tau_leap_seir(param, initial_state, total_time, tau)
 
-output_long <- melt(output, id = "time")
+
 
 # Plot results
-
+output_long <- melt(output, id = "time")
 output_a <- output_long %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
 plot_a <- ggplot(output_a, aes(x = time, y = value, color = variable)) +
   geom_line() +
@@ -166,3 +193,66 @@ plot_sea <- ggplot(output_sea, aes(x = time, y = value, color = variable)) +
 # Display plots
 plot_a 
 plot_sea
+
+
+
+summary_output = function(output){
+  
+  N_a = output[1, c("S_a", "I_a")] %>% sum()
+  
+  max_infected_a = max(output[, "I_a"]) 
+  prop_max_infected_a = max_infected_a / N_a
+  dead_a = output[nrow(output), "D_a"]
+  prop_dead_a = dead_a / N_a
+  
+  max_infected_sea = max(output[, "I_sea"]) 
+  dead_sea = output[nrow(output), "D_sea"]
+  
+  prop_non_exposed_from_a = (output[nrow(output), "S_a"] + output[nrow(output), "S_sea"] - output[1, "S_sea"] ) / N_a
+  
+  return( data.frame(
+    N_a = N_a,
+    max_infected_a = max_infected_a,
+    prop_max_infected_a = prop_max_infected_a,
+    dead_a = dead_a,
+    prop_dead_a = prop_dead_a,
+    max_infected_sea = max_infected_sea,
+    dead_sea = dead_sea,
+    prop_non_exposed_from_a = prop_non_exposed_from_a
+    
+  ))
+}
+
+
+output_long_list = data.frame()
+response_list = data.frame()
+
+nb_iterations = 8
+
+for (i in 1:nb_iterations){
+  
+  output = tau_leap_seir(param, initial_state, total_time, tau)
+  output_long = melt(output, id = "time")
+  
+  output_long_i <- cbind(output_long,
+                       data.frame(simulation = rep(i, times = nrow(output_long))))
+  
+  output_long_list = rbind(output_long_list, output_long_i)
+  response_list = rbind(response_list, summary_output(output))
+  
+}
+
+
+output_a <- output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+
+p = ggplot()
+for(i in 1:nb_iterations){
+  p = p + geom_line(data = output_a %>% subset(., simulation == i )
+                      , aes(x = time, y = value, color = variable)) 
+}
+p = p +
+  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+  theme_minimal() +
+  ggtitle("Stochastic SEIR Model Simulation (τ-leap Algorithm)")
+p
+
