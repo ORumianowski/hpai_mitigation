@@ -15,27 +15,48 @@ library(abind)
 library(cowplot)
 
 # Parameters
-total_time <- 50          # Simulation time
 
-param = list( sigma = 1/10.2,            # Rate of progression from exposed to infectious (inverse of incubation period)
-              gamma = 1/2.9,             # Recovery rate (inverse of infectious period)
-              eta =  (1/5.2)*(0.1)*50,   # Rate of progression from infectious to exposed
-              mu = (1/2.9) * 0.5,        # Rate of mortality 
-              beta = matrix(c(0.02, 0.01, 0.03, 0,
+# Simulation time
+
+total_time <- 50    
+
+# Epidemiological parameters
+
+epi_param = list( 
+  # Rate of progression from exposed to infectious (inverse of incubation period)
+  sigma = 1/10.2, 
+  # Recovery rate (inverse of infectious period)
+  gamma = 1/2.9,
+  # Rate of progression from infectious to exposed
+  eta =  0.9, 
+  # Rate of mortality 
+  mu = (1/2.9) * 0.5,
+  # Transmission rate in a colony, at sea
+  beta = matrix(c(0.12, 0.05, 0.15, 0,
                               0.001, 0.001, 0.001, 0.001),
-                            nrow = 2, ncol = 4, byrow = T),     # Transmission rate in a colony, at sea
-              zeta = 0.001                # Transition from colony A to the sea
+                            nrow = 2, ncol = 4, byrow = T), 
+  # Transition from colony A to the sea
+  zeta = 0.001                
 )
 
 
+# Induced dispersion parameters
+
+disp_param = list(
+  
+  # Proportion of dispersed adults
+  prop_dispersal = 0.5,
+  # Proportion of prospectors among dispersed adults
+  prop_prospecting = 0.2,
+  # Date of induced dispersion
+  dispersal_date = 10 
+  
+)
+
 # Initial state
 
-prop_dispersal = 0.5
-prop_prospecting = 0.2
-dispersal_date = 10 
-
 ## In colony A
-N <- 1000                  # Total population in colony A
+N <- 200                  
 initial_infected <- 1
 initial_exposed <- 0
 initial_recovered <- 0
@@ -49,7 +70,7 @@ initial_state_A <- c(S = initial_susceptible,
                      D = initial_dead)
 
 ## At sea
-N <- 50                  # Total population at sea
+N <- 50                  
 initial_infected <- 0
 initial_exposed <- 0
 initial_recovered <- 0
@@ -63,7 +84,7 @@ initial_state_sea <- c(S = initial_susceptible,
                        D = initial_dead)
 
 ## In colony B
-N <- 1000                  # Total population in colony B
+N <- 200                  
 initial_infected <- 0
 initial_exposed <- 0
 initial_recovered <- 0
@@ -84,21 +105,27 @@ initial_state = matrix(data = c(initial_state_A,
                        byrow = T)
 
 # Gillespie SEIR model function
-gillespie_seir <- function(param, initial_state, total_time, 
-                           prop_dispersal, 
-                           prop_prospecting,
-                           dispersal_date) {
+gillespie_seir <- function(epi_param, 
+                           disp_param,
+                           initial_state, 
+                           total_time) {
   
-  sigma = param$sigma
-  gamma = param$gamma
-  eta = param$eta
-  mu = param$mu
-  beta_colony = param$beta[1,]
-  beta_sea = param$beta[2,]
-  zeta = param$zeta
+  sigma = epi_param$sigma
+  gamma = epi_param$gamma
+  eta = epi_param$eta
+  mu = epi_param$mu
+  beta_colony = epi_param$beta[1,]
+  beta_sea = epi_param$beta[2,]
+  zeta = epi_param$zeta
+  
+  prop_dispersal = disp_param$prop_dispersal
+  prop_prospecting = disp_param$prop_prospecting
+  dispersal_date = disp_param$dispersal_date
+  
 
   times <- c(0)
   states <- array(dim = c(3,5,1), data = initial_state)
+  already_dispersed = F
   
   while (times[length(times)] < total_time) {
     
@@ -125,36 +152,55 @@ gillespie_seir <- function(param, initial_state, total_time,
     R_b <- states[3, 4, dim(states)[3]]
     D_b <- states[3, 5, dim(states)[3]]
     
-    already_dispersed = F
+  
     
     if (round(times[length(times)] ) == dispersal_date & !already_dispersed) { 
       
-      already_dispersed = T
+      
       
       N_a = S_a + E_a + I_a + R_a
       N_disp_a = round(N_a * prop_dispersal)
       
-      disp_a = rmultinom(1, size = N_disp_a, prob = rep(1/4, 4))
+      disp_a = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a)),
+             size = N_disp_a, 
+             replace = F) %>% 
+        factor(., levels = c("S_a","E_a","I_a","R_a")) %>% 
+        table()
+
+      print(c(S_a,  E_a,  I_a,  R_a))
+      print(disp_a)
       
-      disp_S_a = disp_a[1]
+      disp_S_a = disp_a["S_a"]
+      
       disp_S_a_prospecting=  rbinom(1, size = disp_S_a, prob = prop_prospecting)
+      
+      S_a = S_a - disp_S_a
+      
       S_sea = S_sea + (disp_S_a - disp_S_a_prospecting)
       S_b = S_b + disp_S_a_prospecting
       
-      disp_E_a = disp_a[2]
+      disp_E_a = disp_a["E_a"]
       disp_E_a_prospecting=  rbinom(1, size = disp_E_a, prob = prop_prospecting)
+      
+      E_a = E_a - disp_E_a
       E_sea = E_sea + (disp_E_a - disp_E_a_prospecting)
       E_b = E_b + disp_E_a_prospecting
       
-      disp_I_a = disp_a[3]
+      disp_I_a = disp_a["I_a"]
       disp_I_a_prospecting=  rbinom(1, size = disp_I_a, prob = prop_prospecting)
+      
+      I_a = I_a - disp_I_a
       I_sea = I_sea + (disp_I_a - disp_I_a_prospecting)
       I_b = I_b + disp_I_a_prospecting
       
-      disp_R_a = disp_a[4]
+      disp_R_a = disp_a["R_a"]
       disp_R_a_prospecting=  rbinom(1, size = disp_R_a, prob = prop_prospecting)
+      
+      R_a = R_a - disp_R_a
       R_sea = R_sea + (disp_R_a - disp_R_a_prospecting)
       R_b = R_b + disp_R_a_prospecting
+      
+      already_dispersed = T
         
     }
     
@@ -262,6 +308,8 @@ gillespie_seir <- function(param, initial_state, total_time,
                            nrow = 3, ncol = 5, 
                            byrow = T)
     
+    print(new_state)
+    
     states <- abind(states, new_state)
 
   }
@@ -290,10 +338,10 @@ gillespie_seir <- function(param, initial_state, total_time,
 
 # Run simulation
 
-output <- gillespie_seir(param, initial_state, total_time,  
-                         prop_dispersal = 1, 
-                         prop_prospecting= 0.05,
-                         dispersal_date = 8)
+output <- gillespie_seir(epi_param, 
+                         disp_param,
+                         initial_state, 
+                         total_time)
 
 
 
@@ -371,7 +419,7 @@ plot_b
 # 
 # for (i in 1:nb_iterations){
 #   
-#   output = gillespie_seir(param, initial_state, total_time)
+#   output = gillespie_seir(epi_param, initial_state, total_time)
 #   output_long = melt(output, id = "time")
 #   
 #   output_long_i <- cbind(output_long,
