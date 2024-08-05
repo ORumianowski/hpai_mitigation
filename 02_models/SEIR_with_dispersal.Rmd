@@ -1,19 +1,25 @@
+---
+title: "SEIR_with_dispersal"
+author: "Odin Rumianowski"
+date: "2024-08-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 
-
-# -------------------------------------------------------------------------
-
-
-# -------------------------------------------------------------------------
-
-
-
+```{r, warning=FALSE, message=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
 library(abind)
 library(cowplot)
+```
 
+
+```{r, warning=FALSE, message=FALSE}
 # Parameters
 total_time <- 50          # Simulation time
 
@@ -82,7 +88,10 @@ initial_state = matrix(data = c(initial_state_A,
                                 initial_state_B), 
                        nrow = 3, ncol = 5, 
                        byrow = T)
+```
 
+
+```{r, warning=FALSE, message=FALSE}
 # Gillespie SEIR model function
 gillespie_seir <- function(param, initial_state, total_time, 
                            prop_dispersal, 
@@ -125,37 +134,34 @@ gillespie_seir <- function(param, initial_state, total_time,
     R_b <- states[3, 4, dim(states)[3]]
     D_b <- states[3, 5, dim(states)[3]]
     
-    already_dispersed = F
     
-    if (round(times[length(times)] ) == dispersal_date & !already_dispersed) { 
+    if (round(times[length(times)] ) == dispersal_date) { # à modifier
       
-      already_dispersed = T
       
-      N_a = S_a + E_a + I_a + R_a
-      N_disp_a = round(N_a * prop_dispersal)
-      
-      disp_a = rmultinom(1, size = N_disp_a, prob = rep(1/4, 4))
-      
-      disp_S_a = disp_a[1]
-      disp_S_a_prospecting=  rbinom(1, size = disp_S_a, prob = prop_prospecting)
+      disp_S_a = round(S_a * prop_dispersal)
+      disp_S_a_prospecting = round(disp_S_a * prop_prospecting)
+      S_a = S_a - disp_S_a
       S_sea = S_sea + (disp_S_a - disp_S_a_prospecting)
       S_b = S_b + disp_S_a_prospecting
       
-      disp_E_a = disp_a[2]
-      disp_E_a_prospecting=  rbinom(1, size = disp_E_a, prob = prop_prospecting)
+      disp_E_a = round(E_a * prop_dispersal)
+      disp_E_a_prospecting = round(disp_E_a * prop_prospecting)
+      E_a = E_a - disp_E_a
       E_sea = E_sea + (disp_E_a - disp_E_a_prospecting)
       E_b = E_b + disp_E_a_prospecting
       
-      disp_I_a = disp_a[3]
-      disp_I_a_prospecting=  rbinom(1, size = disp_I_a, prob = prop_prospecting)
+      disp_I_a = round(I_a * prop_dispersal)
+      disp_I_a_prospecting = round(disp_I_a * prop_prospecting)
+      I_a = I_a - disp_I_a
       I_sea = I_sea + (disp_I_a - disp_I_a_prospecting)
       I_b = I_b + disp_I_a_prospecting
       
-      disp_R_a = disp_a[4]
-      disp_R_a_prospecting=  rbinom(1, size = disp_R_a, prob = prop_prospecting)
+      disp_R_a = round(R_a * prop_dispersal)
+      disp_R_a_prospecting = round(disp_R_a * prop_prospecting)
+      R_a = R_a - disp_R_a
       R_sea = R_sea + (disp_R_a - disp_R_a_prospecting)
       R_b = R_b + disp_R_a_prospecting
-        
+      
     }
     
     rates <- c(
@@ -287,16 +293,20 @@ gillespie_seir <- function(param, initial_state, total_time,
   
   return(output)
 }
+```
 
+
+```{r, warning=FALSE, message=FALSE}
 # Run simulation
 
 output <- gillespie_seir(param, initial_state, total_time,  
                          prop_dispersal = 1, 
                          prop_prospecting= 0.05,
                          dispersal_date = 8)
+```
 
 
-
+```{r, warning=FALSE, message=FALSE}
 # Plot results
 output_long <- melt(output[1:nrow(output)-1, ], id = "time")
 
@@ -327,84 +337,13 @@ plot_b <- ggplot(output_b, aes(x = time, y = value, color = variable)) +
   theme_minimal() +
   ggtitle("In colony B") +
   scale_color_brewer(palette="Set2")
+```
 
 
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 # Display plots
 plot_a 
 plot_sea
 plot_b
+```
 
-
-# 
-# summary_output = function(output){
-#   
-#   N_a = output[1, c("S_a", "I_a")] %>% sum()
-#   
-#   max_infected_a = max(output[, "I_a"]) 
-#   prop_max_infected_a = max_infected_a / N_a
-#   dead_a = output[nrow(output), "D_a"]
-#   prop_dead_a = dead_a / N_a
-#   
-#   max_infected_sea = max(output[, "I_sea"]) 
-#   dead_sea = output[nrow(output), "D_sea"]
-#   
-#   prop_non_exposed_from_a = (output[nrow(output), "S_a"] + output[nrow(output), "S_sea"] - output[1, "S_sea"] ) / N_a
-#   
-#   return( data.frame(
-#     N_a = N_a,
-#     max_infected_a = max_infected_a,
-#     prop_max_infected_a = prop_max_infected_a,
-#     dead_a = dead_a,
-#     prop_dead_a = prop_dead_a,
-#     max_infected_sea = max_infected_sea,
-#     dead_sea = dead_sea,
-#     prop_non_exposed_from_a = prop_non_exposed_from_a
-#     
-#   ))
-# }
-# 
-# 
-# output_long_list = data.frame()
-# response_list = data.frame()
-# 
-# nb_iterations = 8
-# 
-# for (i in 1:nb_iterations){
-#   
-#   output = gillespie_seir(param, initial_state, total_time)
-#   output_long = melt(output, id = "time")
-#   
-#   output_long_i <- cbind(output_long,
-#                          data.frame(simulation = rep(i, times = nrow(output_long))))
-#   
-#   output_long_list = rbind(output_long_list, output_long_i)
-#   response_list = rbind(response_list, summary_output(output))
-#   
-# }
-# 
-# 
-# output_a <- output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
-# 
-# p = ggplot()
-# for(i in 1:nb_iterations){
-#   p = p + geom_line(data = output_a %>% subset(., simulation == i )
-#                     , aes(x = time, y = value, color = variable)) 
-# }
-# p = p +
-#   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
-#   theme_minimal() +
-#   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
-# 
-# 
-# p
-# 
-# 
-# data_long <- pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
-# 
-# # Créer les diagrammes en violon pour chaque variable
-# ggplot(data_long %>% subset(., variable %in% c("dead_a", "max_infected_a")),
-#        aes(x = variable, y = value)) +
-#   geom_violin() + 
-#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-# 
-# 
