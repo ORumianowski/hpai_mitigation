@@ -34,7 +34,9 @@ epi_param = list(
   # Transmission rate in a colony, at sea
   beta = matrix(c(0.12, 0.05, 0.15, 0,
                               0.001, 0.001, 0.001, 0.001),
-                            nrow = 2, ncol = 4, byrow = T), 
+                            nrow = 2, ncol = 4, byrow = T),
+  # Transmission rate period
+  transmission_period = c(0, 8, 16, 30),
   # Transition from colony A to the sea
   zeta = 0.001                
 )
@@ -45,7 +47,7 @@ epi_param = list(
 disp_param = list(
   
   # Proportion of dispersed adults
-  prop_dispersal = 0.5,
+  prop_dispersal = 1,
   # Proportion of prospectors among dispersed adults
   prop_prospecting = 0.2,
   # Date of induced dispersion
@@ -116,23 +118,20 @@ gillespie_seir <- function(epi_param,
   mu = epi_param$mu
   beta_colony = epi_param$beta[1,]
   beta_sea = epi_param$beta[2,]
+  transmission_period = epi_param$transmission_period
   zeta = epi_param$zeta
   
   prop_dispersal = disp_param$prop_dispersal
   prop_prospecting = disp_param$prop_prospecting
   dispersal_date = disp_param$dispersal_date
   
-
+  # Initialization
   times <- c(0)
   states <- array(dim = c(3,5,1), data = initial_state)
   already_dispersed = F
   
+  # Next event
   while (times[length(times)] < total_time) {
-    
-    period = findInterval(times[length(times)], c(0, 8, 16, 30)) 
-    
-    beta_colony_t = beta_colony[period]
-    beta_sea_t = beta_sea[period]
     
     S_a <- states[1, 1, dim(states)[3]]
     E_a <- states[1, 2, dim(states)[3]]
@@ -152,50 +151,51 @@ gillespie_seir <- function(epi_param,
     R_b <- states[3, 4, dim(states)[3]]
     D_b <- states[3, 5, dim(states)[3]]
     
-  
+    # Transmission period
+    period = findInterval(times[length(times)], transmission_period) 
+    beta_colony_t = beta_colony[period]
+    beta_sea_t = beta_sea[period]
     
+    # Induction of dispersion
     if (round(times[length(times)] ) == dispersal_date & !already_dispersed) { 
       
-      
-      
+      # Number of adults in colony A
       N_a = S_a + E_a + I_a + R_a
+      # Number of adults in colony A who are dispersed
       N_disp_a = round(N_a * prop_dispersal)
-      
+      # Distribution of dispersed adults by epidemiological status
       disp_a = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a)),
              size = N_disp_a, 
              replace = F) %>% 
         factor(., levels = c("S_a","E_a","I_a","R_a")) %>% 
         table()
 
-      print(c(S_a,  E_a,  I_a,  R_a))
-      print(disp_a)
-      
+      # Number of susceptible adults who are dispersed from colony A
       disp_S_a = disp_a["S_a"]
-      
+      # Number of susceptible adults who are dispersed from colony A and prospect other colonies
       disp_S_a_prospecting=  rbinom(1, size = disp_S_a, prob = prop_prospecting)
-      
+      # Update of the number of susceptible adults
       S_a = S_a - disp_S_a
-      
       S_sea = S_sea + (disp_S_a - disp_S_a_prospecting)
       S_b = S_b + disp_S_a_prospecting
       
+      # Same for exposed adults from colony A
       disp_E_a = disp_a["E_a"]
       disp_E_a_prospecting=  rbinom(1, size = disp_E_a, prob = prop_prospecting)
-      
       E_a = E_a - disp_E_a
       E_sea = E_sea + (disp_E_a - disp_E_a_prospecting)
       E_b = E_b + disp_E_a_prospecting
       
+      # Same for infected adults from colony A
       disp_I_a = disp_a["I_a"]
       disp_I_a_prospecting=  rbinom(1, size = disp_I_a, prob = prop_prospecting)
-      
       I_a = I_a - disp_I_a
       I_sea = I_sea + (disp_I_a - disp_I_a_prospecting)
       I_b = I_b + disp_I_a_prospecting
       
+      # Same for recovered adults from colony A
       disp_R_a = disp_a["R_a"]
       disp_R_a_prospecting=  rbinom(1, size = disp_R_a, prob = prop_prospecting)
-      
       R_a = R_a - disp_R_a
       R_sea = R_sea + (disp_R_a - disp_R_a_prospecting)
       R_b = R_b + disp_R_a_prospecting
@@ -204,6 +204,7 @@ gillespie_seir <- function(epi_param,
         
     }
     
+    # Rates of each possible event
     rates <- c(
       "S_a_to_E_a" = beta_colony_t * S_a * I_a,
       "E_a_to_S_a" = eta * E_a,
@@ -308,8 +309,6 @@ gillespie_seir <- function(epi_param,
                            nrow = 3, ncol = 5, 
                            byrow = T)
     
-    print(new_state)
-    
     states <- abind(states, new_state)
 
   }
@@ -367,8 +366,6 @@ plot_sea <- ggplot(output_sea, aes(x = time, y = value, color = variable)) +
 
 
 output_b <- output_long %>% filter(variable %in% c("S_b", "E_b", "I_b", "R_b", "D_b"))
-
-
 plot_b <- ggplot(output_b, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
