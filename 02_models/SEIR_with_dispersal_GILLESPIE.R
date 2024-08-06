@@ -38,7 +38,7 @@ epi_param = list(
   # Transmission rate period
   transmission_period = c(0, 8, 16, 30),
   # Transition from colony A to the sea
-  zeta = 0.001                
+  zeta = 0.000                
 )
 
 
@@ -184,8 +184,8 @@ gillespie_seir = function(epi_param,
       
       
     )
-    
-    total_rate = sum(rates)
+
+        total_rate = sum(rates)
     
     if (total_rate == 0) {
       break
@@ -240,9 +240,15 @@ gillespie_seir = function(epi_param,
       
       already_dispersed = T
       
-      #########
+      new_state = matrix(data = c(S_a, E_a, I_a, R_a, D_a,
+                                  S_sea, E_sea, I_sea, R_sea, D_sea,
+                                  S_b, E_b, I_b, R_b, D_b),
+                         nrow = 3, ncol = 5, 
+                         byrow = T)
       
-      #times = c(times, dispersal_date)
+      states = abind(states, new_state)
+      
+      times = c(times, dispersal_date)
       
       # Transmission period
       period = findInterval(times[length(times)], transmission_period) 
@@ -273,8 +279,6 @@ gillespie_seir = function(epi_param,
         "E_a_to_E_sea" = zeta * E_a,
         "I_a_to_I_sea" = zeta * I_a,
         "R_a_to_R_sea" = zeta * R_a
-        
-        #########
         
       )
       
