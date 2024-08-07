@@ -236,7 +236,7 @@ gillespie_seir = function(param,
       
     )
 
-        total_rate = sum(rates)
+    total_rate = sum(rates)
     
     if (total_rate == 0) {
       break
@@ -434,13 +434,38 @@ gillespie_seir = function(param,
     } else if (transition == "R_b_to_R_sea_b") {
       R_b = R_b - 1
       R_sea_b = R_sea_b + 1
+    }else if (transition == "S_sea_a_to_S_a") {
+      S_a = S_a + 1
+      S_sea_a = S_sea_a - 1
+    } else if (transition == "E_sea_a_to_E_a") {
+      E_a = E_a + 1
+      E_sea_a = E_sea_a - 1
+    } else if (transition == "I_sea_a_to_I_a") {
+      I_a = I_a + 1
+      I_sea_a = I_sea_a - 1
+    } else if (transition == "R_sea_a_to_R_a") {
+      R_a = R_a + 1
+      R_sea_a = R_sea_a - 1
+    } else if (transition == "S_sea_b_to_S_b") {
+      S_b = S_b + 1
+      S_sea_b = S_sea_b - 1
+    } else if (transition == "E_sea_b_to_E_b") {
+      E_b = E_b + 1
+      E_sea_b = E_sea_b - 1
+    } else if (transition == "I_sea_b_to_I_b") {
+      I_b = I_b + 1
+      I_sea_b = I_sea_b - 1
+    } else if (transition == "R_sea_b_to_R_b") {
+      R_b = R_b + 1
+      R_sea_b = R_sea_b - 1
     }
     
     
     new_state = matrix(data = c(S_a, E_a, I_a, R_a, D_a,
-                                S_sea, E_sea, I_sea, R_sea, D_sea,
+                                S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                                S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
                                 S_b, E_b, I_b, R_b, D_b),
-                           nrow = 3, ncol = 5, 
+                           nrow = 4, ncol = 5, 
                            byrow = T)
     
     states = abind(states, new_state)
@@ -454,16 +479,21 @@ gillespie_seir = function(param,
     I_a = states[1, 3, ],
     R_a = states[1, 4, ],
     D_a = states[1, 5, ],
-    S_sea = states[2, 1, ],
-    E_sea = states[2, 2, ],
-    I_sea = states[2, 3, ],
-    R_sea = states[2, 4, ],
-    D_sea = states[2, 5, ],
-    S_b = states[3, 1, ],
-    E_b = states[3, 2, ],
-    I_b = states[3, 3, ],
-    R_b = states[3, 4, ],
-    D_b = states[3, 5, ]
+    S_sea_a = states[2, 1, ],
+    E_sea_a = states[2, 2, ],
+    I_sea_a = states[2, 3, ],
+    R_sea_a = states[2, 4, ],
+    D_sea_a = states[2, 5, ],
+    S_sea_b = states[3, 1, ],
+    E_sea_b = states[3, 2, ],
+    I_sea_b = states[3, 3, ],
+    R_sea_b = states[3, 4, ],
+    D_sea_b = states[3, 5, ],
+    S_b = states[4, 1, ],
+    E_b = states[4, 2, ],
+    I_b = states[4, 3, ],
+    R_b = states[4, 4, ],
+    D_b = states[4, 5, ]
   )
   
   return(output)
@@ -471,8 +501,7 @@ gillespie_seir = function(param,
 
 # Run simulation
 
-output = gillespie_seir(epi_param, 
-                         disp_param,
+output = gillespie_seir(param,
                          initial_state, 
                          total_time)
 
@@ -490,8 +519,8 @@ plot_a = ggplot(output_a, aes(x = time, y = value, color = variable)) +
   scale_color_brewer(palette="Set2")
 
 
-output_sea = output_long %>% filter(variable %in% c("S_sea", "E_sea", "I_sea", "R_sea", "D_sea"))
-plot_sea = ggplot(output_sea, aes(x = time, y = value, color = variable)) +
+output_sea_a = output_long %>% filter(variable %in% c("S_sea_a", "E_sea_a", "I_sea_a", "R_sea_a", "D_sea_a"))
+plot_sea_a = ggplot(output_sea_a, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
@@ -510,7 +539,7 @@ plot_b = ggplot(output_b, aes(x = time, y = value, color = variable)) +
 
 # Display plots
 plot_a 
-plot_sea
+plot_sea_a
 plot_b
 
 
