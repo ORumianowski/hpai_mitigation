@@ -3,6 +3,9 @@
 
 # -------------------------------------------------------------------------
 
+# a faire: 
+# 1 : fonction opérable: CI  infected (yes/no) and dispersal (yes/no)
+# 2 : dispersal stochastic
 
 # -------------------------------------------------------------------------
 
@@ -18,13 +21,13 @@ library(cowplot)
 
 # Simulation time
 
-total_time = 50    
+total_time = 70    
 
 param = list( 
   
   # Epidemiological parameters
   
-  # Transmission rate from exposed individuals and from infectious individuals in a colony, at sea
+  # Transmission rate from exposed individuals and from infectious individuals in a colony
   beta = matrix(c(0.05, 0.55,
                   0.00, 0.00),
                 nrow = 2, ncol = 2, byrow = T),
@@ -57,9 +60,9 @@ param = list(
   # Proportion of dispersed adults
   prop_dispersal = 1,
   # Proportion of prospectors among dispersed adults
-  prop_prospecting = 2,
+  prop_prospecting = 1/4,
   # Date of induced dispersion
-  dispersal_date = 20,
+  dispersal_date = 30,
   
   # Demographic parameters
   hatching_date = 10
@@ -228,6 +231,163 @@ initial_state = matrix(data = c(initial_state_A,
                        byrow = T)
 
 
+calculate_rates = function(  beta_E_colony, beta_I_colony,
+                             sigma,eta, gamma, mu,
+                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                             prop_dispersal, prop_prospecting, dispersal_date,
+                             hatching_date,
+                             S_a, E_a, I_a, R_a, D_a,
+                             S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                             S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
+                             S_b, E_b, I_b, R_b, D_b,
+                             S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                             S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                             S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                             S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                             S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
+                             S_b_N, E_b_N, I_b_N, R_b_N, D_b_N){
+  
+  rates = c(
+    
+  # SEIR
+  
+  ## Nestlings
+  ### Colony A
+  "S_a_N_to_E_a_N" = beta_E_colony * S_a_N * (E_a+E_a_NB+E_a_N) + 
+                     beta_I_colony * S_a_N * (I_a+I_a_NB+I_a_N),
+  "E_a_N_to_S_a_N" = eta * E_a_N,
+  "E_a_N_to_I_a_N" = sigma * E_a_N,
+  "I_a_N_to_R_a_N" = gamma * I_a_N,
+  "I_a_N_to_D_a_N" = mu * I_a_N,
+  ### Colony B
+  "S_b_N_to_E_b_N" = beta_E_colony * S_b_N * (E_b+E_b_NB+E_b_N) +
+                     beta_I_colony * S_b_N * (I_b+I_b_NB+I_b_N),
+  "E_b_N_to_S_b_N" = eta * E_b_N,
+  "E_b_N_to_I_b_N" = sigma * E_b_N,
+  "I_b_N_to_R_b_N" = gamma * I_b_N,
+  "I_b_N_to_D_b_N" = mu * I_b_N,
+  
+  ## Non-Breeders
+  ### Colony A
+  "S_a_NB_to_E_a_NB" = beta_E_colony * S_a_NB * (E_a+E_a_NB+E_a_N) +
+                       beta_I_colony * S_a_NB * (I_a+I_a_NB+I_a_N),
+  "E_a_NB_to_S_a_NB" = eta * E_a_NB,
+  "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
+  "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
+  "I_a_NB_to_D_a_NB" = mu * I_a_NB,
+  ### Sea A
+  "S_sea_a_NB_to_E_sea_a_NB" = 0,
+  "E_sea_a_NB_to_S_sea_a_NB" = eta * E_sea_a_NB,
+  "E_sea_a_NB_to_I_sea_a_NB" = sigma * E_sea_a_NB,
+  "I_sea_a_NB_to_R_sea_a_NB" = gamma * I_sea_a_NB,
+  "I_sea_a_NB_to_D_sea_a_NB" = mu * I_sea_a_NB,
+  ### Sea B
+  "S_sea_b_NB_to_E_sea_b_NB" = 0,
+  "E_sea_b_NB_to_S_sea_b_NB" = eta * E_sea_b_NB,
+  "E_sea_b_NB_to_I_sea_b_NB" = sigma * E_sea_b_NB,
+  "I_sea_b_NB_to_R_sea_b_NB" = gamma * I_sea_b_NB,
+  "I_sea_b_NB_to_D_sea_b_NB" = mu * I_sea_b_NB,
+  ### Colony B
+  "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b+E_b_NB+E_b_N) + 
+                       beta_I_colony * S_b_NB * (I_b+I_b_NB+I_b_N),
+  "E_b_NB_to_S_b_NB" = eta * E_b_NB,
+  "E_b_NB_to_I_b_NB" = sigma * E_b_NB,
+  "I_b_NB_to_R_b_NB" = gamma * I_b_NB,
+  "I_b_NB_to_D_b_NB" = mu * I_b_NB,
+  
+  ## Breeders
+  ### Colony A
+  "S_a_to_E_a" = beta_E_colony * S_a * (E_a+E_a_NB+E_a_N) + 
+                 beta_I_colony * S_a * (I_a+I_a_NB+I_a_N),
+  "E_a_to_S_a" = eta * E_a,
+  "E_a_to_I_a" = sigma * E_a,
+  "I_a_to_R_a" = gamma * I_a,
+  "I_a_to_D_a" = mu * I_a,
+  ### Sea A
+  "S_sea_a_to_E_sea_a" = 0,
+  "E_sea_a_to_S_sea_a" = eta * E_sea_a,
+  "E_sea_a_to_I_sea_a" = sigma * E_sea_a,
+  "I_sea_a_to_R_sea_a" = gamma * I_sea_a,
+  "I_sea_a_to_D_sea_a" = mu * I_sea_a,
+  ### Sea B
+  "S_sea_b_to_E_sea_b" = 0,
+  "E_sea_b_to_S_sea_b" = eta * E_sea_b,
+  "E_sea_b_to_I_sea_b" = sigma * E_sea_b,
+  "I_sea_b_to_R_sea_b" = gamma * I_sea_b,
+  "I_sea_b_to_D_sea_b" = mu * I_sea_b,
+  ### Colony B
+  "S_b_to_E_b" = beta_E_colony * S_b * (E_b+E_b_NB+E_b_N) + 
+                 beta_I_colony * S_b * (I_b+I_b_NB+I_b_N),
+  "E_b_to_S_b" = eta * E_b,
+  "E_b_to_I_b" = sigma * E_b,
+  "I_b_to_R_b" = gamma * I_b,
+  "I_b_to_D_b" = mu * I_b,
+  
+  
+  # Mobility
+  ## Non-Breeders
+  ### From colony A to sea A
+  "S_a_NB_to_S_sea_a_NB" = rho_to_sea * S_a_NB,
+  "E_a_NB_to_E_sea_a_NB" = rho_to_sea * E_a_NB,
+  "I_a_NB_to_I_sea_a_NB" = rho_to_sea * I_a_NB,
+  "R_a_NB_to_R_sea_a_NB" = rho_to_sea * R_a_NB,
+  ### From sea A to colony A
+  "S_sea_a_NB_to_S_a_NB" = rho_to_colony * S_sea_a_NB,
+  "E_sea_a_NB_to_E_a_NB" = rho_to_colony * E_sea_a_NB,
+  "I_sea_a_NB_to_I_a_NB" = rho_to_colony * I_sea_a_NB,
+  "R_sea_a_NB_to_R_a_NB" = rho_to_colony * R_sea_a_NB,
+  ### From colony B to sea B
+  "S_b_NB_to_S_sea_b_NB" = rho_to_sea * S_b_NB,
+  "E_b_NB_to_E_sea_b_NB" = rho_to_sea * E_b_NB,
+  "I_b_NB_to_I_sea_b_NB" = rho_to_sea * I_b_NB,
+  "R_b_NB_to_R_sea_b_NB" = rho_to_sea * R_b_NB,
+  ### From sea B to colony B
+  "S_sea_b_NB_to_S_b_NB" = rho_to_colony * S_sea_b_NB,
+  "E_sea_b_NB_to_E_b_NB" = rho_to_colony * E_sea_b_NB,
+  "I_sea_b_NB_to_I_b_NB" = rho_to_colony * I_sea_b_NB,
+  "R_sea_b_NB_to_R_b_NB" = rho_to_colony * R_sea_b_NB,
+  
+  ## Breeders
+  ### From colony A to sea A
+  "S_a_to_S_sea_a" = zeta_to_sea * S_a,
+  "E_a_to_E_sea_a" = zeta_to_sea * E_a,
+  "I_a_to_I_sea_a" = zeta_to_sea * I_a,
+  "R_a_to_R_sea_a" = zeta_to_sea * R_a,
+  ### From sea A to colony A
+  "S_sea_a_to_S_a" = zeta_to_colony * S_sea_a,
+  "E_sea_a_to_E_a" = zeta_to_colony * E_sea_a,
+  "I_sea_a_to_I_a" = zeta_to_colony * I_sea_a,
+  "R_sea_a_to_R_a" = zeta_to_colony * R_sea_a,
+  ### From colony B to sea B
+  "S_b_to_S_sea_b" = zeta_to_sea * S_b,
+  "E_b_to_E_sea_b" = zeta_to_sea * E_b,
+  "I_b_to_I_sea_b" = zeta_to_sea * I_b,
+  "R_b_to_R_sea_b" = zeta_to_sea * R_b,
+  ### From sea B to colony B
+  "S_sea_b_to_S_b" = zeta_to_colony * S_sea_b,
+  "E_sea_b_to_E_b" = zeta_to_colony * E_sea_b,
+  "I_sea_b_to_I_b" = zeta_to_colony * I_sea_b,
+  "R_sea_b_to_R_b" = zeta_to_colony * R_sea_b,
+  
+  ## Prospecting
+  ### From A to B
+  "S_sea_a_NB_to_S_sea_b_NB" = prop_prospecting * S_sea_a_NB,
+  "E_sea_a_NB_to_E_sea_b_NB" = prop_prospecting * E_sea_a_NB,
+  "I_sea_a_NB_to_I_sea_b_NB" = prop_prospecting * I_sea_a_NB,
+  "R_sea_a_NB_to_R_sea_b_NB" = prop_prospecting * R_sea_a_NB
+  
+  # Breeders become Non-Breeders
+  
+  # "S_a_to_S_a_NB" = psi * S_a,
+  # "E_a_to_E_a_NB" = psi * E_a,
+  # "I_a_to_I_a_NB" = psi * I_a,
+  # "R_a_to_R_a_NB" = psi * R_a
+  
+  )
+  return(rates)
+}
+
+
 # Gillespie SEIR model function
 gillespie_seir = function(param, 
                            initial_state, 
@@ -235,8 +395,6 @@ gillespie_seir = function(param,
   
   beta_E_colony = param$beta[1,1]
   beta_I_colony = param$beta[1,2]
-  beta_E_sea = param$beta[2,1]
-  beta_I_sea = param$beta[2,2]
   
   sigma = param$sigma
   eta = param$eta
@@ -325,132 +483,21 @@ gillespie_seir = function(param,
     D_b_N = states[10, 5, dim(states)[3]]
     
     # Rates of each possible event
-    rates = c(
-      
-      # Nestlings
-      
-      "S_a_N_to_E_a_N" = beta_E_colony * S_a_N * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a_N * (I_a+I_a_NB+I_a_N),
-      "E_a_N_to_S_a_N" = eta * E_a_N,
-      "E_a_N_to_I_a_N" = sigma * E_a_N,
-      "I_a_N_to_R_a_N" = gamma * I_a_N,
-      "I_a_N_to_D_a_N" = mu * I_a_N,
-      
-      "S_b_N_to_E_b_N" = beta_E_colony * S_b_N * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b_N * (I_b+I_b_NB+I_b_N),
-      "E_b_N_to_S_b_N" = eta * E_b_N,
-      "E_b_N_to_I_b_N" = sigma * E_b_N,
-      "I_b_N_to_R_b_N" = gamma * I_b_N,
-      "I_b_N_to_D_b_N" = mu * I_b_N,
-      
-      # Non-Breeders
-      
-      "S_a_NB_to_E_a_NB" = beta_E_colony * S_a_NB * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a_NB * (I_a+I_a_NB+I_a_N),
-      "E_a_NB_to_S_a_NB" = eta * E_a_NB,
-      "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
-      "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
-      "I_a_NB_to_D_a_NB" = mu * I_a_NB,
-      
-      "S_sea_a_NB_to_E_sea_a_NB" = 0,
-      "E_sea_a_NB_to_S_sea_a_NB" = eta * E_sea_a_NB,
-      "E_sea_a_NB_to_I_sea_a_NB" = sigma * E_sea_a_NB,
-      "I_sea_a_NB_to_R_sea_a_NB" = gamma * I_sea_a_NB,
-      "I_sea_a_NB_to_D_sea_a_NB" = mu * I_sea_a_NB,
-      
-      "S_sea_b_NB_to_E_sea_b_NB" = 0,
-      "E_sea_b_NB_to_S_sea_b_NB" = eta * E_sea_b_NB,
-      "E_sea_b_NB_to_I_sea_b_NB" = sigma * E_sea_b_NB,
-      "I_sea_b_NB_to_R_sea_b_NB" = gamma * I_sea_b_NB,
-      "I_sea_b_NB_to_D_sea_b_NB" = mu * I_sea_b_NB,
-      
-      "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b_NB * (I_b+I_b_NB+I_b_N),
-      "E_b_NB_to_S_b_NB" = eta * E_b_NB,
-      "E_b_NB_to_I_b_NB" = sigma * E_b_NB,
-      "I_b_NB_to_R_b_NB" = gamma * I_b_NB,
-      "I_b_NB_to_D_b_NB" = mu * I_b_NB,
-      
-      "S_a_NB_to_S_sea_a_NB" = zeta_to_sea * S_a_NB,
-      "E_a_NB_to_E_sea_a_NB" = zeta_to_sea * E_a_NB,
-      "I_a_NB_to_I_sea_a_NB" = zeta_to_sea * I_a_NB,
-      "R_a_NB_to_R_sea_a_NB" = zeta_to_sea * R_a_NB,
-      
-      "S_sea_a_NB_to_S_a_NB" = zeta_to_colony * S_sea_a_NB,
-      "E_sea_a_NB_to_E_a_NB" = zeta_to_colony * E_sea_a_NB,
-      "I_sea_a_NB_to_I_a_NB" = zeta_to_colony * I_sea_a_NB,
-      "R_sea_a_NB_to_R_a_NB" = zeta_to_colony * R_sea_a_NB,
-      
-      "S_b_NB_to_S_sea_b_NB" = zeta_to_sea * S_b_NB,
-      "E_b_NB_to_E_sea_b_NB" = zeta_to_sea * E_b_NB,
-      "I_b_NB_to_I_sea_b_NB" = zeta_to_sea * I_b_NB,
-      "R_b_NB_to_R_sea_b_NB" = zeta_to_sea * R_b_NB,
-      
-      "S_sea_b_NB_to_S_b_NB" = zeta_to_colony * S_sea_b_NB,
-      "E_sea_b_NB_to_E_b_NB" = zeta_to_colony * E_sea_b_NB,
-      "I_sea_b_NB_to_I_b_NB" = zeta_to_colony * I_sea_b_NB,
-      "R_sea_b_NB_to_R_b_NB" = zeta_to_colony * R_sea_b_NB,
-      
-      # Breeders
-      
-      "S_a_to_E_a" = beta_E_colony * S_a * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a * (I_a+I_a_NB+I_a_N),
-      "E_a_to_S_a" = eta * E_a,
-      "E_a_to_I_a" = sigma * E_a,
-      "I_a_to_R_a" = gamma * I_a,
-      "I_a_to_D_a" = mu * I_a,
-
-      "S_sea_a_to_E_sea_a" = 0,
-      "E_sea_a_to_S_sea_a" = eta * E_sea_a,
-      "E_sea_a_to_I_sea_a" = sigma * E_sea_a,
-      "I_sea_a_to_R_sea_a" = gamma * I_sea_a,
-      "I_sea_a_to_D_sea_a" = mu * I_sea_a,
-      
-      "S_sea_b_to_E_sea_b" = 0,
-      "E_sea_b_to_S_sea_b" = eta * E_sea_b,
-      "E_sea_b_to_I_sea_b" = sigma * E_sea_b,
-      "I_sea_b_to_R_sea_b" = gamma * I_sea_b,
-      "I_sea_b_to_D_sea_b" = mu * I_sea_b,
-      
-      "S_b_to_E_b" = beta_E_colony * S_b * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b * (I_b+I_b_NB+I_b_N),
-      "E_b_to_S_b" = eta * E_b,
-      "E_b_to_I_b" = sigma * E_b,
-      "I_b_to_R_b" = gamma * I_b,
-      "I_b_to_D_b" = mu * I_b,
-      
-      "S_a_to_S_sea_a" = zeta_to_sea * S_a,
-      "E_a_to_E_sea_a" = zeta_to_sea * E_a,
-      "I_a_to_I_sea_a" = zeta_to_sea * I_a,
-      "R_a_to_R_sea_a" = zeta_to_sea * R_a,
-      
-      "S_sea_a_to_S_a" = zeta_to_colony * S_sea_a,
-      "E_sea_a_to_E_a" = zeta_to_colony * E_sea_a,
-      "I_sea_a_to_I_a" = zeta_to_colony * I_sea_a,
-      "R_sea_a_to_R_a" = zeta_to_colony * R_sea_a,
-      
-      "S_b_to_S_sea_b" = zeta_to_sea * S_b,
-      "E_b_to_E_sea_b" = zeta_to_sea * E_b,
-      "I_b_to_I_sea_b" = zeta_to_sea * I_b,
-      "R_b_to_R_sea_b" = zeta_to_sea * R_b,
-      
-      "S_sea_b_to_S_b" = zeta_to_colony * S_sea_b,
-      "E_sea_b_to_E_b" = zeta_to_colony * E_sea_b,
-      "I_sea_b_to_I_b" = zeta_to_colony * I_sea_b,
-      "R_sea_b_to_R_b" = zeta_to_colony * R_sea_b,
-      
-      # Breeders become Non-Breeders
-      
-      "S_a_to_S_a_NB" = psi * S_a,
-      "E_a_to_E_a_NB" = psi * E_a,
-      "I_a_to_I_a_NB" = psi * I_a,
-      "R_a_to_R_a_NB" = psi * R_a,
-      
-      # Prospecting
-      
-      "S_sea_a_NB_to_S_sea_b_NB" = prop_prospecting * S_sea_a_NB,
-      "E_sea_a_NB_to_E_sea_b_NB" = prop_prospecting * E_sea_a_NB,
-      "I_sea_a_NB_to_I_sea_b_NB" = prop_prospecting * I_sea_a_NB,
-      "R_sea_a_NB_to_R_sea_b_NB" = prop_prospecting * R_sea_a_NB
-      
-      
-      
-      
-    )
+    rates = calculate_rates(beta_E_colony, beta_I_colony,
+                            sigma,eta, gamma, mu,
+                            zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                            prop_dispersal, prop_prospecting, dispersal_date,
+                            hatching_date,
+                            S_a, E_a, I_a, R_a, D_a,
+                            S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                            S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
+                            S_b, E_b, I_b, R_b, D_b,
+                            S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                            S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                            S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                            S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                            S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
+                            S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
 
     total_rate = sum(rates)
     
@@ -486,134 +533,25 @@ gillespie_seir = function(param,
                          byrow = T)
       
       states = abind(states, new_state)
-      
       times = c(times, hatching_date)
       
       
       # Rates of each possible event
-      rates = c(
-        
-        # Nestlings
-        
-        "S_a_N_to_E_a_N" = beta_E_colony * S_a_N * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a_N * (I_a+I_a_NB+I_a_N),
-        "E_a_N_to_S_a_N" = eta * E_a_N,
-        "E_a_N_to_I_a_N" = sigma * E_a_N,
-        "I_a_N_to_R_a_N" = gamma * I_a_N,
-        "I_a_N_to_D_a_N" = mu * I_a_N,
-        
-        "S_b_N_to_E_b_N" = beta_E_colony * S_b_N * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b_N * (I_b+I_b_NB+I_b_N),
-        "E_b_N_to_S_b_N" = eta * E_b_N,
-        "E_b_N_to_I_b_N" = sigma * E_b_N,
-        "I_b_N_to_R_b_N" = gamma * I_b_N,
-        "I_b_N_to_D_b_N" = mu * I_b_N,
-        
-        # Non-Breeders
-        
-        "S_a_NB_to_E_a_NB" = beta_E_colony * S_a_NB * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a_NB * (I_a+I_a_NB+I_a_N),
-        "E_a_NB_to_S_a_NB" = eta * E_a_NB,
-        "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
-        "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
-        "I_a_NB_to_D_a_NB" = mu * I_a_NB,
-        
-        "S_sea_a_NB_to_E_sea_a_NB" = 0,
-        "E_sea_a_NB_to_S_sea_a_NB" = eta * E_sea_a_NB,
-        "E_sea_a_NB_to_I_sea_a_NB" = sigma * E_sea_a_NB,
-        "I_sea_a_NB_to_R_sea_a_NB" = gamma * I_sea_a_NB,
-        "I_sea_a_NB_to_D_sea_a_NB" = mu * I_sea_a_NB,
-        
-        "S_sea_b_NB_to_E_sea_b_NB" = 0,
-        "E_sea_b_NB_to_S_sea_b_NB" = eta * E_sea_b_NB,
-        "E_sea_b_NB_to_I_sea_b_NB" = sigma * E_sea_b_NB,
-        "I_sea_b_NB_to_R_sea_b_NB" = gamma * I_sea_b_NB,
-        "I_sea_b_NB_to_D_sea_b_NB" = mu * I_sea_b_NB,
-        
-        "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b_NB * (I_b+I_b_NB+I_b_N),
-        "E_b_NB_to_S_b_NB" = eta * E_b_NB,
-        "E_b_NB_to_I_b_NB" = sigma * E_b_NB,
-        "I_b_NB_to_R_b_NB" = gamma * I_b_NB,
-        "I_b_NB_to_D_b_NB" = mu * I_b_NB,
-        
-        "S_a_NB_to_S_sea_a_NB" = zeta_to_sea * S_a_NB,
-        "E_a_NB_to_E_sea_a_NB" = zeta_to_sea * E_a_NB,
-        "I_a_NB_to_I_sea_a_NB" = zeta_to_sea * I_a_NB,
-        "R_a_NB_to_R_sea_a_NB" = zeta_to_sea * R_a_NB,
-        
-        "S_sea_a_NB_to_S_a_NB" = zeta_to_colony * S_sea_a_NB,
-        "E_sea_a_NB_to_E_a_NB" = zeta_to_colony * E_sea_a_NB,
-        "I_sea_a_NB_to_I_a_NB" = zeta_to_colony * I_sea_a_NB,
-        "R_sea_a_NB_to_R_a_NB" = zeta_to_colony * R_sea_a_NB,
-        
-        "S_b_NB_to_S_sea_b_NB" = zeta_to_sea * S_b_NB,
-        "E_b_NB_to_E_sea_b_NB" = zeta_to_sea * E_b_NB,
-        "I_b_NB_to_I_sea_b_NB" = zeta_to_sea * I_b_NB,
-        "R_b_NB_to_R_sea_b_NB" = zeta_to_sea * R_b_NB,
-        
-        "S_sea_b_NB_to_S_b_NB" = zeta_to_colony * S_sea_b_NB,
-        "E_sea_b_NB_to_E_b_NB" = zeta_to_colony * E_sea_b_NB,
-        "I_sea_b_NB_to_I_b_NB" = zeta_to_colony * I_sea_b_NB,
-        "R_sea_b_NB_to_R_b_NB" = zeta_to_colony * R_sea_b_NB,
-        
-        # Breeders
-        
-        "S_a_to_E_a" = beta_E_colony * S_a * (E_a+E_a_NB+E_a_N) + beta_I_colony * S_a * (I_a+I_a_NB+I_a_N),
-        "E_a_to_S_a" = eta * E_a,
-        "E_a_to_I_a" = sigma * E_a,
-        "I_a_to_R_a" = gamma * I_a,
-        "I_a_to_D_a" = mu * I_a,
-        
-        "S_sea_a_to_E_sea_a" = 0,
-        "E_sea_a_to_S_sea_a" = eta * E_sea_a,
-        "E_sea_a_to_I_sea_a" = sigma * E_sea_a,
-        "I_sea_a_to_R_sea_a" = gamma * I_sea_a,
-        "I_sea_a_to_D_sea_a" = mu * I_sea_a,
-        
-        "S_sea_b_to_E_sea_b" = 0,
-        "E_sea_b_to_S_sea_b" = eta * E_sea_b,
-        "E_sea_b_to_I_sea_b" = sigma * E_sea_b,
-        "I_sea_b_to_R_sea_b" = gamma * I_sea_b,
-        "I_sea_b_to_D_sea_b" = mu * I_sea_b,
-        
-        "S_b_to_E_b" = beta_E_colony * S_b * (E_b+E_b_NB+E_b_N) + beta_I_colony * S_b * (I_b+I_b_NB+I_b_N),
-        "E_b_to_S_b" = eta * E_b,
-        "E_b_to_I_b" = sigma * E_b,
-        "I_b_to_R_b" = gamma * I_b,
-        "I_b_to_D_b" = mu * I_b,
-        
-        "S_a_to_S_sea_a" = zeta_to_sea * S_a,
-        "E_a_to_E_sea_a" = zeta_to_sea * E_a,
-        "I_a_to_I_sea_a" = zeta_to_sea * I_a,
-        "R_a_to_R_sea_a" = zeta_to_sea * R_a,
-        
-        "S_sea_a_to_S_a" = zeta_to_colony * S_sea_a,
-        "E_sea_a_to_E_a" = zeta_to_colony * E_sea_a,
-        "I_sea_a_to_I_a" = zeta_to_colony * I_sea_a,
-        "R_sea_a_to_R_a" = zeta_to_colony * R_sea_a,
-        
-        "S_b_to_S_sea_b" = zeta_to_sea * S_b,
-        "E_b_to_E_sea_b" = zeta_to_sea * E_b,
-        "I_b_to_I_sea_b" = zeta_to_sea * I_b,
-        "R_b_to_R_sea_b" = zeta_to_sea * R_b,
-        
-        "S_sea_b_to_S_b" = zeta_to_colony * S_sea_b,
-        "E_sea_b_to_E_b" = zeta_to_colony * E_sea_b,
-        "I_sea_b_to_I_b" = zeta_to_colony * I_sea_b,
-        "R_sea_b_to_R_b" = zeta_to_colony * R_sea_b,
-        
-        # Breeders become Non-Breeders
-        
-        "S_a_to_S_a_NB" = psi * S_a,
-        "E_a_to_E_a_NB" = psi * E_a,
-        "I_a_to_I_a_NB" = psi * I_a,
-        "R_a_to_R_a_NB" = psi * R_a,
-        
-        # Prospecting
-        
-        "S_sea_a_NB_to_S_sea_b_NB" = prop_prospecting * S_sea_a_NB,
-        "E_sea_a_NB_to_E_sea_b_NB" = prop_prospecting * E_sea_a_NB,
-        "I_sea_a_NB_to_I_sea_b_NB" = prop_prospecting * I_sea_a_NB,
-        "R_sea_a_NB_to_R_sea_b_NB" = prop_prospecting * R_sea_a_NB
-        
-      )
+      rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
+                                          sigma,eta, gamma, mu,
+                                          zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                                          prop_dispersal, prop_prospecting, dispersal_date,
+                                          hatching_date,
+                                          S_a, E_a, I_a, R_a, D_a,
+                                          S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                                          S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
+                                          S_b, E_b, I_b, R_b, D_b,
+                                          S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                                          S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                                          S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                          S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                                          S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
+                                          S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
       
       total_rate = sum(rates)
       
@@ -624,98 +562,96 @@ gillespie_seir = function(param,
       time_step = rexp(1, total_rate)
       next_time = times[length(times)] + time_step
       
-      
     }
     
     
     # Induction of dispersion
-    if (F) { 
-    #if (next_time > dispersal_date & !already_dispersed) { 
+    if (next_time > dispersal_date & !already_dispersed) { 
       
-      # Number of adults in colony A
-      N_a = S_a + E_a + I_a + R_a
-      # Number of adults in colony A who are dispersed
+      # Number of adults in  A
+      N_a = S_a + E_a + I_a + R_a + S_sea_a + E_sea_a + I_sea_a + R_sea_a
+      # Number of adults A who are dispersed
       N_disp_a = round(N_a * prop_dispersal)
       # Distribution of dispersed adults by epidemiological status
-      disp_a = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a)),
+      disp_a = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a),
+                        rep("S_sea_a", S_sea_a), rep("E_sea_a", E_sea_a),rep("I_sea_a", I_sea_a),rep("R_sea_a", R_sea_a)),
              size = N_disp_a, 
              replace = F) %>% 
-        factor(., levels = c("S_a","E_a","I_a","R_a")) %>% 
+        factor(., levels = c("S_a","E_a","I_a","R_a",
+                             "S_sea_a","E_sea_a","I_sea_a","R_sea_a")) %>% 
         table()
 
-      # Number of susceptible adults who are dispersed from colony A
+      # Number of susceptible adults who are dispersed from A
       disp_S_a = disp_a["S_a"]
-      # Number of susceptible adults who are dispersed from colony A and prospect other colonies
-      disp_S_a_prospecting=  rbinom(1, size = disp_S_a, prob = prop_prospecting)
+      disp_S_sea_a = disp_a["S_sea_a"]
       # Update of the number of susceptible adults
       S_a = S_a - disp_S_a
-      S_sea = S_sea + (disp_S_a - disp_S_a_prospecting)
-      S_b = S_b + disp_S_a_prospecting
+      S_sea_a = S_sea_a - disp_S_sea_a
+      S_sea_a_NB = S_sea_a_NB + disp_S_a + disp_S_sea_a
       
-      # Same for exposed adults from colony A
+      # Number of exposed  adults who are dispersed from A
       disp_E_a = disp_a["E_a"]
-      disp_E_a_prospecting=  rbinom(1, size = disp_E_a, prob = prop_prospecting)
+      disp_E_sea_a = disp_a["E_sea_a"]
+      # Update of the number of exposed adults
       E_a = E_a - disp_E_a
-      E_sea = E_sea + (disp_E_a - disp_E_a_prospecting)
-      E_b = E_b + disp_E_a_prospecting
+      E_sea_a = E_sea_a - disp_E_sea_a
+      E_sea_a_NB = E_sea_a_NB + disp_E_a + disp_E_sea_a
       
-      # Same for infected adults from colony A
+      # Number of infectious adults who are dispersed from A
       disp_I_a = disp_a["I_a"]
-      disp_I_a_prospecting=  rbinom(1, size = disp_I_a, prob = prop_prospecting)
+      disp_I_sea_a = disp_a["I_sea_a"]
+      # Update of the number of infectious adults
       I_a = I_a - disp_I_a
-      I_sea = I_sea + (disp_I_a - disp_I_a_prospecting)
-      I_b = I_b + disp_I_a_prospecting
+      I_sea_a = I_sea_a - disp_I_sea_a
+      I_sea_a_NB = I_sea_a_NB + disp_I_a + disp_I_sea_a
       
-      # Same for recovered adults from colony A
+      # Number of recovered adults who are dispersed from A
       disp_R_a = disp_a["R_a"]
-      disp_R_a_prospecting=  rbinom(1, size = disp_R_a, prob = prop_prospecting)
+      disp_R_sea_a = disp_a["R_sea_a"]
+      # Update of the number of recovered adults
       R_a = R_a - disp_R_a
-      R_sea = R_sea + (disp_R_a - disp_R_a_prospecting)
-      R_b = R_b + disp_R_a_prospecting
+      R_sea_a = R_sea_a - disp_R_sea_a
+      R_sea_a_NB = R_sea_a_NB + disp_R_a + disp_R_sea_a
+      
+
       
       already_dispersed = T
       
       new_state = matrix(data = c(S_a, E_a, I_a, R_a, D_a,
-                                  S_sea, E_sea, I_sea, R_sea, D_sea,
-                                  S_b, E_b, I_b, R_b, D_b),
-                         nrow = 3, ncol = 5, 
+                                  S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                                  S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
+                                  S_b, E_b, I_b, R_b, D_b,
+                                  
+                                  S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                                  S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                                  S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                  S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                                  
+                                  S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
+                                  S_b_N, E_b_N, I_b_N, R_b_N, D_b_N),
+                         nrow = 10, ncol = 5, 
                          byrow = T)
       
       states = abind(states, new_state)
-      
       times = c(times, dispersal_date)
       
-      # Transmission period
-      period = findInterval(times[length(times)], transmission_period) 
-      beta_colony_t = beta_colony[period]
-      beta_sea_t = beta_sea[period]
       
       # Rates of each possible event
-      rates = c(
-        "S_a_to_E_a" = beta_colony_t * S_a * I_a,
-        "E_a_to_S_a" = eta * E_a,
-        "E_a_to_I_a" = sigma * E_a,
-        "I_a_to_R_a" = gamma * I_a,
-        "I_a_to_D_a" = mu * I_a,
-        
-        "S_sea_to_E_sea" = beta_sea_t * S_sea * I_sea,
-        "E_sea_to_S_sea" = eta * E_sea,
-        "E_sea_to_I_sea" = sigma * E_sea,
-        "I_sea_to_R_sea" = gamma * I_sea,
-        "I_sea_to_D_sea" = mu * I_sea,
-        
-        "S_b_to_E_b" = beta_colony_t * S_b * I_b,
-        "E_b_to_S_b" = eta * E_b,
-        "E_b_to_I_b" = sigma * E_b,
-        "I_b_to_R_b" = gamma * I_b,
-        "I_b_to_D_b" = mu * I_b,
-        
-        "S_a_to_S_sea" = zeta * S_a,
-        "E_a_to_E_sea" = zeta * E_a,
-        "I_a_to_I_sea" = zeta * I_a,
-        "R_a_to_R_sea" = zeta * R_a
-        
-      )
+      rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
+                                          sigma,eta, gamma, mu,
+                                          zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                                          prop_dispersal, prop_prospecting, dispersal_date,
+                                          hatching_date,
+                                          S_a, E_a, I_a, R_a, D_a,
+                                          S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
+                                          S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
+                                          S_b, E_b, I_b, R_b, D_b,
+                                          S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                                          S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                                          S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                          S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                                          S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
+                                          S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
       
       total_rate = sum(rates)
       
@@ -998,7 +934,7 @@ gillespie_seir = function(param,
     }else if (transition == "I_sea_a_NB_to_I_sea_b_NB") {
       I_sea_a_NB = I_sea_a_NB - 1
       I_sea_b_NB = I_sea_b_NB + 1
-    }else if (transition == "S_sea_a_NB_to_S_sea_b_NB") {
+    }else if (transition == "R_sea_a_NB_to_R_sea_b_NB") {
       R_sea_a_NB = R_sea_a_NB - 1
       R_sea_b_NB = R_sea_b_NB + 1
     }else if (transition == "S_a_N_to_E_a_N"){
@@ -1039,10 +975,6 @@ gillespie_seir = function(param,
       D_b_N = D_b_N + 1
     }
     
-    
-
-    
-    
     new_state = matrix(data = c(S_a, E_a, I_a, R_a, D_a,
                                 S_sea_a, E_sea_a, I_sea_a, R_sea_a, D_sea_a,
                                 S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
@@ -1058,7 +990,7 @@ gillespie_seir = function(param,
                            nrow = 10, ncol = 5, 
                            byrow = T)
     
-    print(new_state)
+    #print(new_state)
     
     states = abind(states, new_state)
 
@@ -1141,7 +1073,16 @@ plot_a = ggplot(output_a, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("At colony A")+
+  ggtitle("At colony A - Breeders")+
+  scale_color_brewer(palette="Set2")
+
+
+output_a_N = output_long %>% filter(variable %in% c("S_a_N", "E_a_N", "I_a_N", "R_a_N", "D_a_N"))
+plot_a_N = ggplot(output_a_N, aes(x = time, y = value, color = variable)) +
+  geom_line() +
+  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+  theme_minimal() +
+  ggtitle("At colony A - Nestlings")+
   scale_color_brewer(palette="Set2")
 
 
@@ -1150,15 +1091,25 @@ plot_sea_a = ggplot(output_sea_a, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("At sea A")+
+  ggtitle("At sea A - Breeders")+
   scale_color_brewer(palette="Set2")
 
-output_a_N = output_long %>% filter(variable %in% c("S_a_N", "E_a_N", "I_a_N", "R_a_N", "D_a_N"))
-plot_a_N = ggplot(output_a_N, aes(x = time, y = value, color = variable)) +
+
+output_sea_a_NB = output_long %>% filter(variable %in% c("S_sea_a_NB", "E_sea_a_NB", "I_sea_a_NB", "R_sea_a_NB", "D_sea_a_NB"))
+plot_sea_a_NB = ggplot(output_sea_a_NB, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("Nestlings A")+
+  ggtitle("At sea A - Non-breeders")+
+  scale_color_brewer(palette="Set2")
+
+
+output_sea_b_NB = output_long %>% filter(variable %in% c("S_sea_b_NB", "E_sea_b_NB", "I_sea_b_NB", "R_sea_b_NB", "D_sea_b_NB"))
+plot_sea_b_NB = ggplot(output_sea_b_NB, aes(x = time, y = value, color = variable)) +
+  geom_line() +
+  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+  theme_minimal() +
+  ggtitle("At sea B - Non-breeders")+
   scale_color_brewer(palette="Set2")
 
 
@@ -1167,15 +1118,29 @@ plot_b = ggplot(output_b, aes(x = time, y = value, color = variable)) +
   geom_line() +
   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
   theme_minimal() +
-  ggtitle("In colony B") +
+  ggtitle("At colony B - Breeders") +
   scale_color_brewer(palette="Set2")
 
 
-# Display plots
-plot_a 
-plot_sea_a
-plot_b
+output_b_N = output_long %>% filter(variable %in% c("S_b_N", "E_b_N", "I_b_N", "R_b_N", "D_b_N"))
+plot_b_N = ggplot(output_b_N, aes(x = time, y = value, color = variable)) +
+  geom_line() +
+  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+  theme_minimal() +
+  ggtitle("At colony B - Nestlings")+
+  scale_color_brewer(palette="Set2")
 
+output_sea_b = output_long %>% filter(variable %in% c("S_sea_b", "E_sea_b", "I_sea_b", "R_sea_b", "D_sea_b"))
+plot_sea_b = ggplot(output_sea_b, aes(x = time, y = value, color = variable)) +
+  geom_line() +
+  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+  theme_minimal() +
+  ggtitle("At sea B - Breeders")+
+  scale_color_brewer(palette="Set2")
+
+
+plot_grid(plot_a, plot_a_N, plot_sea_a, plot_sea_a_NB, labels = c("A", "B", "C", "D"), label_size = 12)
+plot_grid(plot_b, plot_b_N, plot_sea_b, plot_sea_b_NB, labels = c("A", "B", "C", "D"), label_size = 12)
 
 # 
 # summary_output = function(output){
