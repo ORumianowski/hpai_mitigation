@@ -1041,6 +1041,69 @@ gillespie_seir = function(param = param,
     }else if (transition == "I_a_N_to_D_a_N"){
       I_a_N = I_a_N - 1
       D_a_N = D_a_N + 1
+      
+      parent1 = sample(c(rep("S_b", S_b), rep("E_b", E_b),rep("I_b", I_b),rep("R_b", R_b),
+                         rep("S_sea_b", S_b), rep("E_sea_b", E_b),rep("I_sea_b", I_b),rep("R_sea_b", R_b)),
+                       size = 1)
+      
+      if (parent1 == "S_b"){
+        S_b = S_b - 1
+        S_b_NB = S_b_NB + 1
+      } else if (parent1 == "E_b"){
+        E_b = E_b - 1
+        E_b_NB = E_b_NB + 1
+      } else if (parent1 == "I_b"){
+        I_b = I_b - 1
+        I_b_NB = I_b_NB + 1
+      } else if (parent1 == "R_b"){
+        R_b = R_b - 1
+        R_b_NB = R_b_NB + 1
+      } else if (parent1 == "S_sea_b"){
+        S_sea_b = S_sea_b - 1
+        S_sea_b_NB = S_sea_b_NB + 1
+      } else if (parent1 == "E_sea_b"){
+        E_sea_b = E_sea_b - 1
+        E_sea_b_NB = E_sea_b_NB + 1
+      } else if (parent1 == "I_sea_b"){
+        I_sea_b = I_sea_b - 1
+        I_sea_b_NB = I_sea_b_NB + 1
+      } else if (parent1 == "R_sea_b"){
+        R_sea_b = R_sea_b - 1
+        R_sea_b_NB = R_sea_b_NB + 1
+      }
+      
+      parent2 = sample(c(rep("S_b", S_b), rep("E_b", E_b),rep("I_b", I_b),rep("R_b", R_b),
+                         rep("S_sea_b", S_b), rep("E_sea_b", E_b),rep("I_sea_b", I_b),rep("R_sea_b", R_b)),
+                       size = 1)
+      
+      if (parent2 == "S_b"){
+        S_b = S_b - 1
+        S_b_NB = S_b_NB + 1
+      } else if (parent2 == "E_b"){
+        E_b = E_b - 1
+        E_b_NB = E_b_NB + 1
+      } else if (parent2 == "I_b"){
+        I_b = I_b - 1
+        I_b_NB = I_b_NB + 1
+      } else if (parent2 == "R_b"){
+        R_b = R_b - 1
+        R_b_NB = R_b_NB + 1
+      } else if (parent2 == "S_sea_b"){
+        S_sea_b = S_sea_b - 1
+        S_sea_b_NB = S_sea_b_NB + 1
+      } else if (parent2 == "E_sea_b"){
+        E_sea_b = E_sea_b - 1
+        E_sea_b_NB = E_sea_b_NB + 1
+      } else if (parent2 == "I_sea_b"){
+        I_sea_b = I_sea_b - 1
+        I_sea_b_NB = I_sea_b_NB + 1
+      } else if (parent2 == "R_sea_b"){
+        R_sea_b = R_sea_b - 1
+        R_sea_b_NB = R_sea_b_NB + 1
+      }
+      
+      
+      
     }else if (transition == "S_b_N_to_E_b_N"){
       S_b_N = S_b_N - 1
       E_b_N = E_b_N + 1
