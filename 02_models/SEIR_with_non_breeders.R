@@ -16,6 +16,8 @@ library(abind)
 library(cowplot)
 
 
+
+
 # Parameters --------------------------------------------------------------
 
 # Simulation time
@@ -25,7 +27,7 @@ param = list(
   # Epidemiological parameters
   
   # Transmission rate from exposed individuals and from infectious individuals in a colony
-  beta = matrix(c(0.05, 0.55,
+  beta = matrix(c(0.10, 0.15,
                   0.00, 0.00),
                 nrow = 2, ncol = 2, byrow = T),
   # Rate of progression from exposed to infectious (inverse of incubation period)
@@ -57,11 +59,11 @@ param = list(
   # Proportion of dispersed adults
   prop_dispersal = 1,
   # Proportion of prospectors among dispersed adults
-  prop_prospecting = 1/4,
+  prop_prospecting = 1/8,
   # Date of induced dispersion
   dispersal_date = 30,
   # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time = 8,
+  dispersal_reaction_time = 5,
   
   # Demographic parameters
   hatching_date = 10
