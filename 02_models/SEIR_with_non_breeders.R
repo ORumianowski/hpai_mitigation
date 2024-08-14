@@ -16,11 +16,18 @@ library(abind)
 library(cowplot)
 
 
+# Model description -------------------------------------------------------
+
+# Each compartment in the model is described by
+
+# the epidemiological status : Susceptible (S), Exposed (E), Infectious (I), Recovered (R)
+# the reproductive status : Breeders (B), Non-Breeders (NB), Nestlings (N)
+# the localisation : colony A (A), colony (B), sea A (sea_a), sea B (sea_B)
+# 
+# Thus, an exposed individual, non-breeder and at sea B, is noted E_sea_b_NB
 
 
 # Parameters --------------------------------------------------------------
-
-# Simulation time
 
 param = list( 
   
@@ -233,7 +240,8 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
 }
 
 
-# Gillespie SEIR model function
+# Gillespie SEIR model function -------------------------------------------
+
 gillespie_seir = function(param = param, 
                           induced_dispersal = T,
                           initial_number_breeders_A = 50,
@@ -579,21 +587,22 @@ gillespie_seir = function(param = param,
     }
     
     
-    # Induction of dispersion
-    
+
+    # Determining the date of first infection
     if (!first_death & D_a > 0){
-      
       first_death_date = times[length(times)] 
       first_death = T
-      
     }
     
-    
-    if (induced_dispersal){
+    # Induction of dispersion
+    ## Has the induced dispersal strategy been triggered?
+    if (induced_dispersal){ 
+      ## Did the dispersal occur?
       if (!already_dispersed){
+        # Is it time to induce dispersion, according to the stochastic case and the deterministic case?
         if ((dispersal_stochactic & first_death & next_time > first_death_date + dispersal_reaction_time) 
-            # |
-            # (!dispersal_stochactic & next_time > dispersal_date)
+             |
+             (!dispersal_stochactic & next_time > dispersal_date)
             ){
           
           # Dispersal of breeders
@@ -722,9 +731,12 @@ gillespie_seir = function(param = param,
     } else if (transition == "I_a_to_R_a") {
       I_a = I_a - 1
       R_a = R_a + 1
-    } else if (transition == "I_a_to_D_a") {
+    } 
+    # If an adult dies, the partner becomes a non-breeder and the nestling dies
+    else if (transition == "I_a_to_D_a") {
       I_a = I_a - 1
       D_a = D_a + 1
+      # The nestling dies
       if (S_a_N + E_a_N + I_a_N + R_a_N > 0){
         nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
                           size = 1)
@@ -742,7 +754,7 @@ gillespie_seir = function(param = param,
           D_a_N = D_a_N + 1
         }
       }
-
+      # The partner becomes a non-breeder
       partner = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a),
                          rep("S_sea_a", S_a), rep("E_sea_a", E_a),rep("I_sea_a", I_a),rep("R_sea_a", R_a)),
       size = 1)
@@ -813,7 +825,9 @@ gillespie_seir = function(param = param,
     } else if (transition == "I_b_to_R_b") {
       I_b = I_b - 1
       R_b = R_b + 1
-    } else if (transition == "I_b_to_D_b") {
+    } 
+    # If an adult dies, the partner becomes a non-breeder and the nestling dies
+    else if (transition == "I_b_to_D_b") {
       I_b = I_b - 1
       D_b = D_b + 1
       partner = sample(c(rep("S_b", S_b), rep("E_b", E_b),rep("I_b", I_b),rep("R_b", R_b),
@@ -1040,7 +1054,9 @@ gillespie_seir = function(param = param,
     }else if (transition == "I_a_N_to_R_a_N"){
       I_a_N = I_a_N - 1
       R_a_N = R_a_N + 1
-    }else if (transition == "I_a_N_to_D_a_N"){
+    }
+    # If a nestling dies, both parents become non-breeders.
+    else if (transition == "I_a_N_to_D_a_N"){
       I_a_N = I_a_N - 1
       D_a_N = D_a_N + 1
       
