@@ -69,8 +69,6 @@ param = list(
   prop_prospecting = 1/8,
   # Date of induced dispersion
   dispersal_date = 30,
-  # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time = 5,
   
   # Demographic parameters
   hatching_date = 10
@@ -243,12 +241,17 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
 # Gillespie SEIR model function -------------------------------------------
 
 gillespie_seir = function(param = param, 
+                          # Do we induce dispersion ?
                           induced_dispersal = T,
+                          # Reaction time between 1rst death and induced dispersal
+                          dispersal_reaction_time = 5,
+                          
                           initial_number_breeders_A = 50,
                           initial_number_infected_breeders_A = 1, 
                           initial_number_breeders_B = 50,
                           total_time = 70,
                           dispersal_stochactic = T,
+                          
                           tau = 0.25) {
   
   # Initial state
@@ -430,7 +433,6 @@ gillespie_seir = function(param = param,
   prop_dispersal = param$prop_dispersal
   prop_prospecting = param$prop_prospecting
   dispersal_date = param$dispersal_date
-  dispersal_reaction_time = param$dispersal_reaction_time
   
   hatching_date = param$hatching_date
   
@@ -769,13 +771,13 @@ gillespie_seir = function(param = param,
           if (nestling == "S_a_N"){
             S_a_N = S_a_N - 1
             D_a_N = D_a_N + 1
-          } else if (partner == "E_a_N"){
+          } else if (nestling == "E_a_N"){
             E_a_N = E_a_N - 1
             D_a_N = D_a_N + 1
-          } else if (partner == "I_a_N"){
+          } else if (nestling == "I_a_N"){
             I_a_N = I_a_N - 1
             D_a_N = D_a_N + 1
-          } else if (partner == "R_a_N"){
+          } else if (nestling == "R_a_N"){
             R_a_N = R_a_N - 1
             D_a_N = D_a_N + 1
           }
@@ -862,13 +864,13 @@ gillespie_seir = function(param = param,
           if (nestling == "S_b_N"){
             S_b_N = S_b_N - 1
             D_b_N = D_b_N + 1
-          } else if (partner == "E_b_N"){
+          } else if (nestling == "E_b_N"){
             E_b_N = E_b_N - 1
             D_b_N = D_b_N + 1
-          } else if (partner == "I_b_N"){
+          } else if (nestling == "I_b_N"){
             I_b_N = I_b_N - 1
             D_b_N = D_b_N + 1
-          } else if (partner == "R_b_N"){
+          } else if (nestling == "R_b_N"){
             R_b_N = R_b_N - 1
             D_b_N = D_b_N + 1
           }
@@ -1476,28 +1478,59 @@ summary_output = function(output){
   ))
 }
 
-stat_model = function(nb_iterations = 10){
+stat_model = function(nb_iterations = 15,
+                      param_ = param,
+                      induced_dispersal_ = T,
+                      dispersal_reaction_time_ = 5,
+                      initial_number_breeders_A_ = 50,
+                      initial_number_infected_breeders_A_ = 1,
+                      initial_number_breeders_B_ = 50,
+                      total_time_ = 70,
+                      dispersal_stochactic_ = T,
+                      tau_ = 0.2){
   
   response_list = data.frame()
   
   for (i in 1:nb_iterations){
     
-    output = gillespie_seir(param = param,
-                            induced_dispersal = T,
-                            initial_number_breeders_A = 50,
-                            initial_number_infected_breeders_A = 1,
-                            initial_number_breeders_B = 50,
-                            total_time = 70,
-                            dispersal_stochactic = T,
-                            tau = 0.2)
+    output = gillespie_seir(param = param_,
+                            induced_dispersal = induced_dispersal_,
+                            dispersal_reaction_time = dispersal_reaction_time_,
+                            initial_number_breeders_A = initial_number_breeders_A_,
+                            initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
+                            initial_number_breeders_B = initial_number_breeders_B_,
+                            total_time = total_time_,
+                            dispersal_stochactic = dispersal_stochactic_,
+                            tau = tau_)
     
     response_list = rbind(response_list, summary_output(output))
     
   }
   
-  return(response_list)
+  #return(response_list)
+  
+  
+  return(response_list$nb_adults_equi %>% mean())
+}
+
+output = c()
+val_test = 1:40
+
+for (k in val_test){
+  
+  res = stat_model(dispersal_reaction_time_ = k)
+  
+  output = c(output, res)
   
 }
+
+df = data.frame(dispersal_reaction_time_ = val_test,
+           output=output)
+
+ggplot()+
+  geom_point(data = df, aes(x = dispersal_reaction_time_, y = output))
+
+
 
 # data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
 # ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
