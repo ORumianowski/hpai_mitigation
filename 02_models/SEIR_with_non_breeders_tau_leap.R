@@ -1433,81 +1433,131 @@ plot_seir()
 
 summary_output = function(output){
 
-  N_a = output[1, c("S_a", "I_a")] %>% sum()
-
-  max_infected_a = max(output[, "I_a"])
+  N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a",
+                    "S_a_NB", "I_a_NB", "S_sea_a_NB", "I_sea_a_NB")] %>% sum()
+  max_infected_a = max(output[, c("I_a","I_sea_a")])
   prop_max_infected_a = max_infected_a / N_a
-  dead_a = output[nrow(output), "D_a"]
-  prop_dead_a = dead_a / N_a
+  dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
+  a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
+  
+  
+  N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b",
+                    "S_b_NB", "I_b_NB", "S_sea_b_NB", "I_sea_b_NB")] %>% sum()
+  max_infected_b = max(output[, c("I_b","I_sea_b")])
+  prop_max_infected_b = max_infected_b / N_b
+  dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
+  b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
 
-  max_infected_sea = max(output[, "I_sea_a"])
-  dead_sea = output[nrow(output), "D_sea_a"]
+  
+  nb_adults = N_a + N_b - dead_a - dead_b
+  nb_nestlings = a_N + b_N
+  nb_adults_equi = nb_adults + (0.2)*nb_nestlings
 
-  prop_non_exposed_from_a = (output[nrow(output), "S_a"] + output[nrow(output), "S_sea"] - output[1, "S_sea"] ) / N_a
 
   return( data.frame(
     N_a = N_a,
     max_infected_a = max_infected_a,
     prop_max_infected_a = prop_max_infected_a,
     dead_a = dead_a,
-    prop_dead_a = prop_dead_a,
-    max_infected_sea = max_infected_sea,
-    dead_sea = dead_sea,
-    prop_non_exposed_from_a = prop_non_exposed_from_a
+    a_N = a_N,
+    
+    N_b = N_b,
+    max_infected_b = max_infected_b,
+    prop_max_infected_b = prop_max_infected_b,
+    dead_b = dead_b,
+    b_N = b_N,
+    
+    nb_adults = nb_adults,
+    nb_nestlings = nb_nestlings,
+    nb_adults_equi = nb_adults_equi
+    
+    
 
   ))
 }
 
-
-output_long_list = data.frame()
-response_list = data.frame()
-
-nb_iterations = 8
-
-for (i in 1:nb_iterations){
-
-  output = gillespie_seir(param = param,
-                          induced_dispersal = T,
-                          initial_number_breeders_A = 50,
-                          initial_number_infected_breeders_A = 1,
-                          initial_number_breeders_B = 50,
-                          total_time = 70,
-                          dispersal_stochactic = T,
-                          tau = 0.2)
-
-  output_long = melt(output, id = "time")
-
-  output_long_i = cbind(output_long,
-                         data.frame(simulation = rep(i, times = nrow(output_long))))
-
-  output_long_list = rbind(output_long_list, output_long_i)
-  #response_list = rbind(response_list, summary_output(output))
-
+stat_model = function(nb_iterations = 10){
+  
+  response_list = data.frame()
+  
+  for (i in 1:nb_iterations){
+    
+    output = gillespie_seir(param = param,
+                            induced_dispersal = T,
+                            initial_number_breeders_A = 50,
+                            initial_number_infected_breeders_A = 1,
+                            initial_number_breeders_B = 50,
+                            total_time = 70,
+                            dispersal_stochactic = T,
+                            tau = 0.2)
+    
+    response_list = rbind(response_list, summary_output(output))
+    
+  }
+  
+  return(response_list)
+  
 }
 
-
-output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
-
-p = ggplot()
-for(i in 1:nb_iterations){
-  p = p + geom_line(data = output_a %>% subset(., simulation == i )
-                    , aes(x = time, y = value, color = variable))
-}
-p = p +
-  labs(x = "Time", y = "Number of individuals", color = "Compartment") +
-  theme_minimal() +
-  ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
+# data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
+# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+#        aes(x = variable, y = value)) +
+#   geom_violin() +
+#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
 
 
-p
 
 
-data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
-
-# Créer les diagrammes en violon pour chaque variable
-ggplot(data_long %>% subset(., variable %in% c("dead_a", "max_infected_a")),
-       aes(x = variable, y = value)) +
-  geom_violin() +
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-
-
+# 
+# output_long_list = data.frame()
+# response_list = data.frame()
+# 
+# nb_iterations = 8
+# 
+# for (i in 1:nb_iterations){
+#   
+#   output = gillespie_seir(param = param,
+#                           induced_dispersal = T,
+#                           initial_number_breeders_A = 50,
+#                           initial_number_infected_breeders_A = 1,
+#                           initial_number_breeders_B = 50,
+#                           total_time = 70,
+#                           dispersal_stochactic = T,
+#                           tau = 0.2)
+#   
+#   output_long = melt(output, id = "time")
+#   
+#   output_long_i = cbind(output_long,
+#                         data.frame(simulation = rep(i, times = nrow(output_long))))
+#   
+#   output_long_list = rbind(output_long_list, output_long_i)
+#   response_list = rbind(response_list, summary_output(output))
+#   
+# }
+# 
+# 
+# output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+# 
+# p = ggplot()
+# for(i in 1:nb_iterations){
+#   p = p + geom_line(data = output_a %>% subset(., simulation == i )
+#                     , aes(x = time, y = value, color = variable))
+# }
+# p = p +
+#   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+#   theme_minimal() +
+#   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
+# 
+# 
+# p
+# 
+# 
+# data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
+# 
+# # Créer les diagrammes en violon pour chaque variable
+# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+#        aes(x = variable, y = value)) +
+#   geom_violin() +
+#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+# 
+# 
