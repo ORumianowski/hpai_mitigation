@@ -1,6 +1,14 @@
 
 
+##
 
+# actualiser le modèle :
+#   - 
+#   -
+
+# fusionner les S_sea_a_NB, S_sea_b_NB en S_sea_NB
+
+##
 
 
 
@@ -22,7 +30,7 @@ library(cowplot)
 
 # the epidemiological status : Susceptible (S), Exposed (E), Infectious (I), Recovered (R)
 # the reproductive status : Breeders (B), Non-Breeders (NB), Nestlings (N)
-# the localisation : colony A (A), colony (B), sea A (sea_a), sea B (sea_B)
+# the localisation : colony A (A), colony (B), sea A (sea_a), sea B (sea_B), sea Non-Breeders (sea_NB)
 # 
 # Thus, an exposed individual, non-breeder and at sea B, is noted E_sea_b_NB
 
@@ -54,7 +62,7 @@ param = list(
   # Transition from colony to the sea (breeders)
   zeta_to_sea = 1,
   # Transition from breeder to non-breeder (reproductive failure)
-  psi = 0, #Attention départ en couple
+  psi = 0, #Attention départ en couple à coder si != 0
   # Transition from sea to the colony (non-breeders)
   rho_to_colony = 1/7,
   # Transition from colony to the sea (non-breeders)
@@ -65,9 +73,7 @@ param = list(
   
   # Proportion of dispersed adults
   prop_dispersal = 1,
-  # Proportion of prospectors among dispersed adults
-  prop_prospecting = 1/8,
-  # Date of induced dispersion
+  # Date of induced dispersion (if deterministic)
   dispersal_date = 30,
   
   # Demographic parameters
