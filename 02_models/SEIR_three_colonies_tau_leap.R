@@ -7,6 +7,7 @@
 #   -
 
 # fusionner les S_sea_a_NB, S_sea_b_NB en S_sea_NB
+# creer l evement des visites de prospections
 
 ##
 
@@ -31,8 +32,6 @@ library(cowplot)
 # the epidemiological status : Susceptible (S), Exposed (E), Infectious (I), Recovered (R)
 # the reproductive status : Breeders (B), Non-Breeders (NB), Nestlings (N)
 # the localisation : colony A (A), colony (B), sea A (sea_a), sea B (sea_B), sea Non-Breeders (sea_NB)
-# 
-# Thus, an exposed individual, non-breeder and at sea B, is noted E_sea_b_NB
 
 
 # Parameters --------------------------------------------------------------
@@ -97,8 +96,7 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
                              S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
                              S_b, E_b, I_b, R_b, D_b,
                              S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                             S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                             S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                             S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                              S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                              S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                              S_b_N, E_b_N, I_b_N, R_b_N, D_b_N){
@@ -131,18 +129,12 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
   "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
   "I_a_NB_to_D_a_NB" = mu * I_a_NB,
-  ### Sea A
-  "S_sea_a_NB_to_E_sea_a_NB" = 0,
-  "E_sea_a_NB_to_S_sea_a_NB" = eta * E_sea_a_NB,
-  "E_sea_a_NB_to_I_sea_a_NB" = sigma * E_sea_a_NB,
-  "I_sea_a_NB_to_R_sea_a_NB" = gamma * I_sea_a_NB,
-  "I_sea_a_NB_to_D_sea_a_NB" = mu * I_sea_a_NB,
-  ### Sea B
-  "S_sea_b_NB_to_E_sea_b_NB" = 0,
-  "E_sea_b_NB_to_S_sea_b_NB" = eta * E_sea_b_NB,
-  "E_sea_b_NB_to_I_sea_b_NB" = sigma * E_sea_b_NB,
-  "I_sea_b_NB_to_R_sea_b_NB" = gamma * I_sea_b_NB,
-  "I_sea_b_NB_to_D_sea_b_NB" = mu * I_sea_b_NB,
+  ### Sea 
+  "S_sea_NB_to_E_sea_NB" = 0,
+  "E_sea_NB_to_S_sea_NB" = eta * E_sea_NB,
+  "E_sea_NB_to_I_sea_NB" = sigma * E_sea_NB,
+  "I_sea_NB_to_R_sea_NB" = gamma * I_sea_NB,
+  "I_sea_NB_to_D_sea_NB" = mu * I_sea_NB,
   ### Colony B
   "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b+E_b_NB+E_b_N) + 
                        beta_I_colony * S_b_NB * (I_b+I_b_NB+I_b_N),
@@ -183,25 +175,25 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   # Mobility
   ## Non-Breeders
   ### From colony A to sea A
-  "S_a_NB_to_S_sea_a_NB" = rho_to_sea * S_a_NB,
-  "E_a_NB_to_E_sea_a_NB" = rho_to_sea * E_a_NB,
-  "I_a_NB_to_I_sea_a_NB" = rho_to_sea * I_a_NB,
-  "R_a_NB_to_R_sea_a_NB" = rho_to_sea * R_a_NB,
+  "S_a_NB_to_S_sea_NB" = rho_to_sea * S_a_NB,
+  "E_a_NB_to_E_sea_NB" = rho_to_sea * E_a_NB,
+  "I_a_NB_to_I_sea_NB" = rho_to_sea * I_a_NB,
+  "R_a_NB_to_R_sea_NB" = rho_to_sea * R_a_NB,
   ### From sea A to colony A
-  "S_sea_a_NB_to_S_a_NB" = rho_to_colony * S_sea_a_NB,
-  "E_sea_a_NB_to_E_a_NB" = rho_to_colony * E_sea_a_NB,
-  "I_sea_a_NB_to_I_a_NB" = rho_to_colony * I_sea_a_NB,
-  "R_sea_a_NB_to_R_a_NB" = rho_to_colony * R_sea_a_NB,
+  "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB,
+  "E_sea_NB_to_E_a_NB" = rho_to_colony * E_sea_NB,
+  "I_sea_NB_to_I_a_NB" = rho_to_colony * I_sea_NB,
+  "R_sea_NB_to_R_a_NB" = rho_to_colony * R_sea_NB,
   ### From colony B to sea B
-  "S_b_NB_to_S_sea_b_NB" = rho_to_sea * S_b_NB,
-  "E_b_NB_to_E_sea_b_NB" = rho_to_sea * E_b_NB,
-  "I_b_NB_to_I_sea_b_NB" = rho_to_sea * I_b_NB,
-  "R_b_NB_to_R_sea_b_NB" = rho_to_sea * R_b_NB,
+  "S_b_NB_to_S_sea_NB" = rho_to_sea * S_b_NB,
+  "E_b_NB_to_E_sea_NB" = rho_to_sea * E_b_NB,
+  "I_b_NB_to_I_sea_NB" = rho_to_sea * I_b_NB,
+  "R_b_NB_to_R_sea_NB" = rho_to_sea * R_b_NB,
   ### From sea B to colony B
-  "S_sea_b_NB_to_S_b_NB" = rho_to_colony * S_sea_b_NB,
-  "E_sea_b_NB_to_E_b_NB" = rho_to_colony * E_sea_b_NB,
-  "I_sea_b_NB_to_I_b_NB" = rho_to_colony * I_sea_b_NB,
-  "R_sea_b_NB_to_R_b_NB" = rho_to_colony * R_sea_b_NB,
+  "S_sea_NB_to_S_b_NB" = rho_to_colony * S_sea_NB,
+  "E_sea_NB_to_E_b_NB" = rho_to_colony * E_sea_NB,
+  "I_sea_NB_to_I_b_NB" = rho_to_colony * I_sea_NB,
+  "R_sea_NB_to_R_b_NB" = rho_to_colony * R_sea_NB,
   
   ## Breeders
   ### From colony A to sea A
@@ -223,14 +215,7 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "S_sea_b_to_S_b" = zeta_to_colony * S_sea_b,
   "E_sea_b_to_E_b" = zeta_to_colony * E_sea_b,
   "I_sea_b_to_I_b" = zeta_to_colony * I_sea_b,
-  "R_sea_b_to_R_b" = zeta_to_colony * R_sea_b,
-  
-  ## Prospecting
-  ### From A to B
-  "S_sea_a_NB_to_S_sea_b_NB" = prop_prospecting * S_sea_a_NB,
-  "E_sea_a_NB_to_E_sea_b_NB" = prop_prospecting * E_sea_a_NB,
-  "I_sea_a_NB_to_I_sea_b_NB" = prop_prospecting * I_sea_a_NB,
-  "R_sea_a_NB_to_R_sea_b_NB" = prop_prospecting * R_sea_a_NB
+  "R_sea_b_to_R_b" = zeta_to_colony * R_sea_b
   
   # Breeders become Non-Breeders
   
@@ -364,7 +349,7 @@ gillespie_seir = function(param = param,
                          R = initial_recovered,
                          D = initial_dead)
   
-  ## At sea A
+  ## At sea 
   N = 0                  
   initial_infected = 0
   initial_exposed = 0
@@ -372,25 +357,12 @@ gillespie_seir = function(param = param,
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_sea_a_NB = c(S = initial_susceptible,
+  initial_state_sea_NB = c(S = initial_susceptible,
                              E = initial_exposed,
                              I = initial_infected,
                              R = initial_recovered,
                              D = initial_dead)
   
-  ## At sea B
-  N = 0                  
-  initial_infected = 0
-  initial_exposed = 0
-  initial_recovered = 0
-  initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
-  initial_dead = 0
-  
-  initial_state_sea_b_NB = c(S = initial_susceptible,
-                             E = initial_exposed,
-                             I = initial_infected,
-                             R = initial_recovered,
-                             D = initial_dead)
   
   ## In colony B
   N = 0                  
@@ -412,12 +384,11 @@ gillespie_seir = function(param = param,
                                   initial_state_sea_b,
                                   initial_state_B,
                                   initial_state_A_NB,
-                                  initial_state_sea_a_NB,
-                                  initial_state_sea_b_NB,
+                                  initial_state_sea_NB,
                                   initial_state_B_NB,
                                   initial_state_A_N,
                                   initial_state_B_N), 
-                         nrow = 10, ncol = 5, 
+                         nrow = 9, ncol = 5, 
                          byrow = T)
   
   # Parameters
@@ -437,14 +408,13 @@ gillespie_seir = function(param = param,
   rho_to_sea = param$rho_to_sea
   
   prop_dispersal = param$prop_dispersal
-  prop_prospecting = param$prop_prospecting
   dispersal_date = param$dispersal_date
   
   hatching_date = param$hatching_date
   
   # Initialization
   times = c(0)
-  states = array(dim = c(10,5,1), data = initial_state)
+  states = array(dim = c(9,5,1), data = initial_state)
   already_dispersed = F
   already_hatched = F
   first_death = F
@@ -483,35 +453,29 @@ gillespie_seir = function(param = param,
     R_a_NB = states[5, 4, dim(states)[3]]
     D_a_NB = states[5, 5, dim(states)[3]]
     
-    S_sea_a_NB = states[6, 1, dim(states)[3]]
-    E_sea_a_NB = states[6, 2, dim(states)[3]]
-    I_sea_a_NB = states[6, 3, dim(states)[3]]
-    R_sea_a_NB = states[6, 4, dim(states)[3]]
-    D_sea_a_NB = states[6, 5, dim(states)[3]]
-
-    S_sea_b_NB = states[7, 1, dim(states)[3]]
-    E_sea_b_NB = states[7, 2, dim(states)[3]]
-    I_sea_b_NB = states[7, 3, dim(states)[3]]
-    R_sea_b_NB = states[7, 4, dim(states)[3]]
-    D_sea_b_NB = states[7, 5, dim(states)[3]]
+    S_sea_NB = states[6, 1, dim(states)[3]]
+    E_sea_NB = states[6, 2, dim(states)[3]]
+    I_sea_NB = states[6, 3, dim(states)[3]]
+    R_sea_NB = states[6, 4, dim(states)[3]]
+    D_sea_NB = states[6, 5, dim(states)[3]]
     
-    S_b_NB = states[8, 1, dim(states)[3]]
-    E_b_NB = states[8, 2, dim(states)[3]]
-    I_b_NB = states[8, 3, dim(states)[3]]
-    R_b_NB = states[8, 4, dim(states)[3]]
-    D_b_NB = states[8, 5, dim(states)[3]]
+    S_b_NB = states[7, 1, dim(states)[3]]
+    E_b_NB = states[7, 2, dim(states)[3]]
+    I_b_NB = states[7, 3, dim(states)[3]]
+    R_b_NB = states[7, 4, dim(states)[3]]
+    D_b_NB = states[7, 5, dim(states)[3]]
     
-    S_a_N = states[9, 1, dim(states)[3]]
-    E_a_N = states[9, 2, dim(states)[3]]
-    I_a_N = states[9, 3, dim(states)[3]]
-    R_a_N = states[9, 4, dim(states)[3]]
-    D_a_N = states[9, 5, dim(states)[3]]
+    S_a_N = states[8, 1, dim(states)[3]]
+    E_a_N = states[8, 2, dim(states)[3]]
+    I_a_N = states[8, 3, dim(states)[3]]
+    R_a_N = states[8, 4, dim(states)[3]]
+    D_a_N = states[8, 5, dim(states)[3]]
     
-    S_b_N = states[10, 1, dim(states)[3]]
-    E_b_N = states[10, 2, dim(states)[3]]
-    I_b_N = states[10, 3, dim(states)[3]]
-    R_b_N = states[10, 4, dim(states)[3]]
-    D_b_N = states[10, 5, dim(states)[3]]
+    S_b_N = states[9, 1, dim(states)[3]]
+    E_b_N = states[9, 2, dim(states)[3]]
+    I_b_N = states[9, 3, dim(states)[3]]
+    R_b_N = states[9, 4, dim(states)[3]]
+    D_b_N = states[9, 5, dim(states)[3]]
     
     # Rates of each possible event
     rates = calculate_rates(beta_E_colony, beta_I_colony,
@@ -524,8 +488,7 @@ gillespie_seir = function(param = param,
                             S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
                             S_b, E_b, I_b, R_b, D_b,
                             S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                            S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                            S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                            S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                             S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                             S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                             S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
@@ -553,13 +516,12 @@ gillespie_seir = function(param = param,
                                   S_b, E_b, I_b, R_b, D_b,
                                   
                                   S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                  S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                                  S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                  S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                                   S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                                   
                                   S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                   S_b_N, E_b_N, I_b_N, R_b_N, D_b_N),
-                         nrow = 10, ncol = 5, 
+                         nrow = 9, ncol = 5, 
                          byrow = T)
       
       states = abind(states, new_state)
@@ -577,8 +539,7 @@ gillespie_seir = function(param = param,
                                           S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
                                           S_b, E_b, I_b, R_b, D_b,
                                           S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                          S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                                          S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                          S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                                           S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                                           S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                           S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
@@ -634,7 +595,7 @@ gillespie_seir = function(param = param,
           # Update of the number of susceptible adults
           S_a = S_a - disp_S_a
           S_sea_a = S_sea_a - disp_S_sea_a
-          S_sea_a_NB = S_sea_a_NB + disp_S_a + disp_S_sea_a
+          S_sea_NB = S_sea_NB + disp_S_a + disp_S_sea_a
           
           # Number of exposed  adults who are dispersed from A
           disp_E_a = disp_a["E_a"]
@@ -642,7 +603,7 @@ gillespie_seir = function(param = param,
           # Update of the number of exposed adults
           E_a = E_a - disp_E_a
           E_sea_a = E_sea_a - disp_E_sea_a
-          E_sea_a_NB = E_sea_a_NB + disp_E_a + disp_E_sea_a
+          E_sea_NB = E_sea_NB + disp_E_a + disp_E_sea_a
           
           # Number of infectious adults who are dispersed from A
           disp_I_a = disp_a["I_a"]
@@ -650,7 +611,7 @@ gillespie_seir = function(param = param,
           # Update of the number of infectious adults
           I_a = I_a - disp_I_a
           I_sea_a = I_sea_a - disp_I_sea_a
-          I_sea_a_NB = I_sea_a_NB + disp_I_a + disp_I_sea_a
+          I_sea_NB = I_sea_NB + disp_I_a + disp_I_sea_a
           
           # Number of recovered adults who are dispersed from A
           disp_R_a = disp_a["R_a"]
@@ -658,7 +619,7 @@ gillespie_seir = function(param = param,
           # Update of the number of recovered adults
           R_a = R_a - disp_R_a
           R_sea_a = R_sea_a - disp_R_sea_a
-          R_sea_a_NB = R_sea_a_NB + disp_R_a + disp_R_sea_a
+          R_sea_NB = R_sea_NB + disp_R_a + disp_R_sea_a
           
           # Death of nestlings
           
@@ -677,13 +638,12 @@ gillespie_seir = function(param = param,
                                       S_b, E_b, I_b, R_b, D_b,
                                       
                                       S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                      S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                                      S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                      S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                                       S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                                       
                                       S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                       S_b_N, E_b_N, I_b_N, R_b_N, D_b_N),
-                             nrow = 10, ncol = 5, 
+                             nrow = 9, ncol = 5, 
                              byrow = T)
           
           states = abind(states, new_state)
@@ -701,8 +661,7 @@ gillespie_seir = function(param = param,
                                               S_sea_b, E_sea_b, I_sea_b, R_sea_b, D_sea_b,
                                               S_b, E_b, I_b, R_b, D_b,
                                               S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                              S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                                              S_sea_b_NB,  E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                              S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                                               S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                                               S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                               S_b_N, E_b_N, I_b_N, R_b_N, D_b_N)
@@ -806,16 +765,16 @@ gillespie_seir = function(param = param,
           R_a_NB = R_a_NB + 1
         } else if (partner == "S_sea_a"){
           S_sea_a = S_sea_a - 1
-          S_sea_a_NB = S_sea_a_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (partner == "E_sea_a"){
           E_sea_a = E_sea_a - 1
-          E_sea_a_NB = E_sea_a_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (partner == "I_sea_a"){
           I_sea_a = I_sea_a - 1
-          I_sea_a_NB = I_sea_a_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (partner == "R_sea_a"){
           R_sea_a = R_sea_a - 1
-          R_sea_a_NB = R_sea_a_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
       } else if (transition == "S_sea_a_to_E_sea_a" & S_sea_a > 0) {
         S_sea_a = S_sea_a - 1
@@ -900,16 +859,16 @@ gillespie_seir = function(param = param,
           R_b_NB = R_b_NB + 1
         } else if (partner == "S_sea_b"){
           S_sea_b = S_sea_b - 1
-          S_sea_b_NB = S_sea_b_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (partner == "E_sea_b"){
           E_sea_b = E_sea_b - 1
-          E_sea_b_NB = E_sea_b_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (partner == "I_sea_b"){
           I_sea_b = I_sea_b - 1
-          I_sea_b_NB = I_sea_b_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (partner == "R_sea_b"){
           R_sea_b = R_sea_b - 1
-          R_sea_b_NB = R_sea_b_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
         
       } else if (transition == "S_a_to_S_sea_a"  & S_a > 0) {
@@ -975,36 +934,36 @@ gillespie_seir = function(param = param,
       } else if (transition == "I_a_NB_to_D_a_NB" & I_a_NB > 0) {
         I_a_NB = I_a_NB - 1
         D_a_NB = D_a_NB + 1
-      } else if (transition == "S_sea_a_NB_to_E_sea_a_NB" & S_sea_a_NB > 0) {
-        S_sea_a_NB = S_sea_a_NB - 1
-        E_sea_a_NB = E_sea_a_NB + 1
-      } else if (transition == "E_sea_a_NB_to_S_sea_a_NB" & E_sea_a_NB > 0) {
-        E_sea_a_NB = E_sea_a_NB - 1
-        S_sea_a_NB = S_sea_a_NB + 1
-      } else if (transition == "E_sea_a_NB_to_I_sea_a_NB" & E_sea_a_NB > 0) {
-        E_sea_a_NB = E_sea_a_NB - 1
-        I_sea_a_NB = I_sea_a_NB + 1
-      } else if (transition == "I_sea_a_NB_to_R_sea_a_NB" & I_sea_a_NB > 0) {
-        I_sea_a_NB = I_sea_a_NB - 1
-        R_sea_a_NB = R_sea_a_NB + 1
-      } else if (transition == "I_sea_a_NB_to_D_sea_a_NB" & I_sea_a_NB > 0) {
-        I_sea_a_NB = I_sea_a_NB - 1
-        D_sea_a_NB = D_sea_a_NB + 1
-      } else if (transition == "S_sea_b_NB_to_E_sea_b_NB" & S_sea_b_NB > 0) {
-        S_sea_b_NB = S_sea_b_NB - 1
-        E_sea_b_NB = E_sea_b_NB + 1
-      } else if (transition == "E_sea_b_NB_to_S_sea_b_NB" & E_sea_b_NB > 0) {
-        E_sea_b_NB = E_sea_b_NB - 1
-        S_sea_b_NB = S_sea_b_NB + 1
-      } else if (transition == "E_sea_b_NB_to_I_sea_b_NB" & E_sea_b_NB > 0) {
-        E_sea_b_NB = E_sea_b_NB - 1
-        I_sea_b_NB = I_sea_b_NB + 1
-      } else if (transition == "I_sea_b_NB_to_R_sea_b_NB" & I_sea_b_NB > 0) {
-        I_sea_b_NB = I_sea_b_NB - 1
-        R_sea_b_NB = R_sea_b_NB + 1
-      } else if (transition == "I_sea_b_NB_to_D_sea_b_NB" & I_sea_b_NB > 0) {
-        I_sea_b_NB = I_sea_b_NB - 1
-        D_sea_b_NB = D_sea_b_NB + 1
+      } else if (transition == "S_sea_NB_to_E_sea_NB" & S_sea_NB > 0) {
+        S_sea_NB = S_sea_NB - 1
+        E_sea_NB = E_sea_NB + 1
+      } else if (transition == "E_sea_NB_to_S_sea_NB" & E_sea_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+        S_sea_NB = S_sea_NB + 1
+      } else if (transition == "E_sea_NB_to_I_sea_NB" & E_sea_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+        I_sea_NB = I_sea_NB + 1
+      } else if (transition == "I_sea_NB_to_R_sea_NB" & I_sea_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+        R_sea_NB = R_sea_NB + 1
+      } else if (transition == "I_sea_NB_to_D_sea_NB" & I_sea_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+        D_sea_NB = D_sea_NB + 1
+      } else if (transition == "S_sea_NB_to_E_sea_NB" & S_sea_NB > 0) {
+        S_sea_NB = S_sea_NB - 1
+        E_sea_NB = E_sea_NB + 1
+      } else if (transition == "E_sea_NB_to_S_sea_NB" & E_sea_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+        S_sea_NB = S_sea_NB + 1
+      } else if (transition == "E_sea_NB_to_I_sea_NB" & E_sea_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+        I_sea_NB = I_sea_NB + 1
+      } else if (transition == "I_sea_NB_to_R_sea_NB" & I_sea_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+        R_sea_NB = R_sea_NB + 1
+      } else if (transition == "I_sea_NB_to_D_sea_NB" & I_sea_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+        D_sea_NB = D_sea_NB + 1
       } else if (transition == "S_b_NB_to_E_b_NB" & S_b_NB > 0) {
         S_b_NB = S_b_NB - 1
         E_b_NB = E_b_NB + 1
@@ -1020,54 +979,54 @@ gillespie_seir = function(param = param,
       } else if (transition == "I_b_NB_to_D_b_NB" & I_b_NB > 0) {
         I_b_NB = I_b_NB - 1
         D_b_NB = D_b_NB + 1
-      } else if (transition == "S_a_NB_to_S_sea_a_NB" & S_a_NB > 0) {
+      } else if (transition == "S_a_NB_to_S_sea_NB" & S_a_NB > 0) {
         S_a_NB = S_a_NB - 1
-        S_sea_a_NB = S_sea_a_NB + 1
-      } else if (transition == "E_a_NB_to_E_sea_a_NB" & E_a_NB > 0) {
+        S_sea_NB = S_sea_NB + 1
+      } else if (transition == "E_a_NB_to_E_sea_NB" & E_a_NB > 0) {
         E_a_NB = E_a_NB - 1
-        E_sea_a_NB = E_sea_a_NB + 1
-      } else if (transition == "I_a_NB_to_I_sea_a_NB" & I_a_NB > 0) {
+        E_sea_NB = E_sea_NB + 1
+      } else if (transition == "I_a_NB_to_I_sea_NB" & I_a_NB > 0) {
         I_a_NB = I_a_NB - 1
-        I_sea_a_NB = I_sea_a_NB + 1
-      } else if (transition == "R_a_NB_to_R_sea_a_NB" & R_a_NB > 0) {
+        I_sea_NB = I_sea_NB + 1
+      } else if (transition == "R_a_NB_to_R_sea_NB" & R_a_NB > 0) {
         R_a_NB = R_a_NB - 1
-        R_sea_a_NB = R_sea_a_NB + 1
-      } else if (transition == "S_b_NB_to_S_sea_b_NB" & S_b_NB > 0) {
+        R_sea_NB = R_sea_NB + 1
+      } else if (transition == "S_b_NB_to_S_sea_NB" & S_b_NB > 0) {
         S_b_NB = S_b_NB - 1
-        S_sea_b_NB = S_sea_b_NB + 1
-      } else if (transition == "E_b_NB_to_E_sea_b_NB" & E_b_NB > 0) {
+        S_sea_NB = S_sea_NB + 1
+      } else if (transition == "E_b_NB_to_E_sea_NB" & E_b_NB > 0) {
         E_b_NB = E_b_NB - 1
-        E_sea_b_NB = E_sea_b_NB + 1
-      } else if (transition == "I_b_NB_to_I_sea_b_NB" & I_b_NB > 0) {
+        E_sea_NB = E_sea_NB + 1
+      } else if (transition == "I_b_NB_to_I_sea_NB" & I_b_NB > 0) {
         I_b_NB = I_b_NB - 1
-        I_sea_b_NB = I_sea_b_NB + 1
-      } else if (transition == "R_b_NB_to_R_sea_b_NB" & R_b_NB > 0) {
+        I_sea_NB = I_sea_NB + 1
+      } else if (transition == "R_b_NB_to_R_sea_NB" & R_b_NB > 0) {
         R_b_NB = R_b_NB - 1
-        R_sea_b_NB = R_sea_b_NB + 1
-      }else if (transition == "S_sea_a_NB_to_S_a_NB" & S_sea_a_NB > 0) {
+        R_sea_NB = R_sea_NB + 1
+      }else if (transition == "S_sea_NB_to_S_a_NB" & S_sea_NB > 0) {
         S_a_NB = S_a_NB + 1
-        S_sea_a_NB = S_sea_a_NB - 1
-      } else if (transition == "E_sea_a_NB_to_E_a_NB" & E_sea_a_NB > 0) {
+        S_sea_NB = S_sea_NB - 1
+      } else if (transition == "E_sea_NB_to_E_a_NB" & E_sea_NB > 0) {
         E_a_NB = E_a_NB + 1
-        E_sea_a_NB = E_sea_a_NB - 1
-      } else if (transition == "I_sea_a_NB_to_I_a_NB" & I_sea_a_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+      } else if (transition == "I_sea_NB_to_I_a_NB" & I_sea_NB > 0) {
         I_a_NB = I_a_NB + 1
-        I_sea_a_NB = I_sea_a_NB - 1
-      } else if (transition == "R_sea_a_NB_to_R_a_NB" & R_sea_a_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+      } else if (transition == "R_sea_NB_to_R_a_NB" & R_sea_NB > 0) {
         R_a_NB = R_a_NB + 1
-        R_sea_a_NB = R_sea_a_NB - 1
-      } else if (transition == "S_sea_b_NB_to_S_b_NB" & S_sea_b_NB > 0) {
+        R_sea_NB = R_sea_NB - 1
+      } else if (transition == "S_sea_NB_to_S_b_NB" & S_sea_NB > 0) {
         S_b_NB = S_b_NB + 1
-        S_sea_b_NB = S_sea_b_NB - 1
-      } else if (transition == "E_sea_b_NB_to_E_b_NB" & E_sea_b_NB > 0) {
+        S_sea_NB = S_sea_NB - 1
+      } else if (transition == "E_sea_NB_to_E_b_NB" & E_sea_NB > 0) {
         E_b_NB = E_b_NB + 1
-        E_sea_b_NB = E_sea_b_NB - 1
-      } else if (transition == "I_sea_b_NB_to_I_b_NB" & I_sea_b_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+      } else if (transition == "I_sea_NB_to_I_b_NB" & I_sea_NB > 0) {
         I_b_NB = I_b_NB + 1
-        I_sea_b_NB = I_sea_b_NB - 1
-      } else if (transition == "R_sea_b_NB_to_R_b_NB" & R_sea_b_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+      } else if (transition == "R_sea_NB_to_R_b_NB" & R_sea_NB > 0) {
         R_b_NB = R_b_NB + 1
-        R_sea_b_NB = R_sea_b_NB - 1
+        R_sea_NB = R_sea_NB - 1
       } else if (transition == "S_a_to_S_a_NB"  & S_a > 0) {
         S_a = S_a - 2
         S_a_NB = S_a_NB + 2
@@ -1080,18 +1039,18 @@ gillespie_seir = function(param = param,
       } else if (transition == "E_a_to_E_a_NB" & R_a > 0) {
         R_a = R_a - 2
         R_a_NB = R_a_NB + 2
-      } else if (transition == "S_sea_a_NB_to_S_sea_b_NB" & S_sea_a_NB > 0) {
-        S_sea_a_NB = S_sea_a_NB - 1
-        S_sea_b_NB = S_sea_b_NB + 1
-      }else if (transition == "E_sea_a_NB_to_E_sea_b_NB" & E_sea_a_NB > 0) {
-        E_sea_a_NB = E_sea_a_NB - 1
-        E_sea_b_NB = E_sea_b_NB + 1
-      }else if (transition == "I_sea_a_NB_to_I_sea_b_NB" & I_sea_a_NB > 0) {
-        I_sea_a_NB = I_sea_a_NB - 1
-        I_sea_b_NB = I_sea_b_NB + 1
-      }else if (transition == "R_sea_a_NB_to_R_sea_b_NB" & R_sea_a_NB > 0) {
-        R_sea_a_NB = R_sea_a_NB - 1
-        R_sea_b_NB = R_sea_b_NB + 1
+      } else if (transition == "S_sea_NB_to_S_sea_NB" & S_sea_NB > 0) {
+        S_sea_NB = S_sea_NB - 1
+        S_sea_NB = S_sea_NB + 1
+      }else if (transition == "E_sea_NB_to_E_sea_NB" & E_sea_NB > 0) {
+        E_sea_NB = E_sea_NB - 1
+        E_sea_NB = E_sea_NB + 1
+      }else if (transition == "I_sea_NB_to_I_sea_NB" & I_sea_NB > 0) {
+        I_sea_NB = I_sea_NB - 1
+        I_sea_NB = I_sea_NB + 1
+      }else if (transition == "R_sea_NB_to_R_sea_NB" & R_sea_NB > 0) {
+        R_sea_NB = R_sea_NB - 1
+        R_sea_NB = R_sea_NB + 1
       }else if (transition == "S_a_N_to_E_a_N" & S_a_N > 0){
         S_a_N = S_a_N - 1
         E_a_N = E_a_N + 1
@@ -1128,16 +1087,16 @@ gillespie_seir = function(param = param,
           R_a_NB = R_a_NB + 1
         } else if (parent1 == "S_sea_a"){
           S_sea_a = S_sea_a - 1
-          S_sea_a_NB = S_sea_a_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (parent1 == "E_sea_a"){
           E_sea_a = E_sea_a - 1
-          E_sea_a_NB = E_sea_a_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (parent1 == "I_sea_a"){
           I_sea_a = I_sea_a - 1
-          I_sea_a_NB = I_sea_a_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (parent1 == "R_sea_a"){
           R_sea_a = R_sea_a - 1
-          R_sea_a_NB = R_sea_a_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
         parent2 = sample(c(rep("S_a", S_a), rep("E_a", E_a),rep("I_a", I_a),rep("R_a", R_a),
                            rep("S_sea_a", S_sea_a), rep("E_sea_a", E_sea_a),rep("I_sea_a", I_sea_a),rep("R_sea_a", R_sea_a)),
@@ -1156,16 +1115,16 @@ gillespie_seir = function(param = param,
           R_a_NB = R_a_NB + 1
         } else if (parent2 == "S_sea_a"){
           S_sea_a = S_sea_a - 1
-          S_sea_a_NB = S_sea_a_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (parent2 == "E_sea_a"){
           E_sea_a = E_sea_a - 1
-          E_sea_a_NB = E_sea_a_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (parent2 == "I_sea_a"){
           I_sea_a = I_sea_a - 1
-          I_sea_a_NB = I_sea_a_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (parent2 == "R_sea_a"){
           R_sea_a = R_sea_a - 1
-          R_sea_a_NB = R_sea_a_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
       }else if (transition == "S_b_N_to_E_b_N" & S_b_N > 0){
         S_b_N = S_b_N - 1
@@ -1203,16 +1162,16 @@ gillespie_seir = function(param = param,
           R_b_NB = R_b_NB + 1
         } else if (parent1 == "S_sea_b"){
           S_sea_b = S_sea_b - 1
-          S_sea_b_NB = S_sea_b_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (parent1 == "E_sea_b"){
           E_sea_b = E_sea_b - 1
-          E_sea_b_NB = E_sea_b_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (parent1 == "I_sea_b"){
           I_sea_b = I_sea_b - 1
-          I_sea_b_NB = I_sea_b_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (parent1 == "R_sea_b"){
           R_sea_b = R_sea_b - 1
-          R_sea_b_NB = R_sea_b_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
         parent2 = sample(c(rep("S_b", S_b), rep("E_b", E_b),rep("I_b", I_b),rep("R_b", R_b),
                            rep("S_sea_b", S_sea_b), rep("E_sea_b", E_sea_b),rep("I_sea_b", I_sea_b),rep("R_sea_b", R_sea_b)),
@@ -1231,16 +1190,16 @@ gillespie_seir = function(param = param,
           R_b_NB = R_b_NB + 1
         } else if (parent2 == "S_sea_b"){
           S_sea_b = S_sea_b - 1
-          S_sea_b_NB = S_sea_b_NB + 1
+          S_sea_NB = S_sea_NB + 1
         } else if (parent2 == "E_sea_b"){
           E_sea_b = E_sea_b - 1
-          E_sea_b_NB = E_sea_b_NB + 1
+          E_sea_NB = E_sea_NB + 1
         } else if (parent2 == "I_sea_b"){
           I_sea_b = I_sea_b - 1
-          I_sea_b_NB = I_sea_b_NB + 1
+          I_sea_NB = I_sea_NB + 1
         } else if (parent2 == "R_sea_b"){
           R_sea_b = R_sea_b - 1
-          R_sea_b_NB = R_sea_b_NB + 1
+          R_sea_NB = R_sea_NB + 1
         }
       }
     }
@@ -1252,13 +1211,12 @@ gillespie_seir = function(param = param,
                                 S_b, E_b, I_b, R_b, D_b,
                                 
                                 S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
-                                S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB,
                                 S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
                                 
                                 S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                 S_b_N, E_b_N, I_b_N, R_b_N, D_b_N),
-                           nrow = 10, ncol = 5, 
+                           nrow = 9, ncol = 5, 
                            byrow = T)
     
     
@@ -1295,32 +1253,27 @@ gillespie_seir = function(param = param,
     I_a_NB = states[5, 3, ],
     R_a_NB = states[5, 4, ],
     D_a_NB = states[5, 5, ],
-    S_sea_a_NB = states[6, 1, ],
-    E_sea_a_NB = states[6, 2, ],
-    I_sea_a_NB = states[6, 3, ],
-    R_sea_a_NB = states[6, 4, ],
-    D_sea_a_NB = states[6, 5, ],
-    S_sea_b_NB = states[7, 1, ],
-    E_sea_b_NB = states[7, 2, ],
-    I_sea_b_NB = states[7, 3, ],
-    R_sea_b_NB = states[7, 4, ],
-    D_sea_b_NB = states[7, 5, ],
-    S_b_NB = states[8, 1, ],
-    E_b_NB = states[8, 2, ],
-    I_b_NB = states[8, 3, ],
-    R_b_NB = states[8, 4, ],
-    D_b_NB = states[8, 5, ],
+    S_sea_NB = states[6, 1, ],
+    E_sea_NB = states[6, 2, ],
+    I_sea_NB = states[6, 3, ],
+    R_sea_NB = states[6, 4, ],
+    D_sea_NB = states[6, 5, ],
+    S_b_NB = states[7, 1, ],
+    E_b_NB = states[7, 2, ],
+    I_b_NB = states[7, 3, ],
+    R_b_NB = states[7, 4, ],
+    D_b_NB = states[7, 5, ],
     
-    S_a_N = states[9, 1, ],
-    E_a_N = states[9, 2, ],
-    I_a_N = states[9, 3, ],
-    R_a_N = states[9, 4, ],
-    D_a_N = states[9, 5, ],
-    S_b_N = states[10, 1, ],
-    E_b_N = states[10, 2, ],
-    I_b_N = states[10, 3, ],
-    R_b_N = states[10, 4, ],
-    D_b_N = states[10, 5, ]) %>% 
+    S_a_N = states[8, 1, ],
+    E_a_N = states[8, 2, ],
+    I_a_N = states[8, 3, ],
+    R_a_N = states[8, 4, ],
+    D_a_N = states[8, 5, ],
+    S_b_N = states[9, 1, ],
+    E_b_N = states[9, 2, ],
+    I_b_N = states[9, 3, ],
+    R_b_N = states[9, 4, ],
+    D_b_N = states[9, 5, ]) %>% 
     mutate(
     S_a_total = S_a + S_sea_a,
     E_a_total = E_a + E_sea_a,
@@ -1332,19 +1285,7 @@ gillespie_seir = function(param = param,
     E_b_total = E_b + E_sea_b,
     I_b_total = I_b + I_sea_b,
     R_b_total = R_b + R_sea_b,
-    D_b_total = D_b + D_sea_b,
-    
-    S_a_NB_total = S_a_NB + S_sea_a_NB,
-    E_a_NB_total = E_a_NB + E_sea_a_NB,
-    I_a_NB_total = I_a_NB + I_sea_a_NB,
-    R_a_NB_total = R_a_NB + R_sea_a_NB,
-    D_a_NB_total = D_a_NB + D_sea_a_NB,
-    
-    S_b_NB_total = S_b_NB + S_sea_b_NB,
-    E_b_NB_total = E_b_NB + E_sea_b_NB,
-    I_b_NB_total = I_b_NB + I_sea_b_NB,
-    R_b_NB_total = R_b_NB + R_sea_b_NB,
-    D_b_NB_total = D_b_NB + D_sea_b_NB
+    D_b_total = D_b + D_sea_b
   )
   
   return(output)
@@ -1365,7 +1306,6 @@ plot_seir = function(output_ = output){
     ggtitle("Breeders in A (colony+Sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
   
-  
   output_a_N = output_long %>% filter(variable %in% c("S_a_N", "E_a_N", "I_a_N", "R_a_N", "D_a_N"))
   plot_a_N = ggplot(output_a_N, aes(x = time, y = value, color = variable)) +
     geom_line() +
@@ -1374,16 +1314,15 @@ plot_seir = function(output_ = output){
     ggtitle("Nestlings in A")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
   
-  
-  output_a_NB = output_long %>% filter(variable %in% c("S_a_NB_total", "E_a_NB_total", "I_a_NB_total", "R_a_NB_total", "D_a_NB_total"))
+  output_a_NB = output_long %>% filter(variable %in% c("S_a_NB", "E_a_NB", "I_a_NB", "R_a_NB", "D_a_NB"))
   plot_a_NB = ggplot(output_a_NB, aes(x = time, y = value, color = variable)) +
     geom_line() +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
-    ggtitle("Non-Breeders in A (colony+Sea)")+
+    ggtitle("Non-breeder in colony A")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
   
-  
+
   output_b = output_long %>% filter(variable %in% c("S_b_total", "E_b_total", "I_b_total", "R_b_total", "D_b_total"))
   plot_b = ggplot(output_b, aes(x = time, y = value, color = variable)) +
     geom_line() +
@@ -1391,7 +1330,6 @@ plot_seir = function(output_ = output){
     theme_minimal() +
     ggtitle("Breeders in B (colony+Sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
-  
   
   output_b_N = output_long %>% filter(variable %in% c("S_b_N", "E_b_N", "I_b_N", "R_b_N", "D_b_N"))
   plot_b_N = ggplot(output_b_N, aes(x = time, y = value, color = variable)) +
@@ -1401,16 +1339,26 @@ plot_seir = function(output_ = output){
     ggtitle("Nestlings in B")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
   
-  
-  output_b_NB = output_long %>% filter(variable %in% c("S_b_NB_total", "E_b_NB_total", "I_b_NB_total", "R_b_NB_total", "D_b_NB_total"))
+  output_b_NB = output_long %>% filter(variable %in% c("S_b_NB", "E_b_NB", "I_b_NB", "R_b_NB", "D_b_NB"))
   plot_b_NB = ggplot(output_b_NB, aes(x = time, y = value, color = variable)) +
     geom_line() +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
-    ggtitle("Non-Breeders in B (colony+Sea)")+
+    ggtitle("Non-breeder in colony B")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
   
-  plot_grid_seir = plot_grid(plot_a, plot_a_N, plot_a_NB,
+  
+  
+  output_sea_NB = output_long %>% filter(variable %in% c("S_sea_NB", "E_sea_NB", "I_sea_NB", "R_sea_NB", "D_sea_NB"))
+  plot_sea_NB = ggplot(output_sea_NB, aes(x = time, y = value, color = variable)) +
+    geom_line() +
+    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    theme_minimal() +
+    ggtitle("Non-breeder at sea")+
+    scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))
+  
+  
+  plot_grid_seir = plot_grid(plot_a, plot_a_N, plot_sea_NB,
                              plot_b, plot_b_N, plot_b_NB,
                              labels = c("A", "B", "C",
                                         "D", "E", "F"),
@@ -1436,191 +1384,191 @@ time2 <- Sys.time()
 time2 - time1
 plot_seir()
 
-
-
-# summary_output ----------------------------------------------------------
-
-summary_output = function(output){
-
-  N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a",
-                    "S_a_NB", "I_a_NB", "S_sea_a_NB", "I_sea_a_NB")] %>% sum()
-  max_infected_a = max(output[, c("I_a","I_sea_a")])
-  prop_max_infected_a = max_infected_a / N_a
-  dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
-  a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
-  
-  
-  N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b",
-                    "S_b_NB", "I_b_NB", "S_sea_b_NB", "I_sea_b_NB")] %>% sum()
-  max_infected_b = max(output[, c("I_b","I_sea_b")])
-  prop_max_infected_b = max_infected_b / N_b
-  dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
-  b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
-
-  
-  nb_adults = N_a + N_b - dead_a - dead_b
-  nb_nestlings = a_N + b_N
-  nb_adults_equi = nb_adults + (0.2)*nb_nestlings
-
-
-  return( data.frame(
-    N_a = N_a,
-    max_infected_a = max_infected_a,
-    prop_max_infected_a = prop_max_infected_a,
-    dead_a = dead_a,
-    a_N = a_N,
-    
-    N_b = N_b,
-    max_infected_b = max_infected_b,
-    prop_max_infected_b = prop_max_infected_b,
-    dead_b = dead_b,
-    b_N = b_N,
-    
-    nb_adults = nb_adults,
-    nb_nestlings = nb_nestlings,
-    nb_adults_equi = nb_adults_equi
-    
-    
-
-  ))
-}
-
-
-# stat_model --------------------------------------------------------------
-
-stat_model = function(nb_iterations = 5,
-                      param_ = param,
-                      induced_dispersal_ = T,
-                      dispersal_reaction_time_ = 5,
-                      initial_number_breeders_A_ = 50,
-                      initial_number_infected_breeders_A_ = 1,
-                      initial_number_breeders_B_ = 50,
-                      total_time_ = 70,
-                      dispersal_stochactic_ = T,
-                      tau_ = 0.2){
-  
-  response_list = data.frame()
-  
-  for (i in 1:nb_iterations){
-    
-    output = gillespie_seir(param = param_,
-                            induced_dispersal = induced_dispersal_,
-                            dispersal_reaction_time = dispersal_reaction_time_,
-                            initial_number_breeders_A = initial_number_breeders_A_,
-                            initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
-                            initial_number_breeders_B = initial_number_breeders_B_,
-                            total_time = total_time_,
-                            dispersal_stochactic = dispersal_stochactic_,
-                            tau = tau_)
-    
-    response_list = rbind(response_list, summary_output(output))
-    
-  }
-  
-  #return(response_list)
-  
-  
-  return(response_list$nb_adults_equi )
-}
-
-
-# plot --------------------------------------------------------------------
-
-
-
-output = c()
-val_test = (1:20)*2
-
-for (k in val_test){
-  
-  res = stat_model(dispersal_reaction_time_ = k)
-  
-  output = c(output, res)
-  
-}
-
-df = data.frame(dispersal_reaction_time = rep(val_test, each = 5),
-           output=output) %>% 
-  mutate(dispersal_reaction_time = dispersal_reaction_time %>%as.factor())
-
-ggplot(data = df, aes(x = dispersal_reaction_time, y = output))+
-  geom_violin(position=position_dodge(1)) + 
-  geom_dotplot(binaxis='y', stackdir='center', binwidth=0.4) +
-  ggthemes::theme_clean() +
-  theme(
-    panel.border = element_blank(), # Enlever la bordure du panel
-    axis.title = element_text(size = 11),  # Thicken axis titles
-    axis.text = element_text(size = 10),  # Thicken axis text
-    axis.line = element_line(size = 2),  # Thicken axis lines
-    panel.background = element_rect(fill = "transparent", color = NA), 
-    plot.background = element_rect(fill = "transparent", color = NA), 
-    legend.position =  "none"
-  )+
-  labs(x = "Reaction Time", y = "Settlement probabilities", title = "",
-       fill = "Arrival colony type") 
-  
-
-
-
-# data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
-# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-#        aes(x = variable, y = value)) +
-#   geom_violin() +
-#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-
-
-
-
 # 
-# output_long_list = data.frame()
-# response_list = data.frame()
 # 
-# nb_iterations = 8
+# # summary_output ----------------------------------------------------------
 # 
-# for (i in 1:nb_iterations){
+# summary_output = function(output){
+# 
+#   N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a",
+#                     "S_a_NB", "I_a_NB", "S_sea_a_NB", "I_sea_a_NB")] %>% sum()
+#   max_infected_a = max(output[, c("I_a","I_sea_a")])
+#   prop_max_infected_a = max_infected_a / N_a
+#   dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
+#   a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
 #   
-#   output = gillespie_seir(param = param,
-#                           induced_dispersal = T,
-#                           initial_number_breeders_A = 50,
-#                           initial_number_infected_breeders_A = 1,
-#                           initial_number_breeders_B = 50,
-#                           total_time = 70,
-#                           dispersal_stochactic = T,
-#                           tau = 0.2)
 #   
-#   output_long = melt(output, id = "time")
+#   N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b",
+#                     "S_b_NB", "I_b_NB", "S_sea_b_NB", "I_sea_b_NB")] %>% sum()
+#   max_infected_b = max(output[, c("I_b","I_sea_b")])
+#   prop_max_infected_b = max_infected_b / N_b
+#   dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
+#   b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
+# 
 #   
-#   output_long_i = cbind(output_long,
-#                         data.frame(simulation = rep(i, times = nrow(output_long))))
-#   
-#   output_long_list = rbind(output_long_list, output_long_i)
-#   response_list = rbind(response_list, summary_output(output))
-#   
+#   nb_adults = N_a + N_b - dead_a - dead_b
+#   nb_nestlings = a_N + b_N
+#   nb_adults_equi = nb_adults + (0.2)*nb_nestlings
+# 
+# 
+#   return( data.frame(
+#     N_a = N_a,
+#     max_infected_a = max_infected_a,
+#     prop_max_infected_a = prop_max_infected_a,
+#     dead_a = dead_a,
+#     a_N = a_N,
+#     
+#     N_b = N_b,
+#     max_infected_b = max_infected_b,
+#     prop_max_infected_b = prop_max_infected_b,
+#     dead_b = dead_b,
+#     b_N = b_N,
+#     
+#     nb_adults = nb_adults,
+#     nb_nestlings = nb_nestlings,
+#     nb_adults_equi = nb_adults_equi
+#     
+#     
+# 
+#   ))
 # }
 # 
 # 
-# output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+# # stat_model --------------------------------------------------------------
 # 
-# p = ggplot()
-# for(i in 1:nb_iterations){
-#   p = p + geom_line(data = output_a %>% subset(., simulation == i )
-#                     , aes(x = time, y = value, color = variable))
+# stat_model = function(nb_iterations = 5,
+#                       param_ = param,
+#                       induced_dispersal_ = T,
+#                       dispersal_reaction_time_ = 5,
+#                       initial_number_breeders_A_ = 50,
+#                       initial_number_infected_breeders_A_ = 1,
+#                       initial_number_breeders_B_ = 50,
+#                       total_time_ = 70,
+#                       dispersal_stochactic_ = T,
+#                       tau_ = 0.2){
+#   
+#   response_list = data.frame()
+#   
+#   for (i in 1:nb_iterations){
+#     
+#     output = gillespie_seir(param = param_,
+#                             induced_dispersal = induced_dispersal_,
+#                             dispersal_reaction_time = dispersal_reaction_time_,
+#                             initial_number_breeders_A = initial_number_breeders_A_,
+#                             initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
+#                             initial_number_breeders_B = initial_number_breeders_B_,
+#                             total_time = total_time_,
+#                             dispersal_stochactic = dispersal_stochactic_,
+#                             tau = tau_)
+#     
+#     response_list = rbind(response_list, summary_output(output))
+#     
+#   }
+#   
+#   #return(response_list)
+#   
+#   
+#   return(response_list$nb_adults_equi )
 # }
-# p = p +
-#   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
-#   theme_minimal() +
-#   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
 # 
 # 
-# p
+# # plot --------------------------------------------------------------------
 # 
 # 
-# data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
 # 
-# # Créer les diagrammes en violon pour chaque variable
-# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-#        aes(x = variable, y = value)) +
-#   geom_violin() +
-#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+# output = c()
+# val_test = (1:20)*2
+# 
+# for (k in val_test){
+#   
+#   res = stat_model(dispersal_reaction_time_ = k)
+#   
+#   output = c(output, res)
+#   
+# }
+# 
+# df = data.frame(dispersal_reaction_time = rep(val_test, each = 5),
+#            output=output) %>% 
+#   mutate(dispersal_reaction_time = dispersal_reaction_time %>%as.factor())
+# 
+# ggplot(data = df, aes(x = dispersal_reaction_time, y = output))+
+#   geom_violin(position=position_dodge(1)) + 
+#   geom_dotplot(binaxis='y', stackdir='center', binwidth=0.4) +
+#   ggthemes::theme_clean() +
+#   theme(
+#     panel.border = element_blank(), # Enlever la bordure du panel
+#     axis.title = element_text(size = 11),  # Thicken axis titles
+#     axis.text = element_text(size = 10),  # Thicken axis text
+#     axis.line = element_line(size = 2),  # Thicken axis lines
+#     panel.background = element_rect(fill = "transparent", color = NA), 
+#     plot.background = element_rect(fill = "transparent", color = NA), 
+#     legend.position =  "none"
+#   )+
+#   labs(x = "Reaction Time", y = "Settlement probabilities", title = "",
+#        fill = "Arrival colony type") 
+#   
 # 
 # 
+# 
+# # data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
+# # ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+# #        aes(x = variable, y = value)) +
+# #   geom_violin() +
+# #   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+# 
+# 
+# 
+# 
+# # 
+# # output_long_list = data.frame()
+# # response_list = data.frame()
+# # 
+# # nb_iterations = 8
+# # 
+# # for (i in 1:nb_iterations){
+# #   
+# #   output = gillespie_seir(param = param,
+# #                           induced_dispersal = T,
+# #                           initial_number_breeders_A = 50,
+# #                           initial_number_infected_breeders_A = 1,
+# #                           initial_number_breeders_B = 50,
+# #                           total_time = 70,
+# #                           dispersal_stochactic = T,
+# #                           tau = 0.2)
+# #   
+# #   output_long = melt(output, id = "time")
+# #   
+# #   output_long_i = cbind(output_long,
+# #                         data.frame(simulation = rep(i, times = nrow(output_long))))
+# #   
+# #   output_long_list = rbind(output_long_list, output_long_i)
+# #   response_list = rbind(response_list, summary_output(output))
+# #   
+# # }
+# # 
+# # 
+# # output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+# # 
+# # p = ggplot()
+# # for(i in 1:nb_iterations){
+# #   p = p + geom_line(data = output_a %>% subset(., simulation == i )
+# #                     , aes(x = time, y = value, color = variable))
+# # }
+# # p = p +
+# #   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+# #   theme_minimal() +
+# #   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
+# # 
+# # 
+# # p
+# # 
+# # 
+# # data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
+# # 
+# # # Créer les diagrammes en violon pour chaque variable
+# # ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+# #        aes(x = variable, y = value)) +
+# #   geom_violin() +
+# #   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+# # 
+# # 
