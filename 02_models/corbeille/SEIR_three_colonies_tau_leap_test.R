@@ -2,12 +2,15 @@
 
 ##
 
+# actualiser le modèle :
+#   - 
+#   -
+
+# fusionner les S_sea_a_NB, S_sea_b_NB en S_sea_NB
+# creer l evement des visites de prospections
+
+
 # attraction vers les conspecifique
-
-# ajout de d'une fécondité variable
-
-# ajout de l'info de la date de la dispersion
-
 ##
 
 
@@ -63,11 +66,11 @@ param = list(
   rho_to_sea = 1,
   # Transition from sea to the colony (non-breeders)
   rho_to_colony = 1 * (1/100) ,
-  
+
   
   # Transition from breeder to non-breeder (reproductive failure)
   # psi = 0,  
-  
+
   
   # Induced dispersion parameters
   
@@ -78,8 +81,9 @@ param = list(
   
   # Demographic parameters
   hatching_date = 10
-  
+
 )
+
 
 
 
@@ -553,11 +557,9 @@ gillespie_seir = function(# All parameters
   times = c(0)
   states = array(dim = c(13,5,1), data = initial_state)
   already_dispersed = F
-  simulated_dispersal_date = NA
   already_hatched = F
   first_death = F
   first_death_date = NA
-  
   
   # Next event
   while (times[length(times)] < total_time) {
@@ -842,8 +844,6 @@ gillespie_seir = function(# All parameters
           
           states = abind(states, new_state)
           times = c(times, next_time)
-          
-          simulated_dispersal_date = next_time
           
           
           # Rates of each possible event
