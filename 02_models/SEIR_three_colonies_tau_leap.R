@@ -6,8 +6,6 @@
 
 # ajout de d'une fécondité variable
 
-# ajout de l'info de la date de la dispersion
-
 ##
 
 
@@ -50,19 +48,22 @@ param = list(
   # Recovery rate (inverse of infectious period)
   gamma = 1/6,
   # Disease-related mortality rate
-  mu = 1/6, # 50% of mortality
+  # Adult
+  mu_adult = 1/6 * (0.5/(1-0.5)), # 50% of mortality
+  # Nestling
+  mu_nestling = 1/6 * (0.8/(1-0.8)), # 50% of mortality
   
   
   # Mobility  parameters
   
   # Transition from colony to the sea (breeders)
-  zeta_to_sea = 1,
+  zeta_to_sea = 1/2,
   # Transition from sea to the colony (breeders)
-  zeta_to_colony = 1 * 1,
+  zeta_to_colony = 1/2,
   # Transition from colony to the sea (non-breeders)
-  rho_to_sea = 1,
+  rho_to_sea = 1/2,
   # Transition from sea to the colony (non-breeders)
-  rho_to_colony = 1 * (1/100) ,
+  rho_to_colony = 1/40 , # 
   
   
   # Transition from breeder to non-breeder (reproductive failure)
@@ -87,7 +88,7 @@ param = list(
 
 
 calculate_rates = function(  beta_E_colony, beta_I_colony,
-                             sigma,eta, gamma, mu,
+                             sigma,eta, gamma, mu_adult, mu_nestling,
                              zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
                              prop_dispersal, prop_prospecting, dispersal_date,
                              hatching_date,
@@ -124,21 +125,21 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "E_a_N_to_S_a_N" = eta * E_a_N,
   "E_a_N_to_I_a_N" = sigma * E_a_N,
   "I_a_N_to_R_a_N" = gamma * I_a_N,
-  "I_a_N_to_D_a_N" = mu * I_a_N,
+  "I_a_N_to_D_a_N" = mu_nestling * I_a_N,
   ### Colony B
   "S_b_N_to_E_b_N" = beta_E_colony * S_b_N * (E_b+E_b_NB+E_b_N) +
                      beta_I_colony * S_b_N * (I_b+I_b_NB+I_b_N),
   "E_b_N_to_S_b_N" = eta * E_b_N,
   "E_b_N_to_I_b_N" = sigma * E_b_N,
   "I_b_N_to_R_b_N" = gamma * I_b_N,
-  "I_b_N_to_D_b_N" = mu * I_b_N,
+  "I_b_N_to_D_b_N" = mu_nestling * I_b_N,
   ### Colony C
   "S_c_N_to_E_c_N" = beta_E_colony * S_c_N * (E_c+E_c_NB+E_c_N) +
                      beta_I_colony * S_c_N * (I_c+I_c_NB+I_c_N),
   "E_c_N_to_S_c_N" = eta * E_c_N,
   "E_c_N_to_I_c_N" = sigma * E_c_N,
   "I_c_N_to_R_c_N" = gamma * I_c_N,
-  "I_c_N_to_D_c_N" = mu * I_c_N,
+  "I_c_N_to_D_c_N" = mu_nestling * I_c_N,
   
   ## Non-Breeders
   ### Colony A
@@ -147,27 +148,27 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "E_a_NB_to_S_a_NB" = eta * E_a_NB,
   "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
   "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
-  "I_a_NB_to_D_a_NB" = mu * I_a_NB,
+  "I_a_NB_to_D_a_NB" = mu_adult * I_a_NB,
   ### Colony B
   "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b+E_b_NB+E_b_N) + 
                        beta_I_colony * S_b_NB * (I_b+I_b_NB+I_b_N),
   "E_b_NB_to_S_b_NB" = eta * E_b_NB,
   "E_b_NB_to_I_b_NB" = sigma * E_b_NB,
   "I_b_NB_to_R_b_NB" = gamma * I_b_NB,
-  "I_b_NB_to_D_b_NB" = mu * I_b_NB,
+  "I_b_NB_to_D_b_NB" = mu_adult * I_b_NB,
   ### Colony C
   "S_c_NB_to_E_c_NB" = beta_E_colony * S_c_NB * (E_c+E_c_NB+E_c_N) + 
                        beta_I_colony * S_c_NB * (I_c+I_c_NB+I_c_N),
   "E_c_NB_to_S_c_NB" = eta * E_c_NB,
   "E_c_NB_to_I_c_NB" = sigma * E_c_NB,
   "I_c_NB_to_R_c_NB" = gamma * I_c_NB,
-  "I_c_NB_to_D_c_NB" = mu * I_c_NB,
+  "I_c_NB_to_D_c_NB" = mu_adult * I_c_NB,
   ### Sea 
   "S_sea_NB_to_E_sea_NB" = 0,
   "E_sea_NB_to_S_sea_NB" = eta * E_sea_NB,
   "E_sea_NB_to_I_sea_NB" = sigma * E_sea_NB,
   "I_sea_NB_to_R_sea_NB" = gamma * I_sea_NB,
-  "I_sea_NB_to_D_sea_NB" = mu * I_sea_NB,
+  "I_sea_NB_to_D_sea_NB" = mu_adult * I_sea_NB,
 
   
   ## Breeders
@@ -177,39 +178,39 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "E_a_to_S_a" = eta * E_a,
   "E_a_to_I_a" = sigma * E_a,
   "I_a_to_R_a" = gamma * I_a,
-  "I_a_to_D_a" = mu * I_a,
+  "I_a_to_D_a" = mu_adult * I_a,
   ### Sea A
   "S_sea_a_to_E_sea_a" = 0,
   "E_sea_a_to_S_sea_a" = eta * E_sea_a,
   "E_sea_a_to_I_sea_a" = sigma * E_sea_a,
   "I_sea_a_to_R_sea_a" = gamma * I_sea_a,
-  "I_sea_a_to_D_sea_a" = mu * I_sea_a,
+  "I_sea_a_to_D_sea_a" = mu_adult * I_sea_a,
   ### Colony B
   "S_b_to_E_b" = beta_E_colony * S_b * (E_b+E_b_NB+E_b_N) + 
                  beta_I_colony * S_b * (I_b+I_b_NB+I_b_N),
   "E_b_to_S_b" = eta * E_b,
   "E_b_to_I_b" = sigma * E_b,
   "I_b_to_R_b" = gamma * I_b,
-  "I_b_to_D_b" = mu * I_b,
+  "I_b_to_D_b" = mu_adult * I_b,
   ### Sea B
   "S_sea_b_to_E_sea_b" = 0,
   "E_sea_b_to_S_sea_b" = eta * E_sea_b,
   "E_sea_b_to_I_sea_b" = sigma * E_sea_b,
   "I_sea_b_to_R_sea_b" = gamma * I_sea_b,
-  "I_sea_b_to_D_sea_b" = mu * I_sea_b,
+  "I_sea_b_to_D_sea_b" = mu_adult * I_sea_b,
   ### Colony C
   "S_c_to_E_c" = beta_E_colony * S_c * (E_c+E_c_NB+E_c_N) + 
                  beta_I_colony * S_c * (I_c+I_c_NB+I_c_N),
   "E_c_to_S_c" = eta * E_c,
   "E_c_to_I_c" = sigma * E_c,
   "I_c_to_R_c" = gamma * I_c,
-  "I_c_to_D_c" = mu * I_c,
+  "I_c_to_D_c" = mu_adult * I_c,
   ### Sea C
   "S_sea_c_to_E_sea_c" = 0,
   "E_sea_c_to_S_sea_c" = eta * E_sea_c,
   "E_sea_c_to_I_sea_c" = sigma * E_sea_c,
   "I_sea_c_to_R_sea_c" = gamma * I_sea_c,
-  "I_sea_c_to_D_sea_c" = mu * I_sea_c,
+  "I_sea_c_to_D_sea_c" = mu_adult * I_sea_c,
 
   
   
@@ -309,7 +310,7 @@ gillespie_seir = function(# All parameters
                           initial_number_breeders_A = 50,
                           initial_number_breeders_B = 50,
                           initial_number_breeders_C = 50,
-                          # Number of simulation days
+                          # Number of simu_adultlation days
                           total_time = 70,
                           # Induced dispersion mode (deterministic or stochastic)
                           dispersal_stochactic = T,
@@ -363,7 +364,7 @@ gillespie_seir = function(# All parameters
   
   ## Breeders
   ## In colony A
-  N = initial_number_breeders_A                 
+  N = initial_number_breeders_A/2                
   initial_infected = initial_number_infected_breeders_A
   initial_exposed = 0
   initial_recovered = 0
@@ -377,7 +378,7 @@ gillespie_seir = function(# All parameters
                       D = initial_dead)
   
   ## At sea A
-  N = 50                  
+  N = initial_number_breeders_A/2                   
   initial_infected = 0
   initial_exposed = 0
   initial_recovered = 0
@@ -392,7 +393,7 @@ gillespie_seir = function(# All parameters
   
   
   ## In colony B
-  N = initial_number_breeders_B                  
+  N = initial_number_breeders_B/2                  
   initial_infected = 0
   initial_exposed = 0
   initial_recovered = 0
@@ -406,7 +407,7 @@ gillespie_seir = function(# All parameters
                        D = initial_dead)
   
   ## At sea B
-  N = 50                
+  N = initial_number_breeders_B/2                
   initial_infected = 0
   initial_exposed = 0
   initial_recovered = 0
@@ -420,7 +421,7 @@ gillespie_seir = function(# All parameters
                           D = initial_dead)
   
   ## In colony C
-  N = initial_number_breeders_C                 
+  N = initial_number_breeders_C/2               
   initial_infected = 0
   initial_exposed = 0
   initial_recovered = 0
@@ -434,7 +435,7 @@ gillespie_seir = function(# All parameters
                        D = initial_dead)
   
   ## At sea C
-  N = 50                
+  N = initial_number_breeders_C/2                
   initial_infected = 0
   initial_exposed = 0
   initial_recovered = 0
@@ -536,7 +537,8 @@ gillespie_seir = function(# All parameters
   sigma = param$sigma
   eta = param$eta
   gamma = param$gamma
-  mu = param$mu
+  mu_adult = param$mu_adult
+  mu_nestling = param$mu_nestling
   
   zeta_to_colony = param$zeta_to_colony
   zeta_to_sea = param$zeta_to_sea
@@ -644,7 +646,7 @@ gillespie_seir = function(# All parameters
     
     # Rates of each possible event
     rates = calculate_rates(beta_E_colony, beta_I_colony,
-                            sigma,eta, gamma, mu,
+                            sigma,eta, gamma, mu_adult, mu_nestling,
                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
                             prop_dispersal, prop_prospecting, dispersal_date,
                             hatching_date,
@@ -710,7 +712,7 @@ gillespie_seir = function(# All parameters
       
       # Rates of each possible event
       rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
-                                          sigma,eta, gamma, mu,
+                                          sigma,eta, gamma, mu_adult, mu_nestling,
                                           zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
                                           prop_dispersal, prop_prospecting, dispersal_date,
                                           hatching_date,
@@ -848,7 +850,7 @@ gillespie_seir = function(# All parameters
           
           # Rates of each possible event
           rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
-                                              sigma,eta, gamma, mu,
+                                              sigma,eta, gamma, mu_adult, mu_nestling,
                                               zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
                                               prop_dispersal, prop_prospecting, dispersal_date,
                                               hatching_date,
@@ -1804,7 +1806,7 @@ gillespie_seir = function(# All parameters
 
   } # while
   
-  output = data.frame(
+  all_states = data.frame(
     time = times,
     
     S_a_N = states[1, 1, ],
@@ -1906,29 +1908,40 @@ gillespie_seir = function(# All parameters
     D_c_total = D_c + D_sea_c
   )
   
+  output = list(all_states,
+       simulated_dispersal_date)
+  
   return(output)
 } # function
 
 
 # Plot results
 
-plot_seir = function(output_ = output){
+plot_seir = function(output_){
   
-  output_long = melt(output_[1:nrow(output_)-1, ], id = "time")
+  output_1 = output_[[1]]
+  output_2 = output_[[2]]
+  
+  
+  output_long = melt(output_1[1:nrow(output_1)-1, ], id = "time")
   
   # In A
   output_a = output_long %>% filter(variable %in% c("S_a_total", "E_a_total", "I_a_total", "R_a_total", "D_a_total"))
-  plot_a = ggplot(output_a, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_a = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_a, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
-    ggtitle("Breeders in A (colony+Sea)")+
+    ggtitle("Breeders in A (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_a$value == 0)) 1 else NA)
+    ylim(0, if (all(output_a$value == 0)) 1 else NA) 
   
   output_a_N = output_long %>% filter(variable %in% c("S_a_N", "E_a_N", "I_a_N", "R_a_N", "D_a_N"))
-  plot_a_N = ggplot(output_a_N, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_a_N = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_a_N, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in A")+
@@ -1936,8 +1949,10 @@ plot_seir = function(output_ = output){
     ylim(0, if (all(output_a_N$value == 0)) 1 else NA)
   
   output_a_NB = output_long %>% filter(variable %in% c("S_a_NB", "E_a_NB", "I_a_NB", "R_a_NB", "D_a_NB"))
-  plot_a_NB = ggplot(output_a_NB, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_a_NB =  ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_a_NB, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony A")+
@@ -1946,17 +1961,21 @@ plot_seir = function(output_ = output){
   
   # In B
   output_b = output_long %>% filter(variable %in% c("S_b_total", "E_b_total", "I_b_total", "R_b_total", "D_b_total"))
-  plot_b = ggplot(output_b, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_b = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_b, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
-    ggtitle("Breeders in B (colony+Sea)")+
+    ggtitle("Breeders in B (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
     ylim(0, if (all(output_b$value == 0)) 1 else NA)
   
   output_b_N = output_long %>% filter(variable %in% c("S_b_N", "E_b_N", "I_b_N", "R_b_N", "D_b_N"))
-  plot_b_N = ggplot(output_b_N, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_b_N = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_b_N, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in B")+
@@ -1964,8 +1983,10 @@ plot_seir = function(output_ = output){
     ylim(0, if (all(output_b_N$value == 0)) 1 else NA)
   
   output_b_NB = output_long %>% filter(variable %in% c("S_b_NB", "E_b_NB", "I_b_NB", "R_b_NB", "D_b_NB"))
-  plot_b_NB = ggplot(output_b_NB, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_b_NB = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_b_NB, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony B")+
@@ -1975,17 +1996,21 @@ plot_seir = function(output_ = output){
   # In C
   
   output_c = output_long %>% filter(variable %in% c("S_c_total", "E_c_total", "I_c_total", "R_c_total", "D_c_total"))
-  plot_c = ggplot(output_c, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_c = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_c, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
-    ggtitle("Breeders in C (colony+Sea)")+
+    ggtitle("Breeders in C (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
     ylim(0, if (all(output_c$value == 0)) 1 else NA)
   
   output_c_N = output_long %>% filter(variable %in% c("S_c_N", "E_c_N", "I_c_N", "R_c_N", "D_c_N"))
-  plot_c_N = ggplot(output_c_N, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_c_N = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_c_N, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in C")+
@@ -1993,8 +2018,10 @@ plot_seir = function(output_ = output){
     ylim(0, if (all(output_c_N$value == 0)) 1 else NA)
   
   output_c_NB = output_long %>% filter(variable %in% c("S_c_NB", "E_c_NB", "I_c_NB", "R_c_NB", "D_c_NB"))
-  plot_c_NB = ggplot(output_c_NB, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_c_NB = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_c_NB, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony C")+
@@ -2005,8 +2032,10 @@ plot_seir = function(output_ = output){
   # At sea
   
   output_sea_NB = output_long %>% filter(variable %in% c("S_sea_NB", "E_sea_NB", "I_sea_NB", "R_sea_NB", "D_sea_NB"))
-  plot_sea_NB = ggplot(output_sea_NB, aes(x = time, y = value, color = variable)) +
-    geom_line() +
+  plot_sea_NB = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_sea_NB, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Number of individuals", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder at sea")+
@@ -2029,19 +2058,28 @@ plot_seir = function(output_ = output){
 # Run simulation
 
 time1 <- Sys.time()
-output = gillespie_seir(param = param, 
-                        induced_dispersal = T,
-                        initial_number_infected_breeders_A = 1, 
-                        initial_number_breeders_A = 50,
-                        initial_number_breeders_B = 50,
-                        initial_number_breeders_C = 50,
-                        total_time = 70,
-                        dispersal_stochactic = T,
-                        tau = 0.2)
+output = gillespie_seir(
+  # All parameters
+  param = param, 
+  # Do we induce dispersion ?
+  induced_dispersal = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochactic = T,
+  # Reaction time between 1rst death and induced dispersal 
+  dispersal_reaction_time = 2,
+  # Initial conditions
+  initial_number_infected_breeders_A = 1,
+  initial_number_breeders_A = 100,
+  initial_number_breeders_B = 100,
+  initial_number_breeders_C = 10,
+  # Number of simu_adultlation days
+  total_time = 30,
+  # Parameter of the taul-leap agorithm
+  tau = 0.05)
 
 time2 <- Sys.time()
 time2 - time1
-plot_seir()
+plot_seir(output_ = output)
 
 # 
 # 
