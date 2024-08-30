@@ -2,10 +2,6 @@
 
 ##
 
-# attraction vers les conspecifique
-
-# ajout de d'une fécondité variable
-
 # Un bloc avec les 5 scenario
 
 # Tableau de paramètre pour les sous cas
@@ -79,7 +75,7 @@ param = list(
   # Proportion of dispersed adults
   prop_dispersal = 1,
   # Date of induced dispersion (if deterministic)
-  dispersal_date = 30,
+  dispersal_date = 0,
   
   # Demographic parameters
   hatching_date = 10
@@ -230,23 +226,23 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB * ( (S_a+E_a+I_a+R_a)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   
   "E_sea_NB_to_E_a_NB" = rho_to_colony * E_sea_NB * ( (S_a+E_a+I_a+R_a)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   "I_sea_NB_to_I_a_NB" = rho_to_colony * I_sea_NB * ( (S_a+E_a+I_a+R_a)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   "R_sea_NB_to_R_a_NB" = rho_to_colony * R_sea_NB * ( (S_a+E_a+I_a+R_a)
                                                       /(S_a+E_a+I_a+R_a+
                                                         S_b+E_b+I_b+R_b+
-                                                        S_c+E_c+I_c+R_c)
+                                                        S_c+E_c+I_c+R_c+1)
                                                       ),
   ### In B
   ### From colony B to sea
@@ -258,22 +254,22 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "S_sea_NB_to_S_b_NB" = rho_to_colony * S_sea_NB * ( (S_b+E_b+I_b+R_b)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   "E_sea_NB_to_E_b_NB" = rho_to_colony * E_sea_NB * ( (S_b+E_b+I_b+R_b)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   "I_sea_NB_to_I_b_NB" = rho_to_colony * I_sea_NB * ( (S_b+E_b+I_b+R_b)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   "R_sea_NB_to_R_b_NB" = rho_to_colony * R_sea_NB * ( (S_b+E_b+I_b+R_b)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
-                                                       S_c+E_c+I_c+R_c)
+                                                       S_c+E_c+I_c+R_c+1)
                                                      ),
   ### In C
   ### From colony C to sea
@@ -285,22 +281,22 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "S_sea_NB_to_S_c_NB" = rho_to_colony * S_sea_NB * ( (S_c+E_c+I_c+R_c)
                                                       /(S_a+E_a+I_a+R_a+
                                                         S_b+E_b+I_b+R_b+
-                                                        S_c+E_c+I_c+R_c)
+                                                        S_c+E_c+I_c+R_c+1)
                                                       ),
   "E_sea_NB_to_E_c_NB" = rho_to_colony * E_sea_NB * ( (S_c+E_c+I_c+R_c)
                                                       /(S_a+E_a+I_a+R_a+
                                                         S_b+E_b+I_b+R_b+
-                                                        S_c+E_c+I_c+R_c)
+                                                        S_c+E_c+I_c+R_c+1)
                                                       ),
   "I_sea_NB_to_I_c_NB" = rho_to_colony * I_sea_NB * ( (S_c+E_c+I_c+R_c)
                                                       /(S_a+E_a+I_a+R_a+
                                                         S_b+E_b+I_b+R_b+
-                                                        S_c+E_c+I_c+R_c)
+                                                        S_c+E_c+I_c+R_c+1)
                                                       ),
   "R_sea_NB_to_R_c_NB" = rho_to_colony * R_sea_NB * ( (S_c+E_c+I_c+R_c)
                                                       /(S_a+E_a+I_a+R_a+
                                                         S_b+E_b+I_b+R_b+
-                                                        S_c+E_c+I_c+R_c)
+                                                        S_c+E_c+I_c+R_c+1)
                                                       ),
   
   ## Breeders
@@ -2145,36 +2141,59 @@ summary_output = function(output){
   N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a")] %>% sum()
   dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
   a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
-
-
+  max_infected_a =  output[, c("E_a", "E_sea_a", "I_a","I_sea_a")] %>% 
+    rowSums() %>% 
+    max()
+  
   N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b")] %>% sum()
   dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
   b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
+  max_infected_b =  output[, c("E_b", "E_sea_b", "I_b","I_sea_b")] %>% 
+    rowSums() %>% 
+    max()
   
   N_c = output[1, c("S_c", "I_c", "S_sea_c", "I_sea_c")] %>% sum()
   dead_c = output[nrow(output), c("D_c","D_sea_c")] %>% sum()
   c_N = output[nrow(output), c("S_c_N", "E_c_N", "I_c_N", "R_c_N")] %>% sum()
+  max_infected_c =  output[, c("E_c", "E_sea_c", "I_c","I_sea_c")] %>% 
+    rowSums() %>% 
+    max()
 
 
   nb_adults = N_a + N_b + N_c - dead_a - dead_b - dead_c
   nb_nestlings = a_N + b_N + c_N
   nb_adults_equi = nb_adults + (0.8) * (0.4) * nb_nestlings
+  
+  
+  nb_infected_colonies = 
+    sum(max_infected_a > 0,
+        max_infected_b > 0,
+        max_infected_c > 0)
 
 
   return( data.frame(
 
     nb_adults = nb_adults,
     nb_nestlings = nb_nestlings,
-    nb_adults_equi = nb_adults_equi
+    nb_adults_equi = nb_adults_equi,
+    
+    max_infected_a = max_infected_a,
+    max_infected_b = max_infected_b,
+    max_infected_c = max_infected_c,
+    
+    nb_infected_colonies = nb_infected_colonies
 
 
 
   ))
 }
 
+ # summary_output(output)
 
 # stat_model --------------------------------------------------------------
-nb_iterations = 25
+
+nb_iterations = 10
+#nb_iterations = 25
 
 stat_model = function(nb_iterations_ = nb_iterations,
                       # All parameters
@@ -2213,12 +2232,117 @@ stat_model = function(nb_iterations_ = nb_iterations,
     response_list = rbind(response_list, summary_output(output))
 
   }
-
-  #return(response_list)
-
-
-  return(response_list$nb_adults_equi )
+  return(response_list)
 }
+
+# res = stat_model()
+# res$nb_infected_colonies
+
+
+
+# plot - 5 panels - scenario ----------------------------------------------
+
+no_stress = 
+  stat_model(nb_iterations_ = 1,
+             induced_dispersal_ = F,
+           initial_number_infected_breeders_A_ = 0,
+           tau_ = 0.2)
+
+baseline_outbreak = 
+  stat_model(induced_dispersal_ = F,
+             initial_number_infected_breeders_A_ = 1,
+             tau_ = 0.2)
+
+proactive_strategy = 
+  stat_model(nb_iterations_ = 1,
+             induced_dispersal_ = T,
+             initial_number_infected_breeders_A_ = 0,
+             dispersal_stochactic_ = F,
+             tau_ = 0.2)
+
+proactive_strategy_toolate = 
+  stat_model(induced_dispersal_ = T,
+             initial_number_infected_breeders_A_ = 1,
+             dispersal_stochactic_ = F,
+             tau_ = 0.2)
+
+reactive_strategy = 
+  stat_model(induced_dispersal_ = T,
+             initial_number_infected_breeders_A_ = 1,
+             dispersal_stochactic_ = T,
+             dispersal_reaction_time_ = 2,
+             tau_ = 0.2) 
+
+dt_panel_5 = 
+  data.frame(
+  scenario = c(
+    rep("no_stress",nrow(no_stress)),
+    rep("baseline_outbreak",nrow(baseline_outbreak)),
+    rep("proactive_strategy",nrow(proactive_strategy)),
+    rep("proactive_strategy_toolate",nrow(proactive_strategy_toolate)),
+    rep("reactive_strategy",nrow(reactive_strategy))
+    ),
+  
+  equi.survi.ad = c(
+    no_stress$nb_adults_equi,
+    baseline_outbreak$nb_adults_equi,
+    proactive_strategy$nb_adults_equi,
+    proactive_strategy_toolate$nb_adults_equi,
+    reactive_strategy$nb_adults_equi 
+    ),
+  
+  nb_infected_colonies = c(
+    no_stress$nb_infected_colonies,
+    baseline_outbreak$nb_infected_colonies,
+    proactive_strategy$nb_infected_colonies,
+    proactive_strategy_toolate$nb_infected_colonies,
+    reactive_strategy$nb_infected_colonies 
+  )
+  ) %>% 
+  mutate(scenario = factor(scenario, levels = c("no_stress", 
+                                                "baseline_outbreak",
+                                                "proactive_strategy",
+                                                "proactive_strategy_toolate",
+                                                "reactive_strategy")))
+  
+
+ggplot()+
+  geom_violin(data = dt_panel_5, aes(x = scenario, y = equi.survi.ad),
+              trim=FALSE, position=position_dodge(1)) +
+  geom_dotplot(data = dt_panel_5, aes(x = scenario, y = equi.survi.ad),
+               binaxis='y', stackdir='center',
+               binwidth = 2,
+               color = "darkgrey", alpha = 0.5)+
+  ggthemes::theme_clean() +
+    theme(
+      panel.border = element_blank(), # Enlever la bordure du panel
+      axis.title = element_text(size = 11),  # Thicken axis titles
+      axis.text = element_text(size = 10),  # Thicken axis text
+      axis.line = element_line(linewidth = 2),  # Thicken axis lines
+      panel.background = element_rect(fill = "transparent", color = NA),
+      plot.background = element_rect(fill = "transparent", color = NA),
+      legend.position =  "none"
+    )
+
+ggplot()+
+  geom_violin(data = dt_panel_5,
+              aes(x = scenario, y = nb_infected_colonies),
+              trim=FALSE, position=position_dodge(1)) +
+  geom_dotplot(data = dt_panel_5, 
+               aes(x = scenario, y = nb_infected_colonies),
+               binaxis='y', stackdir='center',
+               color = "darkgrey", alpha = 0.5)+
+  theme(
+    panel.border = element_blank(), # Enlever la bordure du panel
+    axis.title = element_text(size = 11),  # Thicken axis titles
+    axis.text = element_text(size = 10),  # Thicken axis text
+    axis.line = element_line(linewidth = 0.2),  # Thicken axis lines
+    panel.background = element_rect(fill = "transparent", color = NA),
+    plot.background = element_rect(fill = "transparent", color = NA),
+    legend.position =  "none"
+  )
+
+
 
 
 # plot --------------------------------------------------------------------
