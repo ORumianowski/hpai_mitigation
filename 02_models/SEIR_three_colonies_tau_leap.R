@@ -2111,13 +2111,13 @@ output = gillespie_seir(
   # All parameters
   param = param, 
   # Do we induce dispersion ?
-  induced_dispersal = F,
+  induced_dispersal = T,
   # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic = T,
+  dispersal_stochactic = F,
   # Reaction time between 1rst death and induced dispersal 
   dispersal_reaction_time = 2,
   # Initial conditions
-  initial_number_infected_breeders_A = 1,
+  initial_number_infected_breeders_A = 0,
   initial_number_breeders_A = 100,
   initial_number_breeders_B = 100,
   initial_number_breeders_C = 10,
@@ -2192,7 +2192,7 @@ summary_output = function(output){
 
 # stat_model --------------------------------------------------------------
 
-nb_iterations = 10
+nb_iterations = 25
 #nb_iterations = 25
 
 stat_model = function(nb_iterations_ = nb_iterations,
@@ -2276,11 +2276,11 @@ reactive_strategy =
 dt_panel_5 = 
   data.frame(
   scenario = c(
-    rep("no_stress",nrow(no_stress)),
-    rep("baseline_outbreak",nrow(baseline_outbreak)),
-    rep("proactive_strategy",nrow(proactive_strategy)),
-    rep("proactive_strategy_toolate",nrow(proactive_strategy_toolate)),
-    rep("reactive_strategy",nrow(reactive_strategy))
+    rep("Healty site",nrow(no_stress)),
+    rep("Baseline outbreak",nrow(baseline_outbreak)),
+    rep("Proactive strategy",nrow(proactive_strategy)),
+    rep("Proactive strategy - Too late",nrow(proactive_strategy_toolate)),
+    rep("Reactive strategy",nrow(reactive_strategy))
     ),
   
   equi.survi.ad = c(
@@ -2299,15 +2299,18 @@ dt_panel_5 =
     reactive_strategy$nb_infected_colonies 
   )
   ) %>% 
-  mutate(scenario = factor(scenario, levels = c("no_stress", 
-                                                "baseline_outbreak",
-                                                "proactive_strategy",
-                                                "proactive_strategy_toolate",
-                                                "reactive_strategy")))
+  mutate(scenario = factor(scenario, levels = c("Healty site", 
+                                                "Baseline outbreak",
+                                                "Proactive strategy",
+                                                "Proactive strategy - Too late",
+                                                "Reactive strategy")))
   
 
-ggplot()+
-  geom_violin(data = dt_panel_5, aes(x = scenario, y = equi.survi.ad),
+p_equi.survi.ad = ggplot()+
+  geom_violin(data = dt_panel_5, 
+              aes(x = scenario, y = equi.survi.ad),
+              fill = "lightblue",
+              color = "white",
               trim=FALSE, position=position_dodge(1)) +
   geom_dotplot(data = dt_panel_5, aes(x = scenario, y = equi.survi.ad),
                binaxis='y', stackdir='center',
@@ -2315,6 +2318,7 @@ ggplot()+
                color = "darkgrey", alpha = 0.5)+
   ggthemes::theme_clean() +
     theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
       panel.border = element_blank(), # Enlever la bordure du panel
       axis.title = element_text(size = 11),  # Thicken axis titles
       axis.text = element_text(size = 10),  # Thicken axis text
@@ -2322,25 +2326,40 @@ ggplot()+
       panel.background = element_rect(fill = "transparent", color = NA),
       plot.background = element_rect(fill = "transparent", color = NA),
       legend.position =  "none"
-    )
+    )+
+  ylim(0, NA)+
+    labs(x = "Scenario", y = "Equivalent number \n  of survived adults") 
 
-ggplot()+
+p_nb_infected_colonies = ggplot()+
   geom_violin(data = dt_panel_5,
               aes(x = scenario, y = nb_infected_colonies),
+              fill = "lightgreen",
+              color = "white",
               trim=FALSE, position=position_dodge(1)) +
   geom_dotplot(data = dt_panel_5, 
                aes(x = scenario, y = nb_infected_colonies),
                binaxis='y', stackdir='center',
-               color = "darkgrey", alpha = 0.5)+
+               binwidth = 0.04,
+               color = "darkgrey", alpha = 0.5,
+               stackratio=0.5)+
+  ggthemes::theme_clean() +
   theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(), # Enlever la bordure du panel
     axis.title = element_text(size = 11),  # Thicken axis titles
     axis.text = element_text(size = 10),  # Thicken axis text
-    axis.line = element_line(linewidth = 0.2),  # Thicken axis lines
+    axis.line = element_line(linewidth = 2),  # Thicken axis lines
     panel.background = element_rect(fill = "transparent", color = NA),
     plot.background = element_rect(fill = "transparent", color = NA),
     legend.position =  "none"
-  )
+  )+
+  ylim(0, 4)+
+  labs(x = "Scenario", y = "Number of infected colonies") 
+
+
+plot_grid(p_equi.survi.ad,
+          p_nb_infected_colonies,
+          labels = c("A", "B"))
 
 
 
