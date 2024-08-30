@@ -6,6 +6,10 @@
 
 # ajout de d'une fécondité variable
 
+# Un bloc avec les 5 scenario
+
+# Tableau de paramètre pour les sous cas
+
 ##
 
 
@@ -223,10 +227,27 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "I_a_NB_to_I_sea_NB" = rho_to_sea * I_a_NB,
   "R_a_NB_to_R_sea_NB" = rho_to_sea * R_a_NB,
   ### From sea to colony A
-  "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB,
-  "E_sea_NB_to_E_a_NB" = rho_to_colony * E_sea_NB,
-  "I_sea_NB_to_I_a_NB" = rho_to_colony * I_sea_NB,
-  "R_sea_NB_to_R_a_NB" = rho_to_colony * R_sea_NB,
+  "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB * ( (S_a+E_a+I_a+R_a)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  
+  "E_sea_NB_to_E_a_NB" = rho_to_colony * E_sea_NB * ( (S_a+E_a+I_a+R_a)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  "I_sea_NB_to_I_a_NB" = rho_to_colony * I_sea_NB * ( (S_a+E_a+I_a+R_a)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  "R_sea_NB_to_R_a_NB" = rho_to_colony * R_sea_NB * ( (S_a+E_a+I_a+R_a)
+                                                      /(S_a+E_a+I_a+R_a+
+                                                        S_b+E_b+I_b+R_b+
+                                                        S_c+E_c+I_c+R_c)
+                                                      ),
   ### In B
   ### From colony B to sea
   "S_b_NB_to_S_sea_NB" = rho_to_sea * S_b_NB,
@@ -234,10 +255,26 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "I_b_NB_to_I_sea_NB" = rho_to_sea * I_b_NB,
   "R_b_NB_to_R_sea_NB" = rho_to_sea * R_b_NB,
   ### From sea to colony B
-  "S_sea_NB_to_S_b_NB" = rho_to_colony * S_sea_NB,
-  "E_sea_NB_to_E_b_NB" = rho_to_colony * E_sea_NB,
-  "I_sea_NB_to_I_b_NB" = rho_to_colony * I_sea_NB,
-  "R_sea_NB_to_R_b_NB" = rho_to_colony * R_sea_NB,
+  "S_sea_NB_to_S_b_NB" = rho_to_colony * S_sea_NB * ( (S_b+E_b+I_b+R_b)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  "E_sea_NB_to_E_b_NB" = rho_to_colony * E_sea_NB * ( (S_b+E_b+I_b+R_b)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  "I_sea_NB_to_I_b_NB" = rho_to_colony * I_sea_NB * ( (S_b+E_b+I_b+R_b)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
+  "R_sea_NB_to_R_b_NB" = rho_to_colony * R_sea_NB * ( (S_b+E_b+I_b+R_b)
+                                                     /(S_a+E_a+I_a+R_a+
+                                                       S_b+E_b+I_b+R_b+
+                                                       S_c+E_c+I_c+R_c)
+                                                     ),
   ### In C
   ### From colony C to sea
   "S_c_NB_to_S_sea_NB" = rho_to_sea * S_c_NB,
@@ -245,10 +282,26 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "I_c_NB_to_I_sea_NB" = rho_to_sea * I_c_NB,
   "R_c_NB_to_R_sea_NB" = rho_to_sea * R_c_NB,
   ### From sea to colony C
-  "S_sea_NB_to_S_c_NB" = rho_to_colony * S_sea_NB,
-  "E_sea_NB_to_E_c_NB" = rho_to_colony * E_sea_NB,
-  "I_sea_NB_to_I_c_NB" = rho_to_colony * I_sea_NB,
-  "R_sea_NB_to_R_c_NB" = rho_to_colony * R_sea_NB,
+  "S_sea_NB_to_S_c_NB" = rho_to_colony * S_sea_NB * ( (S_c+E_c+I_c+R_c)
+                                                      /(S_a+E_a+I_a+R_a+
+                                                        S_b+E_b+I_b+R_b+
+                                                        S_c+E_c+I_c+R_c)
+                                                      ),
+  "E_sea_NB_to_E_c_NB" = rho_to_colony * E_sea_NB * ( (S_c+E_c+I_c+R_c)
+                                                      /(S_a+E_a+I_a+R_a+
+                                                        S_b+E_b+I_b+R_b+
+                                                        S_c+E_c+I_c+R_c)
+                                                      ),
+  "I_sea_NB_to_I_c_NB" = rho_to_colony * I_sea_NB * ( (S_c+E_c+I_c+R_c)
+                                                      /(S_a+E_a+I_a+R_a+
+                                                        S_b+E_b+I_b+R_b+
+                                                        S_c+E_c+I_c+R_c)
+                                                      ),
+  "R_sea_NB_to_R_c_NB" = rho_to_colony * R_sea_NB * ( (S_c+E_c+I_c+R_c)
+                                                      /(S_a+E_a+I_a+R_a+
+                                                        S_b+E_b+I_b+R_b+
+                                                        S_c+E_c+I_c+R_c)
+                                                      ),
   
   ## Breeders
   ### In A
@@ -2081,191 +2134,190 @@ time2 <- Sys.time()
 time2 - time1
 plot_seir(output_ = output)
 
-# 
-# 
-# # summary_output ----------------------------------------------------------
-# 
-# summary_output = function(output){
-# 
-#   N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a",
-#                     "S_a_NB", "I_a_NB", "S_sea_a_NB", "I_sea_a_NB")] %>% sum()
-#   max_infected_a = max(output[, c("I_a","I_sea_a")])
-#   prop_max_infected_a = max_infected_a / N_a
-#   dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
-#   a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
-#   
-#   
-#   N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b",
-#                     "S_b_NB", "I_b_NB", "S_sea_b_NB", "I_sea_b_NB")] %>% sum()
-#   max_infected_b = max(output[, c("I_b","I_sea_b")])
-#   prop_max_infected_b = max_infected_b / N_b
-#   dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
-#   b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
-# 
-#   
-#   nb_adults = N_a + N_b - dead_a - dead_b
-#   nb_nestlings = a_N + b_N
-#   nb_adults_equi = nb_adults + (0.2)*nb_nestlings
-# 
-# 
-#   return( data.frame(
-#     N_a = N_a,
-#     max_infected_a = max_infected_a,
-#     prop_max_infected_a = prop_max_infected_a,
-#     dead_a = dead_a,
-#     a_N = a_N,
-#     
-#     N_b = N_b,
-#     max_infected_b = max_infected_b,
-#     prop_max_infected_b = prop_max_infected_b,
-#     dead_b = dead_b,
-#     b_N = b_N,
-#     
-#     nb_adults = nb_adults,
-#     nb_nestlings = nb_nestlings,
-#     nb_adults_equi = nb_adults_equi
-#     
-#     
-# 
-#   ))
-# }
-# 
-# 
-# # stat_model --------------------------------------------------------------
-# 
-# stat_model = function(nb_iterations = 5,
-#                       param_ = param,
-#                       induced_dispersal_ = T,
-#                       dispersal_reaction_time_ = 5,
-#                       initial_number_breeders_A_ = 50,
-#                       initial_number_infected_breeders_A_ = 1,
-#                       initial_number_breeders_B_ = 50,
-#                       total_time_ = 70,
-#                       dispersal_stochactic_ = T,
-#                       tau_ = 0.2){
-#   
-#   response_list = data.frame()
-#   
-#   for (i in 1:nb_iterations){
-#     
-#     output = gillespie_seir(param = param_,
-#                             induced_dispersal = induced_dispersal_,
-#                             dispersal_reaction_time = dispersal_reaction_time_,
-#                             initial_number_breeders_A = initial_number_breeders_A_,
-#                             initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
-#                             initial_number_breeders_B = initial_number_breeders_B_,
-#                             total_time = total_time_,
-#                             dispersal_stochactic = dispersal_stochactic_,
-#                             tau = tau_)
-#     
-#     response_list = rbind(response_list, summary_output(output))
-#     
-#   }
-#   
-#   #return(response_list)
-#   
-#   
-#   return(response_list$nb_adults_equi )
-# }
-# 
-# 
-# # plot --------------------------------------------------------------------
-# 
-# 
-# 
+
+
+# summary_output ----------------------------------------------------------
+
+summary_output = function(output){
+  
+  output = output[[1]]
+
+  N_a = output[1, c("S_a", "I_a", "S_sea_a", "I_sea_a")] %>% sum()
+  dead_a = output[nrow(output), c("D_a","D_sea_a")] %>% sum()
+  a_N = output[nrow(output), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
+
+
+  N_b = output[1, c("S_b", "I_b", "S_sea_b", "I_sea_b")] %>% sum()
+  dead_b = output[nrow(output), c("D_b","D_sea_b")] %>% sum()
+  b_N = output[nrow(output), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
+  
+  N_c = output[1, c("S_c", "I_c", "S_sea_c", "I_sea_c")] %>% sum()
+  dead_c = output[nrow(output), c("D_c","D_sea_c")] %>% sum()
+  c_N = output[nrow(output), c("S_c_N", "E_c_N", "I_c_N", "R_c_N")] %>% sum()
+
+
+  nb_adults = N_a + N_b + N_c - dead_a - dead_b - dead_c
+  nb_nestlings = a_N + b_N + c_N
+  nb_adults_equi = nb_adults + (0.8) * (0.4) * nb_nestlings
+
+
+  return( data.frame(
+
+    nb_adults = nb_adults,
+    nb_nestlings = nb_nestlings,
+    nb_adults_equi = nb_adults_equi
+
+
+
+  ))
+}
+
+
+# stat_model --------------------------------------------------------------
+nb_iterations = 25
+
+stat_model = function(nb_iterations_ = nb_iterations,
+                      # All parameters
+                      param_ = param, 
+                      # Do we induce dispersion ?
+                      induced_dispersal_ = T,
+                      # Induced dispersion mode (deterministic or stochastic)
+                      dispersal_stochactic_ = T,
+                      # Reaction time between 1rst death and induced dispersal 
+                      dispersal_reaction_time_ = 2,
+                      # Initial conditions
+                      initial_number_infected_breeders_A_ = 1,
+                      initial_number_breeders_A_ = 100,
+                      initial_number_breeders_B_ = 100,
+                      initial_number_breeders_C_ = 10,
+                      # Number of simu_adultlation days
+                      total_time_ = 30,
+                      # Parameter of the taul-leap agorithm
+                      tau_ = 0.1){
+
+  response_list = data.frame()
+
+  for (i in 1:nb_iterations_){
+
+    output = gillespie_seir(param = param_,
+                            induced_dispersal = induced_dispersal_,
+                            dispersal_stochactic = dispersal_stochactic_,
+                            dispersal_reaction_time = dispersal_reaction_time_,
+                            initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
+                            initial_number_breeders_A = initial_number_breeders_A_,
+                            initial_number_breeders_B = initial_number_breeders_B_,
+                            initial_number_breeders_C = initial_number_breeders_C_,
+                            total_time = total_time_,
+                            tau = tau_)
+
+    response_list = rbind(response_list, summary_output(output))
+
+  }
+
+  #return(response_list)
+
+
+  return(response_list$nb_adults_equi )
+}
+
+
+# plot --------------------------------------------------------------------
+
+
+
 # output = c()
-# val_test = (1:20)*2
+# val_test = c(1,2,3,5,10)
 # 
 # for (k in val_test){
-#   
+# 
 #   res = stat_model(dispersal_reaction_time_ = k)
-#   
+# 
 #   output = c(output, res)
-#   
+# 
 # }
 # 
-# df = data.frame(dispersal_reaction_time = rep(val_test, each = 5),
-#            output=output) %>% 
-#   mutate(dispersal_reaction_time = dispersal_reaction_time %>%as.factor())
+# df = data.frame(dispersal_reaction_time = rep(val_test, each = nb_iterations),
+#            output=output) %>%
+#   mutate(dispersal_reaction_time = dispersal_reaction_time %>% as.factor()) 
 # 
 # ggplot(data = df, aes(x = dispersal_reaction_time, y = output))+
-#   geom_violin(position=position_dodge(1)) + 
-#   geom_dotplot(binaxis='y', stackdir='center', binwidth=0.4) +
+#   geom_violin(trim=FALSE, position=position_dodge(1)) +
+#   geom_dotplot(binaxis='y', stackdir='center', binwidth=0.4, color = "darkgrey", alpha = 0.5) +
 #   ggthemes::theme_clean() +
 #   theme(
 #     panel.border = element_blank(), # Enlever la bordure du panel
 #     axis.title = element_text(size = 11),  # Thicken axis titles
 #     axis.text = element_text(size = 10),  # Thicken axis text
 #     axis.line = element_line(size = 2),  # Thicken axis lines
-#     panel.background = element_rect(fill = "transparent", color = NA), 
-#     plot.background = element_rect(fill = "transparent", color = NA), 
+#     panel.background = element_rect(fill = "transparent", color = NA),
+#     plot.background = element_rect(fill = "transparent", color = NA),
 #     legend.position =  "none"
 #   )+
-#   labs(x = "Reaction Time", y = "Settlement probabilities", title = "",
-#        fill = "Arrival colony type") 
-#   
-# 
-# 
-# 
-# # data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
-# # ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-# #        aes(x = variable, y = value)) +
-# #   geom_violin() +
-# #   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-# 
-# 
-# 
-# 
-# # 
-# # output_long_list = data.frame()
-# # response_list = data.frame()
-# # 
-# # nb_iterations = 8
-# # 
-# # for (i in 1:nb_iterations){
-# #   
-# #   output = gillespie_seir(param = param,
-# #                           induced_dispersal = T,
-# #                           initial_number_breeders_A = 50,
-# #                           initial_number_infected_breeders_A = 1,
-# #                           initial_number_breeders_B = 50,
-# #                           total_time = 70,
-# #                           dispersal_stochactic = T,
-# #                           tau = 0.2)
-# #   
-# #   output_long = melt(output, id = "time")
-# #   
-# #   output_long_i = cbind(output_long,
-# #                         data.frame(simulation = rep(i, times = nrow(output_long))))
-# #   
-# #   output_long_list = rbind(output_long_list, output_long_i)
-# #   response_list = rbind(response_list, summary_output(output))
-# #   
-# # }
-# # 
-# # 
-# # output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
-# # 
-# # p = ggplot()
-# # for(i in 1:nb_iterations){
-# #   p = p + geom_line(data = output_a %>% subset(., simulation == i )
-# #                     , aes(x = time, y = value, color = variable))
-# # }
-# # p = p +
-# #   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
-# #   theme_minimal() +
-# #   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
-# # 
-# # 
-# # p
-# # 
-# # 
-# # data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
-# # 
-# # # Créer les diagrammes en violon pour chaque variable
-# # ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-# #        aes(x = variable, y = value)) +
-# #   geom_violin() +
-# #   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-# # 
-# # 
+#   labs(x = "Reaction Time", y = "Score \n (Equiv.Survived Ad.)", title = "",
+#        fill = "Arrival colony type")
+
+
+
+
+# data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
+# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+#        aes(x = variable, y = value)) +
+#   geom_violin() +
+#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+
+
+
+
+#
+# output_long_list = data.frame()
+# response_list = data.frame()
+#
+# nb_iterations = 8
+#
+# for (i in 1:nb_iterations){
+#
+#   output = gillespie_seir(param = param,
+#                           induced_dispersal = T,
+#                           initial_number_breeders_A = 50,
+#                           initial_number_infected_breeders_A = 1,
+#                           initial_number_breeders_B = 50,
+#                           total_time = 70,
+#                           dispersal_stochactic = T,
+#                           tau = 0.2)
+#
+#   output_long = melt(output, id = "time")
+#
+#   output_long_i = cbind(output_long,
+#                         data.frame(simulation = rep(i, times = nrow(output_long))))
+#
+#   output_long_list = rbind(output_long_list, output_long_i)
+#   response_list = rbind(response_list, summary_output(output))
+#
+# }
+#
+#
+# output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
+#
+# p = ggplot()
+# for(i in 1:nb_iterations){
+#   p = p + geom_line(data = output_a %>% subset(., simulation == i )
+#                     , aes(x = time, y = value, color = variable))
+# }
+# p = p +
+#   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
+#   theme_minimal() +
+#   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
+#
+#
+# p
+#
+#
+# data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
+#
+# # Créer les diagrammes en violon pour chaque variable
+# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
+#        aes(x = variable, y = value)) +
+#   geom_violin() +
+#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
+#
+#
