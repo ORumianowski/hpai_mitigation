@@ -4,6 +4,11 @@
 
 # clean & easy to use & organised
 
+# Should I add failures unrelated to the disease?
+
+
+# color in relation the position compared to baseline outbreak
+
 ##
 
 
@@ -38,8 +43,6 @@ library(cowplot)
 calculate_rates = function(  beta_E_colony, beta_I_colony,
                              sigma,eta, gamma, mu_adult, mu_nestling,
                              zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
-                             prop_dispersal, prop_prospecting, dispersal_date,
-                             hatching_date,
                              # A
                              S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                              S_a, E_a, I_a, R_a, D_a,
@@ -170,7 +173,7 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "E_a_NB_to_E_sea_NB" = rho_to_sea * E_a_NB,
   "I_a_NB_to_I_sea_NB" = rho_to_sea * I_a_NB,
   "R_a_NB_to_R_sea_NB" = rho_to_sea * R_a_NB,
-  ### From sea to colony A
+  ### From sea to colony A (conspecific attraction)
   "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB * ( (S_a+E_a+I_a+R_a)
                                                      /(S_a+E_a+I_a+R_a+
                                                        S_b+E_b+I_b+R_b+
@@ -296,25 +299,26 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
 
 # Gillespie SEIR model function -------------------------------------------
 
-gillespie_seir = function(# Do we induce dispersion ?
-                          induced_dispersal = T,
-                          # Reaction time between 1rst death and induced dispersal
-                          dispersal_reaction_time = 5,
+gillespie_seir = function(# Parameter of the taul-leap agorithm
+                          tau = 0.25,
+                          # Number of simu_adultlation days
+                          total_time = 70,
                           # Initial conditions
                           initial_number_infected_breeders_A = 1,
                           initial_number_breeders_A = 50,
                           initial_number_breeders_B = 50,
                           initial_number_breeders_C = 50,
+                          # Do we induce dispersion ?
+                          induced_dispersal = T,
+                          # Induced dispersion mode (deterministic or stochastic)
+                          dispersal_stochactic = T,
+                          # Reaction time between 1rst death and induced dispersal
+                          dispersal_reaction_time = 5,
                           # Transmission rate from exposed individuals and from infectious individuals in a colony
                           BETA = 0.5,
                           # Time at sea before returning to a colony (non-breeders)
-                          TIME_AT_SEA_NB = 40,
-                          # Number of simu_adultlation days
-                          total_time = 70,
-                          # Induced dispersion mode (deterministic or stochastic)
-                          dispersal_stochactic = T,
-                          # Parameter of the taul-leap agorithm
-                          tau = 0.25) {
+                          TIME_AT_SEA_NB = 40
+                          ) {
   
   # Parameters --------------------------------------------------------------
   
@@ -322,33 +326,35 @@ gillespie_seir = function(# Do we induce dispersion ?
     
     # Epidemiological parameters
     
-    # Transmission rate from exposed individuals and from infectious individuals in a colony
+    ## Transmission rate from exposed individuals and from infectious individuals in a colony
+    ## First row - in colonies / Second row - at sea // First column - for exposed / Second column - for infectious
     beta = matrix(c(0.00, BETA,
                     0.00, 0.00),
                   nrow = 2, ncol = 2, byrow = T),
-    # Rate of progression from exposed to infectious (inverse of incubation period)
-    sigma = 1,
-    # Rate of progression from exposed to susceptible 
+    ## Rate of progression from exposed to infectious (inverse of incubation period)
+    sigma = 1/1,
+    ## Rate of progression from exposed to susceptible 
     eta =  0, 
-    # Recovery rate (inverse of infectious period)
+    ## Recovery rate (inverse of infectious period)
     gamma = 1/6,
-    # Disease-related mortality rate
-    # Adult
+    ## Disease-related mortality rate
+    ## Death probability = mu / (mu + gamma)
+    ## Adult
     mu_adult = 1/6 * (0.5/(1-0.5)), # 50% of mortality
-    # Nestling
-    mu_nestling = 1/6 * (0.8/(1-0.8)), # 50% of mortality
+    ## Nestling
+    mu_nestling = 1/6 * (0.8/(1-0.8)), # 80% of mortality
     
     
     # Mobility  parameters
     
-    # Transition from colony to the sea (breeders)
+    ## Transition from colony to the sea (breeders)
     zeta_to_sea = 1/2,
-    # Transition from sea to the colony (breeders)
+    ## Transition from sea to the colony (breeders)
     zeta_to_colony = 1/2,
-    # Transition from colony to the sea (non-breeders)
+    ## Transition from colony to the sea (non-breeders)
     rho_to_sea = 1/2,
-    # Transition from sea to the colony (non-breeders)
-    rho_to_colony = 1/TIME_AT_SEA_NB , # 
+    ## Transition from sea to the colony (non-breeders)
+    rho_to_colony = 1/TIME_AT_SEA_NB , 
     
     
     # Transition from breeder to non-breeder (reproductive failure)
@@ -357,12 +363,14 @@ gillespie_seir = function(# Do we induce dispersion ?
     
     # Induced dispersion parameters
     
-    # Proportion of dispersed adults
+    ## Proportion of dispersed adults
     prop_dispersal = 1,
-    # Date of induced dispersion (if deterministic)
+    ## Date of induced dispersion (if deterministic)
     dispersal_date = 0,
     
     # Demographic parameters
+    
+    ## Hatching date of the chicks
     hatching_date = 10
     
   )
@@ -698,8 +706,6 @@ gillespie_seir = function(# Do we induce dispersion ?
     rates = calculate_rates(beta_E_colony, beta_I_colony,
                             sigma,eta, gamma, mu_adult, mu_nestling,
                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
-                            prop_dispersal, prop_prospecting, dispersal_date,
-                            hatching_date,
                             # A
                             S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                             S_a, E_a, I_a, R_a, D_a,
@@ -764,8 +770,6 @@ gillespie_seir = function(# Do we induce dispersion ?
       rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
                                           sigma,eta, gamma, mu_adult, mu_nestling,
                                           zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
-                                          prop_dispersal, prop_prospecting, dispersal_date,
-                                          hatching_date,
                                           # A
                                           S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                           S_a, E_a, I_a, R_a, D_a,
@@ -806,7 +810,7 @@ gillespie_seir = function(# Do we induce dispersion ?
     # Induction of dispersion
     ## Has the induced dispersal strategy been triggered?
     if (induced_dispersal){ 
-      ## Did the dispersal occur?
+      ## Has the dispersal occured?
       if (!already_dispersed){
         # Is it time to induce dispersion, according to the stochastic case and the deterministic case?
         if ((dispersal_stochactic & first_death & next_time > first_death_date + dispersal_reaction_time) 
@@ -863,7 +867,7 @@ gillespie_seir = function(# Do we induce dispersion ?
           
           # Death of nestlings
           
-          D_a_N = D_a_N + S_a_N + E_a_N + I_a_N + R_a_N
+          D_a_N = D_a_N + (S_a_N + E_a_N + I_a_N + R_a_N)
           S_a_N = 0
           E_a_N = 0
           I_a_N = 0
@@ -902,8 +906,6 @@ gillespie_seir = function(# Do we induce dispersion ?
           rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
                                               sigma,eta, gamma, mu_adult, mu_nestling,
                                               zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
-                                              prop_dispersal, prop_prospecting, dispersal_date,
-                                              hatching_date,
                                               # A
                                               S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                               S_a, E_a, I_a, R_a, D_a,
@@ -937,11 +939,12 @@ gillespie_seir = function(# Do we induce dispersion ?
       }
     }
     
+    # Continuation of the script if there is no special event (dispersal or hatching)
+    
     times = c(times, next_time)
     
     nb_events <- rpois(1, total_rate * time_step) 
     whichevent = sample(1:length(rates), nb_events, prob = rates, replace = TRUE)
-    
     
     transitions = factor(whichevent, levels = 1:length(rates)) %>% 
       table() %>% 
@@ -950,7 +953,6 @@ gillespie_seir = function(# Do we induce dispersion ?
       as.data.frame()
     
     names_transitions = names(rates)
-    
     names(transitions) <- names_transitions
 
     transitions_bank = c()
@@ -2119,9 +2121,9 @@ output = gillespie_seir(
   initial_number_infected_breeders_A = 5,
   initial_number_breeders_A = 100,
   initial_number_breeders_B = 100,
-  initial_number_breeders_C = 10,
+  initial_number_breeders_C = 20,
   # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA = 0.015,
+  BETA = 0.02,
   # Time at sea before returning to a colony (non-breeders)
   TIME_AT_SEA_NB = 4,
   # Number of simu_adultlation days
@@ -2258,7 +2260,7 @@ stat_model = function(nb_iterations_ = nb_iterations,
 
 # plot - 5 panels - scenario ----------------------------------------------
 
-scenario_plot = function(beta_context,
+scenario_dt = function(beta_context,
                          time_at_sea_NB_context
                          ){
   
@@ -2303,7 +2305,7 @@ scenario_plot = function(beta_context,
                BETA_ =  beta_context,  
                TIME_AT_SEA_NB_ = time_at_sea_NB_context)
   
-  dt_panel_5 = 
+  dt = 
     data.frame(
       scenario = c(
         rep("Healty site", nrow(no_stress)),
@@ -2345,31 +2347,39 @@ scenario_plot = function(beta_context,
                                                   "Proactive strategy",
                                                   "Proactive strategy - Too late",
                                                   "Reactive strategy")))
+  return(dt)
   
+}
+
+
+scenario_plot = function(dt){
+  
+  dt_panel_5 = dt
   
   p_equi.survi.ad = ggplot()+
     geom_violin(data = dt_panel_5, 
                 aes(x = scenario, y = equi.lost.survi.ad),
                 fill = "lightblue",
                 color = "white",
+                scale = "width",
                 trim=FALSE, position=position_dodge(1)) +
     geom_dotplot(data = dt_panel_5, aes(x = scenario, y = equi.lost.survi.ad),
                  binaxis='y', stackdir='center',
-                 binwidth = 2,
+                 dotsize = 0.5,
                  color = "darkgrey", alpha = 0.5)+
     geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
                  aes(x = scenario, y = equi.lost.survi.ad),
                  binaxis='y', stackdir='center',
-                 binwidth = 7,
+                 dotsize = 2,
                  fill = "lightblue",
                  color = "white",
                  stackratio=0.5)+
     geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
                  aes(x = scenario, y = equi.lost.survi.ad),
                  binaxis='y', stackdir='center',
-                 binwidth = 1.5,
-                 fill = "black",
-                 color = "black",
+                 dotsize = 0.5,
+                 fill = "antiquewhite4",
+                 color = "antiquewhite4",
                  stackratio=0.5)+
     ggthemes::theme_clean() +
     theme(
@@ -2385,22 +2395,71 @@ scenario_plot = function(beta_context,
     ylim(0, NA)+
     labs(x = "Scenario", y = "ENLA") 
   
+  p_infected_X_time = ggplot()+
+    geom_violin(data = dt_panel_5,
+                aes(x = scenario, y = infected_X_time),
+                fill = "lightgreen",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data = dt_panel_5, 
+                 aes(x = scenario, y = infected_X_time),
+                 method = "histodot",
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 color = "darkgrey", alpha = 0.5,
+                 stackratio=0.5)+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+                 aes(x = scenario, y = infected_X_time),
+                 binaxis='y', stackdir='center',
+                 dotsize = 2,
+                 fill = "lightgreen",
+                 color = "white",
+                 stackratio=0.5)+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+                 aes(x = scenario, y = infected_X_time),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 color = "grey", alpha = 0.5,
+                 stackratio=0.5)+
+    ggthemes::theme_clean() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.border = element_blank(), 
+      axis.title = element_text(size = 11), 
+      axis.text = element_text(size = 10), 
+      axis.line = element_line(linewidth = 2), 
+      panel.background = element_rect(fill = "transparent", color = NA),
+      plot.background = element_rect(fill = "transparent", color = NA),
+      legend.position =  "none"
+    )+
+    ylim(0, NA)+
+    labs(x = "Scenario", y = "Infected x Time") 
+  
   p_nb_infected_colonies = ggplot()+
     geom_violin(data = dt_panel_5,
                 aes(x = scenario, y = nb_infected_colonies),
+                scale = "width",
                 fill = "burlywood1",
                 color = "white",
                 trim=FALSE, position=position_dodge(1)) +
     geom_dotplot(data = dt_panel_5, 
                  aes(x = scenario, y = nb_infected_colonies),
                  binaxis='y', stackdir='center',
-                 binwidth = 0.04,
+                 dotsize = 0.5,
                  color = "darkgrey", alpha = 0.5,
                  stackratio=0.5)+
     geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
                  aes(x = scenario, y = nb_infected_colonies),
                  binaxis='y', stackdir='center',
-                 binwidth = 0.15,
+                 dotsize = 2,
+                 fill = "burlywood1",
+                 color = "white",
+                 stackratio=0.5)+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+                 aes(x = scenario, y = nb_infected_colonies),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
                  color = "darkgrey", alpha = 0.5,
                  stackratio=0.5)+
     ggthemes::theme_clean() +
@@ -2417,37 +2476,7 @@ scenario_plot = function(beta_context,
     ylim(0, 4)+
     labs(x = "Scenario", y = "Number of infected colonies") 
   
-  p_infected_X_time = ggplot()+
-    geom_violin(data = dt_panel_5,
-                aes(x = scenario, y = infected_X_time),
-                fill = "lightgreen",
-                color = "white",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5, 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 binwidth = 0.04,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 binwidth = 0.15,
-                 color = "grey", alpha = 0.5,
-                 stackratio=0.5)+
-    ggthemes::theme_clean() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.border = element_blank(), # Enlever la bordure du panel
-      axis.title = element_text(size = 11),  # Thicken axis titles
-      axis.text = element_text(size = 10),  # Thicken axis text
-      axis.line = element_line(linewidth = 2),  # Thicken axis lines
-      panel.background = element_rect(fill = "transparent", color = NA),
-      plot.background = element_rect(fill = "transparent", color = NA),
-      legend.position =  "none"
-    )+
-    ylim(0, NA)+
-    labs(x = "Scenario", y = "Infected x Time") 
+
   
   
   p = plot_grid(p_equi.survi.ad,
@@ -2460,112 +2489,8 @@ scenario_plot = function(beta_context,
   
 }
 
-scenario_plot(beta_context = 0.5,
-              time_at_sea_NB_context = 40)
+# dt = scenario_dt(beta_context = 0.5,
+#                  time_at_sea_NB_context = 40)
 
-scenario_plot(beta_context = 0.05,
-              time_at_sea_NB_context = 40)
+scenario_plot(dt)
 
-
-# scenario_plot()
-
-
-# plot --------------------------------------------------------------------
-
-
-# output = c()
-# val_test = c(1,2,3,5,10)
-# 
-# for (k in val_test){
-# 
-#   res = stat_model(dispersal_reaction_time_ = k)
-# 
-#   output = c(output, res)
-# 
-# }
-# 
-# df = data.frame(dispersal_reaction_time = rep(val_test, each = nb_iterations),
-#            output=output) %>%
-#   mutate(dispersal_reaction_time = dispersal_reaction_time %>% as.factor()) 
-# 
-# ggplot(data = df, aes(x = dispersal_reaction_time, y = output))+
-#   geom_violin(trim=FALSE, position=position_dodge(1)) +
-#   geom_dotplot(binaxis='y', stackdir='center', binwidth=0.4, color = "darkgrey", alpha = 0.5) +
-#   ggthemes::theme_clean() +
-#   theme(
-#     panel.border = element_blank(), # Enlever la bordure du panel
-#     axis.title = element_text(size = 11),  # Thicken axis titles
-#     axis.text = element_text(size = 10),  # Thicken axis text
-#     axis.line = element_line(size = 2),  # Thicken axis lines
-#     panel.background = element_rect(fill = "transparent", color = NA),
-#     plot.background = element_rect(fill = "transparent", color = NA),
-#     legend.position =  "none"
-#   )+
-#   labs(x = "Reaction Time", y = "Score \n (Equiv.Survived Ad.)", title = "",
-#        fill = "Arrival colony type")
-
-
-
-
-# data_long = pivot_longer(stat_model(20), cols = -N_a, names_to = "variable", values_to = "value")
-# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-#        aes(x = variable, y = value)) +
-#   geom_violin() +
-#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-
-
-
-
-#
-# output_long_list = data.frame()
-# response_list = data.frame()
-#
-# nb_iterations = 8
-#
-# for (i in 1:nb_iterations){
-#
-#   output = gillespie_seir(param = param,
-#                           induced_dispersal = T,
-#                           initial_number_breeders_A = 50,
-#                           initial_number_infected_breeders_A = 1,
-#                           initial_number_breeders_B = 50,
-#                           total_time = 70,
-#                           dispersal_stochactic = T,
-#                           tau = 0.2)
-#
-#   output_long = melt(output, id = "time")
-#
-#   output_long_i = cbind(output_long,
-#                         data.frame(simulation = rep(i, times = nrow(output_long))))
-#
-#   output_long_list = rbind(output_long_list, output_long_i)
-#   response_list = rbind(response_list, summary_output(output))
-#
-# }
-#
-#
-# output_a = output_long_list %>% filter(variable %in% c("S_a", "E_a", "I_a", "R_a", "D_a"))
-#
-# p = ggplot()
-# for(i in 1:nb_iterations){
-#   p = p + geom_line(data = output_a %>% subset(., simulation == i )
-#                     , aes(x = time, y = value, color = variable))
-# }
-# p = p +
-#   labs(x = "Time", y = "Number of individuals", color = "Compartment") +
-#   theme_minimal() +
-#   ggtitle("Stochastic SEIR Model Simulation (Gillespie Algorithm)")
-#
-#
-# p
-#
-#
-# data_long = pivot_longer(response_list, cols = -N_a, names_to = "variable", values_to = "value")
-#
-# # Créer les diagrammes en violon pour chaque variable
-# ggplot(data_long %>% subset(., variable %in% c("nb_adults", "nb_nestlings", "nb_adults_equi")),
-#        aes(x = variable, y = value)) +
-#   geom_violin() +
-#   geom_dotplot(binaxis='y', stackdir='center', dotsize=1)
-#
-#
