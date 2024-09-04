@@ -2,7 +2,7 @@
 
 ##
 
-# clean & easy to use & organised
+# regroupe le parametre de probabilite de recrutement
 
 # Should I add failures unrelated to the disease?
 
@@ -2207,7 +2207,7 @@ summary_output = function(output){
 
 # stat_model --------------------------------------------------------------
 
-nb_iterations = 3
+nb_iterations = 25
 #nb_iterations = 25
 
 stat_model = function(nb_iterations_ = nb_iterations,
@@ -2351,36 +2351,102 @@ scenario_dt = function(beta_context,
   
 }
 
+scenario_mean = function(dt){
+  
+  equi.lost.survi.ad_mean = c(
+  no_stress = mean(dt[dt$scenario == "Healty site", c("equi.lost.survi.ad")]),
+  baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("equi.lost.survi.ad")]),
+  proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("equi.lost.survi.ad")]),
+  proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("equi.lost.survi.ad")]),
+  reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("equi.lost.survi.ad")])
+  )
+  infected_X_time_mean = c(
+    no_stress = mean(dt[dt$scenario == "Healty site", c("infected_X_time")]),
+    baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("infected_X_time")]),
+    proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("infected_X_time")]),
+    proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("infected_X_time")]),
+    reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("infected_X_time")])
+  )
+  nb_infected_colonies_mean = c(
+    no_stress = mean(dt[dt$scenario == "Healty site", c("nb_infected_colonies")]),
+    baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("nb_infected_colonies")]),
+    proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("nb_infected_colonies")]),
+    proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("nb_infected_colonies")]),
+    reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("nb_infected_colonies")])
+  )
+  
+  dt_mean = data.frame(equi.lost.survi.ad_mean,
+                       infected_X_time_mean,
+                       nb_infected_colonies_mean)
+  return(dt_mean)
+}
+
+
 
 scenario_plot = function(dt){
   
   dt_panel_5 = dt
   
+  sc_mean = scenario_mean(dt)
+  
   p_equi.survi.ad = ggplot()+
-    geom_violin(data = dt_panel_5, 
-                aes(x = scenario, y = equi.lost.survi.ad),
-                fill = "lightblue",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5, aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
                  aes(x = scenario, y = equi.lost.survi.ad),
                  binaxis='y', stackdir='center',
                  dotsize = 2,
-                 fill = "lightblue",
+                 fill = "grey",
                  color = "white",
-                 stackratio=0.5)+
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
+                aes(x = scenario, y = equi.lost.survi.ad),
+                fill = "grey",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
+                 aes(x = scenario, y = equi.lost.survi.ad),
+                 binaxis='y', stackdir='center',
+                 dotsize = 2,
+                 fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
+                            >sc_mean["proactive_strategy","equi.lost.survi.ad_mean"]) "lightgreen"
+                 else "darksalmon",
+                 color = "white",
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
+                aes(x = scenario, y = equi.lost.survi.ad),
+                fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
+                           >sc_mean["proactive_strategy_toolate","equi.lost.survi.ad_mean"]) "lightgreen"
+                       else "darksalmon",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
+                aes(x = scenario, y = equi.lost.survi.ad),
+                fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
+                           >sc_mean["reactive_strategy","equi.lost.survi.ad_mean"]) "lightgreen"
+                else "darksalmon",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
+                 aes(x = scenario, y = equi.lost.survi.ad),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 color = "darkgrey", alpha = 0.5,
+                 stackratio=0.25)+
+    geom_dotplot(data = dt_panel_5 %>% subset(., !(scenario %in% c("Proactive strategy - Too late"))), 
+                 aes(x = scenario, y = equi.lost.survi.ad),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 color = "darkgrey", alpha = 0.5,
+                 stackratio=0.45)+
     geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
                  aes(x = scenario, y = equi.lost.survi.ad),
                  binaxis='y', stackdir='center',
                  dotsize = 0.5,
                  fill = "antiquewhite4",
                  color = "antiquewhite4",
-                 stackratio=0.5)+
+                 stackratio=0.05)+
     ggthemes::theme_clean() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
@@ -2394,74 +2460,65 @@ scenario_plot = function(dt){
     )+
     ylim(0, NA)+
     labs(x = "Scenario", y = "ENLA") 
-  
+
   p_infected_X_time = ggplot()+
-    geom_violin(data = dt_panel_5,
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
+                 aes(x = scenario, y = infected_X_time),
+                 binaxis='y', stackdir='center',
+                 dotsize = 2,
+                 fill = "grey",
+                 color = "white",
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
                 aes(x = scenario, y = infected_X_time),
-                fill = "lightgreen",
+                fill = "grey",
                 color = "white",
                 scale = "width",
                 trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5, 
-                 aes(x = scenario, y = infected_X_time),
-                 method = "histodot",
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
                  aes(x = scenario, y = infected_X_time),
                  binaxis='y', stackdir='center',
                  dotsize = 2,
-                 fill = "lightgreen",
+                 fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
+                            >sc_mean["proactive_strategy","infected_X_time_mean"]) "lightgreen"
+                 else "darksalmon",
                  color = "white",
-                 stackratio=0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "grey", alpha = 0.5,
-                 stackratio=0.5)+
-    ggthemes::theme_clean() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.border = element_blank(), 
-      axis.title = element_text(size = 11), 
-      axis.text = element_text(size = 10), 
-      axis.line = element_line(linewidth = 2), 
-      panel.background = element_rect(fill = "transparent", color = NA),
-      plot.background = element_rect(fill = "transparent", color = NA),
-      legend.position =  "none"
-    )+
-    ylim(0, NA)+
-    labs(x = "Scenario", y = "Infected x Time") 
-  
-  p_nb_infected_colonies = ggplot()+
-    geom_violin(data = dt_panel_5,
-                aes(x = scenario, y = nb_infected_colonies),
-                scale = "width",
-                fill = "burlywood1",
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
+                aes(x = scenario, y = infected_X_time),
+                fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
+                           >sc_mean["proactive_strategy_toolate","infected_X_time_mean"]) "lightgreen"
+                else "darksalmon",
                 color = "white",
+                scale = "width",
                 trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5, 
-                 aes(x = scenario, y = nb_infected_colonies),
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
+                aes(x = scenario, y = infected_X_time),
+                fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
+                           >sc_mean["reactive_strategy","infected_X_time_mean"]) "lightgreen"
+                else "darksalmon",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data = dt_panel_5 %>% subset(., !(scenario %in% c("Proactive strategy - Too late"))),
+                 aes(x = scenario, y = infected_X_time),
                  binaxis='y', stackdir='center',
                  dotsize = 0.5,
                  color = "darkgrey", alpha = 0.5,
                  stackratio=0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = nb_infected_colonies),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = "burlywood1",
-                 color = "white",
-                 stackratio=0.5)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = nb_infected_colonies),
+    geom_dotplot(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")),
+                 aes(x = scenario, y = infected_X_time),
                  binaxis='y', stackdir='center',
                  dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.5)+
+                 color = "darkgrey", alpha = 0.55,
+                 stackratio=0.15)+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+                 aes(x = scenario, y = infected_X_time),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 fill = "antiquewhite4",
+                 color = "antiquewhite4",
+                 stackratio=0.05)+
     ggthemes::theme_clean() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
@@ -2473,10 +2530,73 @@ scenario_plot = function(dt){
       plot.background = element_rect(fill = "transparent", color = NA),
       legend.position =  "none"
     )+
-    ylim(0, 4)+
-    labs(x = "Scenario", y = "Number of infected colonies") 
+    ylim(0, NA)+
+    labs(x = "Scenario", y = "Infected x Time") 
   
-
+  p_nb_infected_colonies = ggplot()+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
+                 aes(x = scenario, y = nb_infected_colonies),
+                 binaxis='y', stackdir='center',
+                 dotsize = 2,
+                 fill = "grey",
+                 color = "white",
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
+                aes(x = scenario, y = nb_infected_colonies),
+                fill = "grey",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
+                 aes(x = scenario, y = nb_infected_colonies),
+                 binaxis='y', stackdir='center',
+                 dotsize = 2,
+                 fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
+                            >sc_mean["proactive_strategy","nb_infected_colonies_mean"]) "lightgreen"
+                 else "darksalmon",
+                 color = "white",
+                 stackratio=0.05)+
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
+                aes(x = scenario, y = nb_infected_colonies),
+                fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
+                           >sc_mean["proactive_strategy_toolate","nb_infected_colonies_mean"]) "lightgreen"
+                else "darksalmon",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
+                aes(x = scenario, y = nb_infected_colonies),
+                fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
+                           >sc_mean["reactive_strategy","nb_infected_colonies_mean"]) "lightgreen"
+                else "darksalmon",
+                color = "white",
+                scale = "width",
+                trim=FALSE, position=position_dodge(1)) +
+    geom_dotplot(data = dt_panel_5, aes(x = scenario, y = nb_infected_colonies),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 color = "darkgrey", alpha = 0.5,
+                 stackratio=0.25)+
+    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
+                 aes(x = scenario, y = nb_infected_colonies),
+                 binaxis='y', stackdir='center',
+                 dotsize = 0.5,
+                 fill = "antiquewhite4",
+                 color = "antiquewhite4",
+                 stackratio=0.05)+
+    ggthemes::theme_clean() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.border = element_blank(), # Enlever la bordure du panel
+      axis.title = element_text(size = 11),  # Thicken axis titles
+      axis.text = element_text(size = 10),  # Thicken axis text
+      axis.line = element_line(linewidth = 2),  # Thicken axis lines
+      panel.background = element_rect(fill = "transparent", color = NA),
+      plot.background = element_rect(fill = "transparent", color = NA),
+      legend.position =  "none"
+    )+
+    ylim(0, NA)+
+    labs(x = "Scenario", y = "Infected x Time") 
   
   
   p = plot_grid(p_equi.survi.ad,
@@ -2484,6 +2604,7 @@ scenario_plot = function(dt){
                 p_nb_infected_colonies,
             labels = c("A", "B", "C"),
             ncol = 3)
+
   
   print(p)
   
