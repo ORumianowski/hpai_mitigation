@@ -2,6 +2,10 @@
 
 ##
 
+# Meilleur dicernement de la prob recrutement
+
+# sortir les paramters
+
 # regroupe le parametre de probabilite de recrutement
 
 # Should I add failures unrelated to the disease?
@@ -2107,39 +2111,12 @@ plot_seir = function(output_){
   
 }
 
-# Run simulation
-
-time1 <- Sys.time()
-output = gillespie_seir(
-  # Do we induce dispersion ?
-  induced_dispersal = F,
-  # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic = T,
-  # Reaction time between 1rst death and induced dispersal 
-  dispersal_reaction_time = 2,
-  # Initial conditions
-  initial_number_infected_breeders_A = 5,
-  initial_number_breeders_A = 100,
-  initial_number_breeders_B = 100,
-  initial_number_breeders_C = 20,
-  # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA = 0.02,
-  # Time at sea before returning to a colony (non-breeders)
-  TIME_AT_SEA_NB = 4,
-  # Number of simu_adultlation days
-  total_time = 50,
-  # Parameter of the taul-leap agorithm
-  tau = 0.05)
-
-time2 <- Sys.time()
-time2 - time1
-plot_seir(output_ = output)
-
-
-
 # summary_output ----------------------------------------------------------
 
-summary_output = function(output){
+summary_output = function(# Time series of all states
+                          output, 
+                          # Probability of a nestling becoming a breeder
+                          reaching.repro.prob = 0.3){
   
   output = output[[1]]
 
@@ -2168,7 +2145,7 @@ summary_output = function(output){
 
   nb_adults = N_a + N_b + N_c - dead_a - dead_b - dead_c
   nb_nestlings = a_N + b_N + c_N
-  nb_adults_equi = nb_adults + (0.8) * (0.4) * nb_nestlings
+  nb_adults_equi = nb_adults + reaching.repro.prob * nb_nestlings
   
   
   nb_infected_colonies = 
@@ -2186,28 +2163,118 @@ summary_output = function(output){
 
   return( data.frame(
 
-    nb_adults = nb_adults,
-    nb_nestlings = nb_nestlings,
     nb_adults_equi = nb_adults_equi,
-    
-    max_infected_a = max_infected_a,
-    max_infected_b = max_infected_b,
-    max_infected_c = max_infected_c,
-    
     nb_infected_colonies = nb_infected_colonies,
-    
     infected_X_time = infected_X_time
-
-
 
   ))
 }
 
- # summary_output(output)
+# Wrapper function --------------------------------------------------------
+
+model_wrapper = function(  
+    # Parameter of the taul-leap agorithm
+  tau_ = 0.05,
+  # Number of simu_adultlation days
+  total_time_ = 50,
+  # Do we induce dispersion ?
+  induced_dispersal_ = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochactic_ = T,
+  # Reaction time between 1rst death and induced dispersal
+  dispersal_reaction_time_ = 4,
+  # Initial conditions
+  initial_number_infected_breeders_A_ = 3,
+  initial_number_breeders_A_ = 100,
+  initial_number_breeders_B_ = 80,
+  initial_number_breeders_C_ = 20,
+  # Transmission rate from exposed individuals and from infectious individuals in a colony
+  BETA_ = 0.02,
+  # Time at sea before returning to a colony (non-breeders)
+  TIME_AT_SEA_NB_ = 40,
+  # Probability of a nestling becoming a breeder
+  reaching.repro.prob_ = 0.3){
+  
+  output_ = gillespie_seir(
+    tau = tau_,
+    total_time = total_time_,
+    induced_dispersal = induced_dispersal_,
+    dispersal_stochactic = dispersal_stochactic_,
+    dispersal_reaction_time = dispersal_reaction_time_,
+    initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
+    initial_number_breeders_A = initial_number_breeders_A_,
+    initial_number_breeders_B = initial_number_breeders_B_,
+    initial_number_breeders_C = initial_number_breeders_C_,
+    BETA = BETA_,
+    TIME_AT_SEA_NB = TIME_AT_SEA_NB_)
+  
+  res = summary_output(output = output_, reaching.repro.prob = reaching.repro.prob_)
+  
+  return(res)
+}
+
+
+# Run simulation ----------------------------------------------------------
+
+time1 <- Sys.time()
+output = gillespie_seir(
+
+  # Parameter of the taul-leap agorithm
+  tau = 0.05,
+  # Number of simu_adultlation days
+  total_time = 50,
+  # Do we induce dispersion ?
+  induced_dispersal = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochactic = T,
+  # Reaction time between 1rst death and induced dispersal
+  dispersal_reaction_time = 4,
+  # Initial conditions
+  initial_number_infected_breeders_A = 3,
+  initial_number_breeders_A = 100,
+  initial_number_breeders_B = 80,
+  initial_number_breeders_C = 20,
+  # Transmission rate from exposed individuals and from infectious individuals in a colony
+  BETA = 0.02,
+  # Time at sea before returning to a colony (non-breeders)
+  TIME_AT_SEA_NB = 40
+  
+  )
+
+time2 <- Sys.time()
+time2 - time1
+
+plot_seir(output_ = output)
+
+summary_output(output, reaching.repro.prob = 0.4)
+
+
+model_wrapper(  # Parameter of the taul-leap agorithm
+  tau_ = 0.05,
+  # Number of simu_adultlation days
+  total_time_ = 50,
+  # Do we induce dispersion ?
+  induced_dispersal_ = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochactic_ = T,
+  # Reaction time between 1rst death and induced dispersal
+  dispersal_reaction_time_ = 4,
+  # Initial conditions
+  initial_number_infected_breeders_A_ = 3,
+  initial_number_breeders_A_ = 100,
+  initial_number_breeders_B_ = 80,
+  initial_number_breeders_C_ = 20,
+  # Transmission rate from exposed individuals and from infectious individuals in a colony
+  BETA_ = 0.02,
+  # Time at sea before returning to a colony (non-breeders)
+  TIME_AT_SEA_NB_ = 40,
+  # Probability of a nestling becoming a breeder
+  reaching.repro.prob_ = 0.3)
+
 
 # stat_model --------------------------------------------------------------
 
-nb_iterations = 25
+nb_iterations = 8
 #nb_iterations = 25
 
 stat_model = function(nb_iterations_ = nb_iterations,
@@ -2610,8 +2677,8 @@ scenario_plot = function(dt){
   
 }
 
-# dt = scenario_dt(beta_context = 0.5,
-#                  time_at_sea_NB_context = 40)
+dt = scenario_dt(beta_context = 0.5,
+                 time_at_sea_NB_context = 40)
 
 scenario_plot(dt)
 
