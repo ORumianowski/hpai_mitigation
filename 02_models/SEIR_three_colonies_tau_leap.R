@@ -2663,7 +2663,7 @@ scenario_plot = function(dt){
       legend.position =  "none"
     )+
     ylim(0, NA)+
-    labs(x = "Scenario", y = "Infected x Time") 
+    labs(x = "Scenario", y = "Infected colonies") 
   
   
   p = plot_grid(p_equi.survi.ad,
@@ -2678,6 +2678,11 @@ scenario_plot = function(dt){
 }
 
 dt = scenario_dt(beta_context = 0.5,
+                 time_at_sea_NB_context = 40)
+
+scenario_plot(dt)
+
+dt = scenario_dt(beta_context = 0.03,
                  time_at_sea_NB_context = 40)
 
 scenario_plot(dt)
