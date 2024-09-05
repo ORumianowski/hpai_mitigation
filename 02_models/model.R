@@ -2111,7 +2111,7 @@ plot_seir = function(output_){
   
 }
 
-# summary_output ----------------------------------------------------------
+# Summary output ----------------------------------------------------------
 
 summary_output = function(# Time series of all states
                           output, 
@@ -2216,474 +2216,60 @@ model_wrapper = function(
 
 # Run simulation ----------------------------------------------------------
 
-time1 <- Sys.time()
-output = gillespie_seir(
-
-  # Parameter of the taul-leap agorithm
-  tau = 0.05,
-  # Number of simu_adultlation days
-  total_time = 50,
-  # Do we induce dispersion ?
-  induced_dispersal = F,
-  # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic = T,
-  # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time = 4,
-  # Initial conditions
-  initial_number_infected_breeders_A = 3,
-  initial_number_breeders_A = 100,
-  initial_number_breeders_B = 80,
-  initial_number_breeders_C = 20,
-  # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA = 0.02,
-  # Time at sea before returning to a colony (non-breeders)
-  TIME_AT_SEA_NB = 40
-  
-  )
-
-time2 <- Sys.time()
-time2 - time1
-
-plot_seir(output_ = output)
-
-summary_output(output, reaching.repro.prob = 0.4)
-
-
-model_wrapper(  # Parameter of the taul-leap agorithm
-  tau_ = 0.05,
-  # Number of simu_adultlation days
-  total_time_ = 50,
-  # Do we induce dispersion ?
-  induced_dispersal_ = F,
-  # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic_ = T,
-  # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time_ = 4,
-  # Initial conditions
-  initial_number_infected_breeders_A_ = 3,
-  initial_number_breeders_A_ = 100,
-  initial_number_breeders_B_ = 80,
-  initial_number_breeders_C_ = 20,
-  # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA_ = 0.02,
-  # Time at sea before returning to a colony (non-breeders)
-  TIME_AT_SEA_NB_ = 40,
-  # Probability of a nestling becoming a breeder
-  reaching.repro.prob_ = 0.3)
-
-
-# stat_model --------------------------------------------------------------
-
-nb_iterations = 8
-#nb_iterations = 25
-
-stat_model = function(nb_iterations_ = nb_iterations,
-                      # Do we induce dispersion ?
-                      induced_dispersal_ = T,
-                      # Induced dispersion mode (deterministic or stochastic)
-                      dispersal_stochactic_ = T,
-                      # Reaction time between 1rst death and induced dispersal 
-                      dispersal_reaction_time_ = 2,
-                      # Initial conditions
-                      initial_number_infected_breeders_A_ = 1,
-                      initial_number_breeders_A_ = 100,
-                      initial_number_breeders_B_ = 100,
-                      initial_number_breeders_C_ = 10,
-                      # Transmission rate from exposed individuals and from infectious individuals in a colony
-                      BETA_ = 0.5,
-                      # Time at sea before returning to a colony (non-breeders)
-                      TIME_AT_SEA_NB_ = 40,
-                      # Number of simu_adultlation days
-                      total_time_ = 30,
-                      # Parameter of the taul-leap agorithm
-                      tau_ = 0.1){
-
-  response_list = data.frame()
-
-  for (i in 1:nb_iterations_){
-
-    output = gillespie_seir(induced_dispersal = induced_dispersal_,
-                            dispersal_stochactic = dispersal_stochactic_,
-                            dispersal_reaction_time = dispersal_reaction_time_,
-                            initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
-                            initial_number_breeders_A = initial_number_breeders_A_,
-                            initial_number_breeders_B = initial_number_breeders_B_,
-                            initial_number_breeders_C = initial_number_breeders_C_,
-                            TIME_AT_SEA_NB = TIME_AT_SEA_NB_,
-                            BETA = BETA_,
-                            total_time = total_time_,
-                            tau = tau_)
-
-    response_list = rbind(response_list, summary_output(output))
-
-  }
-  return(response_list)
-}
-
-# res = stat_model()
-# res$nb_infected_colonies
-
-
-
-# plot - 5 panels - scenario ----------------------------------------------
-
-scenario_dt = function(beta_context,
-                         time_at_sea_NB_context
-                         ){
-  
-  no_stress = 
-    stat_model(nb_iterations_ = 1,
-               induced_dispersal_ = F,
-               initial_number_infected_breeders_A_ = 0,
-               tau_ = 0.2,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context)
-  
-  baseline_outbreak = 
-    stat_model(induced_dispersal_ = F,
-               initial_number_infected_breeders_A_ = 1,
-               tau_ = 0.2,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context)
-  
-  proactive_strategy = 
-    stat_model(nb_iterations_ = 1,
-               induced_dispersal_ = T,
-               initial_number_infected_breeders_A_ = 0,
-               dispersal_stochactic_ = F,
-               tau_ = 0.2,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context)
-  
-  proactive_strategy_toolate = 
-    stat_model(induced_dispersal_ = T,
-               initial_number_infected_breeders_A_ = 1,
-               dispersal_stochactic_ = F,
-               tau_ = 0.2,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context)
-  
-  reactive_strategy = 
-    stat_model(induced_dispersal_ = T,
-               initial_number_infected_breeders_A_ = 1,
-               dispersal_stochactic_ = T,
-               dispersal_reaction_time_ = 2,
-               tau_ = 0.2,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context)
-  
-  dt = 
-    data.frame(
-      scenario = c(
-        rep("Healty site", nrow(no_stress)),
-        rep("Baseline outbreak",nrow(baseline_outbreak)),
-        rep("Proactive strategy",nrow(proactive_strategy)),
-        rep("Proactive strategy - Too late",nrow(proactive_strategy_toolate)),
-        rep("Reactive strategy",nrow(reactive_strategy))
-      ),
-      
-      equi.lost.survi.ad = c(
-        0,
-        no_stress$nb_adults_equi - baseline_outbreak$nb_adults_equi,
-        no_stress$nb_adults_equi - proactive_strategy$nb_adults_equi,
-        no_stress$nb_adults_equi - proactive_strategy_toolate$nb_adults_equi,
-        no_stress$nb_adults_equi - reactive_strategy$nb_adults_equi 
-      ),
-      
-      nb_infected_colonies = c(
-        no_stress$nb_infected_colonies,
-        baseline_outbreak$nb_infected_colonies,
-        proactive_strategy$nb_infected_colonies,
-        proactive_strategy_toolate$nb_infected_colonies,
-        reactive_strategy$nb_infected_colonies
-      ),
-      
-      infected_X_time = c(
-        no_stress$infected_X_time,
-        baseline_outbreak$infected_X_time,
-        proactive_strategy$infected_X_time,
-        proactive_strategy_toolate$infected_X_time,
-        reactive_strategy$infected_X_time
-        
-      )
-      
-      
-    ) %>% 
-    mutate(scenario = factor(scenario, levels = c("Healty site", 
-                                                  "Baseline outbreak",
-                                                  "Proactive strategy",
-                                                  "Proactive strategy - Too late",
-                                                  "Reactive strategy")))
-  return(dt)
-  
-}
-
-scenario_mean = function(dt){
-  
-  equi.lost.survi.ad_mean = c(
-  no_stress = mean(dt[dt$scenario == "Healty site", c("equi.lost.survi.ad")]),
-  baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("equi.lost.survi.ad")]),
-  proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("equi.lost.survi.ad")]),
-  proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("equi.lost.survi.ad")]),
-  reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("equi.lost.survi.ad")])
-  )
-  infected_X_time_mean = c(
-    no_stress = mean(dt[dt$scenario == "Healty site", c("infected_X_time")]),
-    baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("infected_X_time")]),
-    proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("infected_X_time")]),
-    proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("infected_X_time")]),
-    reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("infected_X_time")])
-  )
-  nb_infected_colonies_mean = c(
-    no_stress = mean(dt[dt$scenario == "Healty site", c("nb_infected_colonies")]),
-    baseline_outbreak = mean(dt[dt$scenario == "Baseline outbreak", c("nb_infected_colonies")]),
-    proactive_strategy = mean(dt[dt$scenario == "Proactive strategy", c("nb_infected_colonies")]),
-    proactive_strategy_toolate = mean(dt[dt$scenario == "Proactive strategy - Too late", c("nb_infected_colonies")]),
-    reactive_strategy = mean(dt[dt$scenario == "Reactive strategy", c("nb_infected_colonies")])
-  )
-  
-  dt_mean = data.frame(equi.lost.survi.ad_mean,
-                       infected_X_time_mean,
-                       nb_infected_colonies_mean)
-  return(dt_mean)
-}
-
-
-
-scenario_plot = function(dt){
-  
-  dt_panel_5 = dt
-  
-  sc_mean = scenario_mean(dt)
-  
-  p_equi.survi.ad = ggplot()+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
-                 aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = "grey",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
-                aes(x = scenario, y = equi.lost.survi.ad),
-                fill = "grey",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
-                 aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
-                            >sc_mean["proactive_strategy","equi.lost.survi.ad_mean"]) "lightgreen"
-                 else "darksalmon",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
-                aes(x = scenario, y = equi.lost.survi.ad),
-                fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
-                           >sc_mean["proactive_strategy_toolate","equi.lost.survi.ad_mean"]) "lightgreen"
-                       else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
-                aes(x = scenario, y = equi.lost.survi.ad),
-                fill = if (sc_mean["baseline_outbreak","equi.lost.survi.ad_mean"]
-                           >sc_mean["reactive_strategy","equi.lost.survi.ad_mean"]) "lightgreen"
-                else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
-                 aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.25)+
-    geom_dotplot(data = dt_panel_5 %>% subset(., !(scenario %in% c("Proactive strategy - Too late"))), 
-                 aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.45)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = equi.lost.survi.ad),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 fill = "antiquewhite4",
-                 color = "antiquewhite4",
-                 stackratio=0.05)+
-    ggthemes::theme_clean() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.border = element_blank(), # Enlever la bordure du panel
-      axis.title = element_text(size = 11),  # Thicken axis titles
-      axis.text = element_text(size = 10),  # Thicken axis text
-      axis.line = element_line(linewidth = 2),  # Thicken axis lines
-      panel.background = element_rect(fill = "transparent", color = NA),
-      plot.background = element_rect(fill = "transparent", color = NA),
-      legend.position =  "none"
-    )+
-    ylim(0, NA)+
-    labs(x = "Scenario", y = "ENLA") 
-
-  p_infected_X_time = ggplot()+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = "grey",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
-                aes(x = scenario, y = infected_X_time),
-                fill = "grey",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
-                            >sc_mean["proactive_strategy","infected_X_time_mean"]) "lightgreen"
-                 else "darksalmon",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
-                aes(x = scenario, y = infected_X_time),
-                fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
-                           >sc_mean["proactive_strategy_toolate","infected_X_time_mean"]) "lightgreen"
-                else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
-                aes(x = scenario, y = infected_X_time),
-                fill = if (sc_mean["baseline_outbreak","infected_X_time_mean"]
-                           >sc_mean["reactive_strategy","infected_X_time_mean"]) "lightgreen"
-                else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5 %>% subset(., !(scenario %in% c("Proactive strategy - Too late"))),
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.5)+
-    geom_dotplot(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")),
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.55,
-                 stackratio=0.15)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = infected_X_time),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 fill = "antiquewhite4",
-                 color = "antiquewhite4",
-                 stackratio=0.05)+
-    ggthemes::theme_clean() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.border = element_blank(), # Enlever la bordure du panel
-      axis.title = element_text(size = 11),  # Thicken axis titles
-      axis.text = element_text(size = 10),  # Thicken axis text
-      axis.line = element_line(linewidth = 2),  # Thicken axis lines
-      panel.background = element_rect(fill = "transparent", color = NA),
-      plot.background = element_rect(fill = "transparent", color = NA),
-      legend.position =  "none"
-    )+
-    ylim(0, NA)+
-    labs(x = "Scenario", y = "Infected x Time") 
-  
-  p_nb_infected_colonies = ggplot()+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site")), 
-                 aes(x = scenario, y = nb_infected_colonies),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = "grey",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Baseline outbreak")), 
-                aes(x = scenario, y = nb_infected_colonies),
-                fill = "grey",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy")), 
-                 aes(x = scenario, y = nb_infected_colonies),
-                 binaxis='y', stackdir='center',
-                 dotsize = 2,
-                 fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
-                            >sc_mean["proactive_strategy","nb_infected_colonies_mean"]) "lightgreen"
-                 else "darksalmon",
-                 color = "white",
-                 stackratio=0.05)+
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Proactive strategy - Too late")), 
-                aes(x = scenario, y = nb_infected_colonies),
-                fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
-                           >sc_mean["proactive_strategy_toolate","nb_infected_colonies_mean"]) "lightgreen"
-                else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_violin(data = dt_panel_5 %>% subset(., scenario %in% c("Reactive strategy")), 
-                aes(x = scenario, y = nb_infected_colonies),
-                fill = if (sc_mean["baseline_outbreak","nb_infected_colonies_mean"]
-                           >sc_mean["reactive_strategy","nb_infected_colonies_mean"]) "lightgreen"
-                else "darksalmon",
-                color = "white",
-                scale = "width",
-                trim=FALSE, position=position_dodge(1)) +
-    geom_dotplot(data = dt_panel_5, aes(x = scenario, y = nb_infected_colonies),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 color = "darkgrey", alpha = 0.5,
-                 stackratio=0.25)+
-    geom_dotplot(data =  dt_panel_5 %>% subset(., scenario %in% c("Healty site", "Proactive strategy")), 
-                 aes(x = scenario, y = nb_infected_colonies),
-                 binaxis='y', stackdir='center',
-                 dotsize = 0.5,
-                 fill = "antiquewhite4",
-                 color = "antiquewhite4",
-                 stackratio=0.05)+
-    ggthemes::theme_clean() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.border = element_blank(), # Enlever la bordure du panel
-      axis.title = element_text(size = 11),  # Thicken axis titles
-      axis.text = element_text(size = 10),  # Thicken axis text
-      axis.line = element_line(linewidth = 2),  # Thicken axis lines
-      panel.background = element_rect(fill = "transparent", color = NA),
-      plot.background = element_rect(fill = "transparent", color = NA),
-      legend.position =  "none"
-    )+
-    ylim(0, NA)+
-    labs(x = "Scenario", y = "Infected colonies") 
-  
-  
-  p = plot_grid(p_equi.survi.ad,
-                p_infected_X_time,
-                p_nb_infected_colonies,
-            labels = c("A", "B", "C"),
-            ncol = 3)
-
-  
-  print(p)
-  
-}
-
-dt = scenario_dt(beta_context = 0.5,
-                 time_at_sea_NB_context = 40)
-
-scenario_plot(dt)
-
-dt = scenario_dt(beta_context = 0.03,
-                 time_at_sea_NB_context = 40)
-
-scenario_plot(dt)
-
+# time1 <- Sys.time()
+# output = gillespie_seir(
+#   
+#   # Parameter of the taul-leap agorithm
+#   tau = 0.05,
+#   # Number of simu_adultlation days
+#   total_time = 50,
+#   # Do we induce dispersion ?
+#   induced_dispersal = F,
+#   # Induced dispersion mode (deterministic or stochastic)
+#   dispersal_stochactic = T,
+#   # Reaction time between 1rst death and induced dispersal
+#   dispersal_reaction_time = 4,
+#   # Initial conditions
+#   initial_number_infected_breeders_A = 3,
+#   initial_number_breeders_A = 100,
+#   initial_number_breeders_B = 80,
+#   initial_number_breeders_C = 20,
+#   # Transmission rate from exposed individuals and from infectious individuals in a colony
+#   BETA = 0.02,
+#   # Time at sea before returning to a colony (non-breeders)
+#   TIME_AT_SEA_NB = 40
+#   
+# )
+# 
+# time2 <- Sys.time()
+# time2 - time1
+# 
+# plot_seir(output_ = output)
+# 
+# summary_output(output, reaching.repro.prob = 0.4)
+# 
+# model_wrapper(  # Parameter of the taul-leap agorithm
+#   tau_ = 0.05,
+#   # Number of simu_adultlation days
+#   total_time_ = 50,
+#   # Do we induce dispersion ?
+#   induced_dispersal_ = F,
+#   # Induced dispersion mode (deterministic or stochastic)
+#   dispersal_stochactic_ = T,
+#   # Reaction time between 1rst death and induced dispersal
+#   dispersal_reaction_time_ = 4,
+#   # Initial conditions
+#   initial_number_infected_breeders_A_ = 3,
+#   initial_number_breeders_A_ = 100,
+#   initial_number_breeders_B_ = 80,
+#   initial_number_breeders_C_ = 20,
+#   # Transmission rate from exposed individuals and from infectious individuals in a colony
+#   BETA_ = 0.02,
+#   # Time at sea before returning to a colony (non-breeders)
+#   TIME_AT_SEA_NB_ = 40,
+#   # Probability of a nestling becoming a breeder
+#   reaching.repro.prob_ = 0.3)
+# 
+# 
+# 
+# 
