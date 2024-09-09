@@ -10,7 +10,6 @@
 
 # Should I add failures unrelated to the disease?
 
-
 # color in relation the position compared to baseline outbreak
 
 ##
@@ -367,7 +366,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
     
     # Induced dispersion parameters
     
-    ## Proportion of dispersed adults
+    ## Proportion of dispersed adults 
+    # add noise in the next iteration
     prop_dispersal = 1,
     ## Date of induced dispersion (if deterministic)
     dispersal_date = 0,
@@ -2218,19 +2218,18 @@ model_wrapper = function(
 
 time1 <- Sys.time()
 output = gillespie_seir(
-
   # Parameter of the taul-leap agorithm
   tau = 0.05,
   # Number of simu_adultlation days
   total_time = 50,
   # Do we induce dispersion ?
-  induced_dispersal = F,
+  induced_dispersal = T,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochactic = T,
   # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time = 4,
+  dispersal_reaction_time = 8,
   # Initial conditions
-  initial_number_infected_breeders_A = 3,
+  initial_number_infected_breeders_A = 0,
   initial_number_breeders_A = 100,
   initial_number_breeders_B = 80,
   initial_number_breeders_C = 20,
@@ -2254,7 +2253,7 @@ model_wrapper(  # Parameter of the taul-leap agorithm
   # Number of simu_adultlation days
   total_time_ = 50,
   # Do we induce dispersion ?
-  induced_dispersal_ = F,
+  induced_dispersal_ = T,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochactic_ = T,
   # Reaction time between 1rst death and induced dispersal

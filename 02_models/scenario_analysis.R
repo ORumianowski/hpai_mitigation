@@ -1,16 +1,5 @@
 
 
-
-#
-
-# une foonction pour chaque variable réponse
-# plot les trois
-
-# plus d 'itérations
-
-#
-
-
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
@@ -335,20 +324,20 @@ for (beta in beta_bank){
                         reaching.repro.prob = repro)
       
       plot_ENLSA[[i]] <- scenario_plot3(dt = dt_, BETA = beta, MOB=mob, REPRO=repro,
-                     column_to_plot = "equi.lost.survi.ad",
-                     index_label = "ENLSA",
-                     its_dotsize = 0.6)
+                                        column_to_plot = "equi.lost.survi.ad",
+                                        index_label = "ENLSA",
+                                        its_dotsize = 0.6)
       
       plot_infec.col[[i]] <- scenario_plot3(dt = dt_, BETA = beta, MOB=mob, REPRO=repro,
-                                   column_to_plot = "nb_infected_colonies",
-                                   index_label = "Infected colonies",
-                                   its_dotsize = 1.1)
+                                            column_to_plot = "nb_infected_colonies",
+                                            index_label = "Infected colonies",
+                                            its_dotsize = 1.1)
       
       plot_infected_X_time[[i]] <- scenario_plot3(dt = dt_, BETA = beta, MOB=mob, REPRO=repro,
-                                            column_to_plot = "infected_X_time",
-                                            index_label = "Infected X Time colonies",
-                                            its_dotsize = 1.1)
-
+                                                  column_to_plot = "infected_X_time",
+                                                  index_label = "Infected X Time colonies",
+                                                  its_dotsize = 1.1)
+      
       
     }
   }
@@ -357,4 +346,5 @@ for (beta in beta_bank){
 all_plot_ENLSA = grid.arrange(grobs = plot_ENLSA, ncol = 3, nrow = 4)
 all_plot_infec.col = grid.arrange(grobs = plot_infec.col, ncol = 3, nrow = 4)
 all_plot_infected_X_time = grid.arrange(grobs = plot_infected_X_time, ncol = 3, nrow = 4)
+
 

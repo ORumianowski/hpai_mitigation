@@ -2214,8 +2214,33 @@ model_wrapper = function(
 }
 
 
-# Run simulation ----------------------------------------------------------
 
+
+model_wrapper(  # Parameter of the taul-leap agorithm
+  tau_ = 0.05,
+  # Number of simu_adultlation days
+  total_time_ = 50,
+  # Do we induce dispersion ?
+  induced_dispersal_ = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochactic_ = T,
+  # Reaction time between 1rst death and induced dispersal
+  dispersal_reaction_time_ = 4,
+  # Initial conditions
+  initial_number_infected_breeders_A_ = 3,
+  initial_number_breeders_A_ = 100,
+  initial_number_breeders_B_ = 80,
+  initial_number_breeders_C_ = 20,
+  # Transmission rate from exposed individuals and from infectious individuals in a colony
+  BETA_ = 0.02,
+  # Time at sea before returning to a colony (non-breeders)
+  TIME_AT_SEA_NB_ = 40,
+  # Probability of a nestling becoming a breeder
+  reaching.repro.prob_ = 0.3)
+
+
+# Run simulation ----------------------------------------------------------
+# 
 # time1 <- Sys.time()
 # output = gillespie_seir(
 #   
@@ -2246,29 +2271,6 @@ model_wrapper = function(
 # 
 # plot_seir(output_ = output)
 # 
-# summary_output(output, reaching.repro.prob = 0.4)
-# 
-# model_wrapper(  # Parameter of the taul-leap agorithm
-#   tau_ = 0.05,
-#   # Number of simu_adultlation days
-#   total_time_ = 50,
-#   # Do we induce dispersion ?
-#   induced_dispersal_ = F,
-#   # Induced dispersion mode (deterministic or stochastic)
-#   dispersal_stochactic_ = T,
-#   # Reaction time between 1rst death and induced dispersal
-#   dispersal_reaction_time_ = 4,
-#   # Initial conditions
-#   initial_number_infected_breeders_A_ = 3,
-#   initial_number_breeders_A_ = 100,
-#   initial_number_breeders_B_ = 80,
-#   initial_number_breeders_C_ = 20,
-#   # Transmission rate from exposed individuals and from infectious individuals in a colony
-#   BETA_ = 0.02,
-#   # Time at sea before returning to a colony (non-breeders)
-#   TIME_AT_SEA_NB_ = 40,
-#   # Probability of a nestling becoming a breeder
-#   reaching.repro.prob_ = 0.3)
 # 
 # 
 # 
