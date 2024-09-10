@@ -309,6 +309,62 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   return(rates)
 }
 
+# Parameter of the taul-leap algorithm
+tau = 0.25
+# Number of simulation days
+total_time = 70
+# Initial conditions
+initial_number_infected_breeders_A = 1
+initial_number_infected_breeders_B = 0
+initial_number_infected_breeders_C = 0
+initial_number_breeders_A = 50
+initial_number_breeders_B = 50
+initial_number_breeders_C = 50
+# Induced dispersion parameters
+# Do we induce dispersion ?
+induced_dispersal = T
+# Induced dispersion mode (deterministic or stochastic)
+dispersal_stochastic = T
+# Reaction time between 1st death and induced dispersal
+dispersal_reaction_time = 5
+# Proportion of dispersed adults
+prop_dispersal = 1
+# Date of induced dispersion (if deterministic)
+dispersal_date = 0
+# Epidemiological parameters
+# Transmission rate from exposed and infectious individuals in a colony
+beta_E_colony = 0
+beta_I_colony = 0.05
+# Rate of progression from exposed to infectious (inverse of incubation period)
+sigma = 1/1
+# Rate of progression from exposed to susceptible 
+eta =  0
+# Recovery rate (inverse of infectious period)
+gamma = 1/6
+# Disease-related mortality rate
+# Death probability = mu / (mu + gamma)
+# Adult
+mu_adult = 1/6 * (0.5/(1-0.5)) # 50% of mortality
+# Nestling
+mu_nestling = 1/6 * (0.8/(1-0.8)) # 80% of mortality
+# Mobility parameters
+# Transition from colony to the sea (breeders)
+zeta_to_sea = 1/2
+# Transition from sea to the colony (breeders)
+zeta_to_colony = 1/2
+# Transition from colony to the sea (non-breeders)
+rho_to_sea = 1/2
+# Transition from sea to the colony (non-breeders)
+rho_to_colony = 1/40
+# Transition from breeder to non-breeder (reproductive failure)
+psi = 1/500
+# Demographic parameters
+# Hatching date of the chicks
+hatching_date = 10
+# Probability of a nestling becoming a breeder
+reaching.repro.prob = 0.3
+
+
 
 # Gillespie SEIR model function -------------------------------------------
 
@@ -364,6 +420,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           # Demographic parameters
                           ## Hatching date of the chicks
                           hatching_date = 10,
+                          ## Hatching date standard deviation
+                          hatching_sd = 1,
                           # Probability of a nestling becoming a breeder
                           reaching.repro.prob = 0.3
                           
@@ -591,6 +649,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   first_death_date = NA
   
   
+  sum_p = 0
+  
   # Next event
   while (times[length(times)] < total_time) {
     
@@ -704,72 +764,26 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
     
     time_step <- min(tau, (total_time - times[length(times)]))
     next_time = times[length(times)] + time_step
-
+    
+    
+    
     # Hatching
-    if (next_time > hatching_date & !already_hatched) { 
-      
-      S_a_N = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)
-      S_b_N = round((S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B)/2)
-      S_c_N = round((S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B)/2)
-      
-      already_hatched = T
-      
-      new_state = matrix(data = c(S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
-                                  S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
-                                  S_sea_a_B, E_sea_a_B, I_sea_a_B, R_sea_a_B, D_sea_a_B,
-                                  S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                  
-                                  S_b_N, E_b_N, I_b_N, R_b_N, D_b_N,
-                                  S_b_B, E_b_B, I_b_B, R_b_B, D_b_B,
-                                  S_sea_b_B, E_sea_b_B, I_sea_b_B, R_sea_b_B, D_sea_b_B,
-                                  S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
-                                  
-                                  S_c_N, E_c_N, I_c_N, R_c_N, D_c_N,
-                                  S_c_B, E_c_B, I_c_B, R_c_B, D_c_B,
-                                  S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
-                                  S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
-                                  
-                                  S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB
-                                  ),
-                         nrow = 13, ncol = 5, 
-                         byrow = T)
-      
-      states = abind(states, new_state)
-      times = c(times, hatching_date)
-      
-      
-      # Rates of each possible event
-      rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
-                                          sigma,eta, gamma, mu_adult, mu_nestling,
-                                          zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
-                                          # A
-                                          S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
-                                          S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
-                                          S_sea_a_B, E_sea_a_B, I_sea_a_B, R_sea_a_B, D_sea_a_B,
-                                          S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
-                                          # B
-                                          S_b_N, E_b_N, I_b_N, R_b_N, D_b_N,
-                                          S_b_B, E_b_B, I_b_B, R_b_B, D_b_B,
-                                          S_sea_b_B, E_sea_b_B, I_sea_b_B, R_sea_b_B, D_sea_b_B,
-                                          S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
-                                          # C
-                                          S_c_N, E_c_N, I_c_N, R_c_N, D_c_N,
-                                          S_c_B, E_c_B, I_c_B, R_c_B, D_c_B,
-                                          S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
-                                          S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
-                                          # Non-breeders at sea
-                                          S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB)
-      
-      total_rate = sum(rates)
-      
-      if (total_rate == 0) {
-        break
-      }
-      
-      time_step = rexp(1, total_rate)
-      next_time = times[length(times)] + time_step
-      
-    }
+    p_hatched = (pnorm(times[length(times)] + time_step, hatching_date,sd = hatching_sd)-pnorm(times[length(times)],mean = hatching_date,sd = hatching_sd))
+ 
+    # In A
+    nb_pairs_a = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)
+    nb_hatched_nestling_a = round(p_hatched * nb_pairs_a)
+    S_a_N = S_a_N + nb_hatched_nestling_a
+    
+    # In B
+    nb_pairs_b = round((S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B)/2)
+    nb_hatched_nestling_b = round(p_hatched * nb_pairs_b)
+    S_b_N = S_b_N + nb_hatched_nestling_b
+    
+    # In C
+    nb_pairs_c = round((S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B)/2)
+    nb_hatched_nestling_c = round(p_hatched * nb_pairs_c)
+    S_c_N = S_c_N + nb_hatched_nestling_c
     
     
     
@@ -2800,10 +2814,15 @@ plot_seir = function(output_){
 # Run simulation ----------------------------------------------------------
 
 time1 <- Sys.time()
-output = gillespie_seir(# Parameter of the taul-leap agorithm
-  tau = 0.25,
+output = gillespie_seir(
+  
+  ## Hatching date standard deviation
+  hatching_sd = 1,
+  
+  # Parameter of the taul-leap agorithm
+  tau = 0.05,
   # Number of simu_adultlation days
-  total_time = 70,
+  total_time = 20,
   # Initial conditions
   initial_number_infected_breeders_A = 0,
   initial_number_infected_breeders_B = 0,
