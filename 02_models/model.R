@@ -312,72 +312,51 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           initial_number_breeders_A = 50,
                           initial_number_breeders_B = 50,
                           initial_number_breeders_C = 50,
+                          # Induced dispersion parameters
                           # Do we induce dispersion ?
                           induced_dispersal = T,
                           # Induced dispersion mode (deterministic or stochastic)
-                          dispersal_stochactic = T,
+                          dispersal_stochastic = T,
                           # Reaction time between 1rst death and induced dispersal
                           dispersal_reaction_time = 5,
-                          # Transmission rate from exposed individuals and from infectious individuals in a colony
-                          BETA = 0.5,
-                          # Time at sea before returning to a colony (non-breeders)
-                          TIME_AT_SEA_NB = 40
+                          ## Proportion of dispersed adults
+                          prop_dispersal = 1,
+                          ## Date of induced dispersion (if deterministic)
+                          dispersal_date = 0,
+                          # Epidemiological parameters
+                          ## Transmission rate from exposed and infectious individuals in a colony
+                          beta_E_colony = 0,
+                          beta_I_colony = 0.05,
+                          ## Rate of progression from exposed to infectious (inverse of incubation period)
+                          sigma = 1/1,
+                          ## Rate of progression from exposed to susceptible 
+                          eta =  0, 
+                          ## Recovery rate (inverse of infectious period)
+                          gamma = 1/6,
+                          ## Disease-related mortality rate
+                          ## Death probability = mu / (mu + gamma)
+                          ## Adult
+                          mu_adult = 1/6 * (0.5/(1-0.5)), # 50% of mortality
+                          ## Nestling
+                          mu_nestling = 1/6 * (0.8/(1-0.8)), # 80% of mortality
+                          # Mobility  parameters
+                          ## Transition from colony to the sea (breeders)
+                          zeta_to_sea = 1/2,
+                          ## Transition from sea to the colony (breeders)
+                          zeta_to_colony = 1/2,
+                          ## Transition from colony to the sea (non-breeders)
+                          rho_to_sea = 1/2,
+                          ## Transition from sea to the colony (non-breeders)
+                          rho_to_colony = 1/40 , 
+                          # Transition from breeder to non-breeder (reproductive failure)
+                          # psi = 0,  
+                          # Demographic parameters
+                          ## Hatching date of the chicks
+                          hatching_date = 10
+                          
                           ) {
   
   # Parameters --------------------------------------------------------------
-  
-  param = list( 
-    
-    # Epidemiological parameters
-    
-    ## Transmission rate from exposed individuals and from infectious individuals in a colony
-    ## First row - in colonies / Second row - at sea // First column - for exposed / Second column - for infectious
-    beta = matrix(c(0.00, BETA,
-                    0.00, 0.00),
-                  nrow = 2, ncol = 2, byrow = T),
-    ## Rate of progression from exposed to infectious (inverse of incubation period)
-    sigma = 1/1,
-    ## Rate of progression from exposed to susceptible 
-    eta =  0, 
-    ## Recovery rate (inverse of infectious period)
-    gamma = 1/6,
-    ## Disease-related mortality rate
-    ## Death probability = mu / (mu + gamma)
-    ## Adult
-    mu_adult = 1/6 * (0.5/(1-0.5)), # 50% of mortality
-    ## Nestling
-    mu_nestling = 1/6 * (0.8/(1-0.8)), # 80% of mortality
-    
-    
-    # Mobility  parameters
-    
-    ## Transition from colony to the sea (breeders)
-    zeta_to_sea = 1/2,
-    ## Transition from sea to the colony (breeders)
-    zeta_to_colony = 1/2,
-    ## Transition from colony to the sea (non-breeders)
-    rho_to_sea = 1/2,
-    ## Transition from sea to the colony (non-breeders)
-    rho_to_colony = 1/TIME_AT_SEA_NB , 
-    
-    
-    # Transition from breeder to non-breeder (reproductive failure)
-    # psi = 0,  
-    
-    
-    # Induced dispersion parameters
-    
-    ## Proportion of dispersed adults
-    prop_dispersal = 1,
-    ## Date of induced dispersion (if deterministic)
-    dispersal_date = 0,
-    
-    # Demographic parameters
-    
-    ## Hatching date of the chicks
-    hatching_date = 10
-    
-  )
   
   # Initial state
   
@@ -390,7 +369,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_A_N = c(S = initial_susceptible,
+  initial_state_a_N = c(S = initial_susceptible,
                         E = initial_exposed,
                         I = initial_infected,
                         R = initial_recovered,
@@ -403,7 +382,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_B_N = c(S = initial_susceptible,
+  initial_state_b_N = c(S = initial_susceptible,
                         E = initial_exposed,
                         I = initial_infected,
                         R = initial_recovered,
@@ -417,7 +396,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_C_N = c(S = initial_susceptible,
+  initial_state_c_N = c(S = initial_susceptible,
                         E = initial_exposed,
                         I = initial_infected,
                         R = initial_recovered,
@@ -433,7 +412,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_A = c(S = initial_susceptible,
+  initial_state_a_B = c(S = initial_susceptible,
                       E = initial_exposed,
                       I = initial_infected,
                       R = initial_recovered,
@@ -447,7 +426,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_sea_a = c(S = initial_susceptible,
+  initial_state_sea_a_B = c(S = initial_susceptible,
                           E = initial_exposed,
                           I = initial_infected,
                           R = initial_recovered,
@@ -462,7 +441,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_B <- c(S = initial_susceptible,
+  initial_state_b_B <- c(S = initial_susceptible,
                        E = initial_exposed,
                        I = initial_infected,
                        R = initial_recovered,
@@ -476,7 +455,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_sea_b = c(S = initial_susceptible,
+  initial_state_sea_b_B = c(S = initial_susceptible,
                           E = initial_exposed,
                           I = initial_infected,
                           R = initial_recovered,
@@ -490,7 +469,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_C <- c(S = initial_susceptible,
+  initial_state_c_B <- c(S = initial_susceptible,
                        E = initial_exposed,
                        I = initial_infected,
                        R = initial_recovered,
@@ -504,7 +483,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_sea_c = c(S = initial_susceptible,
+  initial_state_sea_c_B = c(S = initial_susceptible,
                           E = initial_exposed,
                           I = initial_infected,
                           R = initial_recovered,
@@ -519,7 +498,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_A_NB = c(S = initial_susceptible,
+  initial_state_a_NB = c(S = initial_susceptible,
                          E = initial_exposed,
                          I = initial_infected,
                          R = initial_recovered,
@@ -533,7 +512,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_B_NB <- c(S = initial_susceptible,
+  initial_state_b_NB <- c(S = initial_susceptible,
                           E = initial_exposed,
                           I = initial_infected,
                           R = initial_recovered,
@@ -547,7 +526,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_C_NB <- c(S = initial_susceptible,
+  initial_state_c_NB <- c(S = initial_susceptible,
                           E = initial_exposed,
                           I = initial_infected,
                           R = initial_recovered,
@@ -568,50 +547,26 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                              D = initial_dead)
   
   
-
-  
-  
-  initial_state = matrix(data = c(initial_state_A_N,
-                                  initial_state_A,
-                                  initial_state_sea_a,
-                                  initial_state_A_NB,
+  initial_state = matrix(data = c(initial_state_a_N,
+                                  initial_state_a_B,
+                                  initial_state_sea_a_B,
+                                  initial_state_a_NB,
                                   
-                                  initial_state_B_N,
-                                  initial_state_B,
-                                  initial_state_sea_b,
-                                  initial_state_B_NB,
+                                  initial_state_b_N,
+                                  initial_state_b_B,
+                                  initial_state_sea_b_B,
+                                  initial_state_b_NB,
                                   
-                                  initial_state_C_N,
-                                  initial_state_C,
-                                  initial_state_sea_c,
-                                  initial_state_C_NB,
+                                  initial_state_c_N,
+                                  initial_state_c_B,
+                                  initial_state_sea_c_B,
+                                  initial_state_c_NB,
   
                                   initial_state_sea_NB
                                   ), 
                          nrow = 13, ncol = 5, 
                          byrow = T)
   
-  # Parameters
-  
-  beta_E_colony = param$beta[1,1]
-  beta_I_colony = param$beta[1,2]
-  
-  sigma = param$sigma
-  eta = param$eta
-  gamma = param$gamma
-  mu_adult = param$mu_adult
-  mu_nestling = param$mu_nestling
-  
-  zeta_to_colony = param$zeta_to_colony
-  zeta_to_sea = param$zeta_to_sea
-  psi = param$psi
-  rho_to_colony = param$rho_to_colony
-  rho_to_sea = param$rho_to_sea
-  
-  prop_dispersal = param$prop_dispersal
-  dispersal_date = param$dispersal_date
-  
-  hatching_date = param$hatching_date
   
   # Initialization
   times = c(0)
@@ -817,55 +772,55 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
       ## Has the dispersal occured?
       if (!already_dispersed){
         # Is it time to induce dispersion, according to the stochastic case and the deterministic case?
-        if ((dispersal_stochactic & first_death & next_time > first_death_date + dispersal_reaction_time) 
+        if ((dispersal_stochastic & first_death & next_time > first_death_date + dispersal_reaction_time) 
             |
-            (!dispersal_stochactic & next_time > dispersal_date)
+            (!dispersal_stochastic & next_time > dispersal_date)
         ){
           
           # Dispersal of breeders
           
           # Number of adults in  A
-          N_a = S_a_B + E_a_B+ I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B
+          N_a_B = S_a_B + E_a_B+ I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B
           # Number of adults A who are dispersed
-          N_disp_a = round(N_a * prop_dispersal)
+          N_disp_a_B = round(N_a_B * prop_dispersal)
           # Distribution of dispersed adults by epidemiological status
-          disp_a = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
+          disp_a_B = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
                             rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
-                          size = N_disp_a, 
+                          size = N_disp_a_B, 
                           replace = F) %>% 
             factor(., levels = c("S_a_B","E_a_B","I_a_B","R_a_B",
                                  "S_sea_a_B","E_sea_a_B","I_sea_a_B","R_sea_a_B")) %>% 
             table()
           
           # Number of susceptible adults who are dispersed from A
-          disp_S_a_B = disp_a["S_a_B"]
-          disp_S_sea_a_B = disp_a["S_sea_a_B"]
+          disp_S_a_B = disp_a_B["S_a_B"]
+          disp_S_sea_a_B = disp_a_B["S_sea_a_B"]
           # Update of the number of susceptible adults
-          S_a_B = S_a_B - disp_S_a
+          S_a_B = S_a_B - disp_S_a_B
           S_sea_a_B = S_sea_a_B - disp_S_sea_a_B
           S_sea_NB = S_sea_NB + disp_S_a_B + disp_S_sea_a_B
           
           # Number of exposed  adults who are dispersed from A
-          disp_E_a_B= disp_a["E_a_B"]
-          disp_E_sea_a_B = disp_a["E_sea_a_B"]
+          disp_E_a_B= disp_a_B["E_a_B"]
+          disp_E_sea_a_B = disp_a_B["E_sea_a_B"]
           # Update of the number of exposed adults
-          E_a_B= E_a_B- disp_E_a
+          E_a_B= E_a_B- disp_E_a_B
           E_sea_a_B = E_sea_a_B - disp_E_sea_a_B
           E_sea_NB = E_sea_NB + disp_E_a_B+ disp_E_sea_a_B
           
           # Number of infectious adults who are dispersed from A
-          disp_I_a_B = disp_a["I_a_B"]
-          disp_I_sea_a_B = disp_a["I_sea_a_B"]
+          disp_I_a_B = disp_a_B["I_a_B"]
+          disp_I_sea_a_B = disp_a_B["I_sea_a_B"]
           # Update of the number of infectious adults
-          I_a_B = I_a_B - disp_I_a
+          I_a_B = I_a_B - disp_I_a_B
           I_sea_a_B = I_sea_a_B - disp_I_sea_a_B
           I_sea_NB = I_sea_NB + disp_I_a_B + disp_I_sea_a_B
           
           # Number of recovered adults who are dispersed from A
-          disp_R_a_B = disp_a["R_a_B"]
-          disp_R_sea_a_B = disp_a["R_sea_a_B"]
+          disp_R_a_B = disp_a_B["R_a_B"]
+          disp_R_sea_a_B = disp_a_B["R_sea_a_B"]
           # Update of the number of recovered adults
-          R_a_B = R_a_B - disp_R_a
+          R_a_B = R_a_B - disp_R_a_B
           R_sea_a_B = R_sea_a_B - disp_R_sea_a_B
           R_sea_NB = R_sea_NB + disp_R_a_B + disp_R_sea_a_B
           
@@ -2180,7 +2135,7 @@ model_wrapper = function(
   # Do we induce dispersion ?
   induced_dispersal_ = F,
   # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic_ = T,
+  dispersal_stochastic_ = T,
   # Reaction time between 1rst death and induced dispersal
   dispersal_reaction_time_ = 4,
   # Initial conditions
@@ -2199,7 +2154,7 @@ model_wrapper = function(
     tau = tau_,
     total_time = total_time_,
     induced_dispersal = induced_dispersal_,
-    dispersal_stochactic = dispersal_stochactic_,
+    dispersal_stochastic = dispersal_stochastic_,
     dispersal_reaction_time = dispersal_reaction_time_,
     initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
     initial_number_breeders_A = initial_number_breeders_A_,
@@ -2216,56 +2171,47 @@ model_wrapper = function(
 
 
 
-model_wrapper(  # Parameter of the taul-leap agorithm
-  tau_ = 0.05,
-  # Number of simu_adultlation days
-  total_time_ = 50,
-  # Do we induce dispersion ?
-  induced_dispersal_ = F,
-  # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic_ = T,
-  # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time_ = 4,
-  # Initial conditions
-  initial_number_infected_breeders_A_ = 3,
-  initial_number_breeders_A_ = 100,
-  initial_number_breeders_B_ = 80,
-  initial_number_breeders_C_ = 20,
-  # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA_ = 0.02,
-  # Time at sea before returning to a colony (non-breeders)
-  TIME_AT_SEA_NB_ = 40,
-  # Probability of a nestling becoming a breeder
-  reaching.repro.prob_ = 0.3)
+# model_wrapper(  # Parameter of the taul-leap agorithm
+#   tau_ = 0.05,
+#   # Number of simu_adultlation days
+#   total_time_ = 50,
+#   # Do we induce dispersion ?
+#   induced_dispersal_ = F,
+#   # Induced dispersion mode (deterministic or stochastic)
+#   dispersal_stochastic_ = T,
+#   # Reaction time between 1rst death and induced dispersal
+#   dispersal_reaction_time_ = 4,
+#   # Initial conditions
+#   initial_number_infected_breeders_A_ = 3,
+#   initial_number_breeders_A_ = 100,
+#   initial_number_breeders_B_ = 80,
+#   initial_number_breeders_C_ = 20,
+#   # Transmission rate from exposed individuals and from infectious individuals in a colony
+#   BETA_ = 0.02,
+#   # Time at sea before returning to a colony (non-breeders)
+#   TIME_AT_SEA_NB_ = 40,
+#   # Probability of a nestling becoming a breeder
+#   reaching.repro.prob_ = 0.3)
 
 
 # Run simulation ----------------------------------------------------------
 
 time1 <- Sys.time()
-output = gillespie_seir(
-
-  # Parameter of the taul-leap agorithm
-  tau = 0.05,
+output = gillespie_seir(# Parameter of the taul-leap agorithm
+  tau = 0.25,
   # Number of simu_adultlation days
-  total_time = 50,
+  total_time = 70,
+  # Initial conditions
+  initial_number_infected_breeders_A = 1,
+  initial_number_breeders_A = 50,
+  initial_number_breeders_B = 50,
+  initial_number_breeders_C = 50,
+  # Induced dispersion parameters
   # Do we induce dispersion ?
   induced_dispersal = F,
   # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochactic = T,
-  # Reaction time between 1rst death and induced dispersal
-  dispersal_reaction_time = 4,
-  # Initial conditions
-  initial_number_infected_breeders_A = 3,
-  initial_number_breeders_A = 100,
-  initial_number_breeders_B = 80,
-  initial_number_breeders_C = 20,
-  # Transmission rate from exposed individuals and from infectious individuals in a colony
-  BETA = 0.02,
-  # Time at sea before returning to a colony (non-breeders)
-  TIME_AT_SEA_NB = 40
-
-)
-
+  dispersal_stochastic = F
+  )
 time2 <- Sys.time()
 time2 - time1
 
