@@ -287,15 +287,24 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "S_sea_c_B_to_S_c_B" = zeta_to_colony * S_sea_c_B,
   "E_sea_c_B_to_E_c_B" = zeta_to_colony * E_sea_c_B,
   "I_sea_c_B_to_I_c_B" = zeta_to_colony * I_sea_c_B,
-  "R_sea_c_B_to_R_c_B" = zeta_to_colony * R_sea_c_B
+  "R_sea_c_B_to_R_c_B" = zeta_to_colony * R_sea_c_B,
   
-  # Breeders become Non-Breeders
-  
-  # "S_a_B_to_S_a_NB" = psi * S_a_B,
-  # "E_a_B_to_E_a_NB" = psi * E_a_B,
-  # "I_a_B_to_I_a_NB" = psi * I_a_B,
-  # "R_a_B_to_R_a_NB" = psi * R_a
-  
+  # Breeders become Non-Breeders (baseline reproductive failure)
+  # In A
+  "S_a_B_to_S_a_NB" = psi * S_a_B,
+  "E_a_B_to_E_a_NB" = psi * E_a_B,
+  "I_a_B_to_I_a_NB" = psi * I_a_B,
+  "R_a_B_to_R_a_NB" = psi * R_a_B,
+  # In B
+  "S_b_B_to_S_b_NB" = psi * S_b_B,
+  "E_b_B_to_E_b_NB" = psi * E_b_B,
+  "I_b_B_to_I_b_NB" = psi * I_b_B,
+  "R_b_B_to_R_b_NB" = psi * R_b_B,
+  # In C
+  "S_c_B_to_S_c_NB" = psi * S_c_B,
+  "E_c_B_to_E_c_NB" = psi * E_c_B,
+  "I_c_B_to_I_c_NB" = psi * I_c_B,
+  "R_c_B_to_R_c_NB" = psi * R_c_B
   )
   return(rates)
 }
@@ -309,6 +318,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           total_time = 70,
                           # Initial conditions
                           initial_number_infected_breeders_A = 1,
+                          initial_number_infected_breeders_B = 0,
+                          initial_number_infected_breeders_C = 0,
                           initial_number_breeders_A = 50,
                           initial_number_breeders_B = 50,
                           initial_number_breeders_C = 50,
@@ -349,7 +360,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           ## Transition from sea to the colony (non-breeders)
                           rho_to_colony = 1/40 , 
                           # Transition from breeder to non-breeder (reproductive failure)
-                          # psi = 0,  
+                          psi = 1/500,  
                           # Demographic parameters
                           ## Hatching date of the chicks
                           hatching_date = 10,
@@ -437,7 +448,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   
   ## In colony B
   N = initial_number_breeders_B/2                  
-  initial_infected = 0
+  initial_infected = initial_number_infected_breeders_B
   initial_exposed = 0
   initial_recovered = 0
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
@@ -465,7 +476,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   
   ## In colony C
   N = initial_number_breeders_C/2               
-  initial_infected = 0
+  initial_infected = initial_number_infected_breeders_C
   initial_exposed = 0
   initial_recovered = 0
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
@@ -1775,20 +1786,691 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
       } else if (transition == "R_sea_NB_to_R_c_NB" & R_sea_NB > 0) {
         R_c_NB = R_c_NB + 1
         R_sea_NB = R_sea_NB - 1
-      # } else if (transition == "S_a_B_to_S_a_NB"  & S_a_B > 0) {
-      #   S_a_B = S_a_B - 2
-      #   S_a_NB = S_a_NB + 2
-      # } else if (transition == "E_a_B_to_E_a_NB" & E_a_B> 0) {
-      #   E_a_B= E_a_B- 2
-      #   E_a_NB = E_a_NB + 2
-      # } else if (transition == "I_a_B_to_I_a_NB" & I_a_B > 0) {
-      #   I_a_B = I_a_B - 2
-      #   I_a_NB = I_a_NB + 2
-      # } else if (transition == "E_a_B_to_E_a_NB" & R_a_B > 0) {
-      #   R_a_B = R_a_B - 2
-      #   R_a_NB = R_a_NB + 2
+      # Breeders become Non-Breeders (baseline reproductive failure)
+      # In A
+      # Status S
+      } else if (transition %in% c("S_a_B_to_S_a_NB")  
+                 & 
+                 S_a_B >= 1 
+                 &
+                 S_a_B + E_a_B + I_a_B + R_a_B  >= 2 # Presence of a pair 
+                 ) { 
+         S_a_B = S_a_B - 1
+         S_a_NB = S_a_NB + 1
+         # The nestling dies
+         if (S_a_N + E_a_N + I_a_N + R_a_N >= 1){
+           nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
+                             size = 1)
+           if (nestling == "S_a_N"){
+             S_a_N = S_a_N - 1
+             D_a_N = D_a_N + 1
+           } else if (nestling == "E_a_N"){
+             E_a_N = E_a_N - 1
+             D_a_N = D_a_N + 1
+           } else if (nestling == "I_a_N"){
+             I_a_N = I_a_N - 1
+             D_a_N = D_a_N + 1
+           } else if (nestling == "R_a_N"){
+             R_a_N = R_a_N - 1
+             D_a_N = D_a_N + 1
+           }
+         }
+         # The partner becomes a non-breeder
+         partner = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
+                            rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
+                          size = 1)
+         if (partner == "S_a_B"){
+           S_a_B = S_a_B - 1
+           S_a_NB = S_a_NB + 1
+         } else if (partner == "E_a_B"){
+           E_a_B= E_a_B- 1
+           E_a_NB = E_a_NB + 1
+         } else if (partner == "I_a_B"){
+           I_a_B = I_a_B - 1
+           I_a_NB = I_a_NB + 1
+         } else if (partner == "R_a_B"){
+           R_a_B = R_a_B - 1
+           R_a_NB = R_a_NB + 1
+         } else if (partner == "S_sea_a_B"){
+           S_sea_a_B = S_sea_a_B - 1
+           S_sea_NB = S_sea_NB + 1
+         } else if (partner == "E_sea_a_B"){
+           E_sea_a_B = E_sea_a_B - 1
+           E_sea_NB = E_sea_NB + 1
+         } else if (partner == "I_sea_a_B"){
+           I_sea_a_B = I_sea_a_B - 1
+           I_sea_NB = I_sea_NB + 1
+         } else if (partner == "R_sea_a_B"){
+           R_sea_a_B = R_sea_a_B - 1
+           R_sea_NB = R_sea_NB + 1
+         }
+      # Status E
+      } else if (transition %in% c("E_a_B_to_E_a_NB")  
+                 & 
+                 E_a_B >= 1 
+                 &
+                 S_a_B + E_a_B + I_a_B + R_a_B  >= 2 # Presence of a pair 
+      ) { 
+        E_a_B = E_a_B - 1
+        E_a_NB = E_a_NB + 1
+        # The nestling dies
+        if (S_a_N + E_a_N + I_a_N + R_a_N >= 1){
+          nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
+                            size = 1)
+          if (nestling == "S_a_N"){
+            S_a_N = S_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "E_a_N"){
+            E_a_N = E_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "I_a_N"){
+            I_a_N = I_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "R_a_N"){
+            R_a_N = R_a_N - 1
+            D_a_N = D_a_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
+                           rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
+                         size = 1)
+        if (partner == "S_a_B"){
+          S_a_B = S_a_B - 1
+          S_a_NB = S_a_NB + 1
+        } else if (partner == "E_a_B"){
+          E_a_B= E_a_B- 1
+          E_a_NB = E_a_NB + 1
+        } else if (partner == "I_a_B"){
+          I_a_B = I_a_B - 1
+          I_a_NB = I_a_NB + 1
+        } else if (partner == "R_a_B"){
+          R_a_B = R_a_B - 1
+          R_a_NB = R_a_NB + 1
+        } else if (partner == "S_sea_a_B"){
+          S_sea_a_B = S_sea_a_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_a_B"){
+          E_sea_a_B = E_sea_a_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_a_B"){
+          I_sea_a_B = I_sea_a_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_a_B"){
+          R_sea_a_B = R_sea_a_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+      # Status I
+      } else if (transition %in% c("I_a_B_to_I_a_NB")  
+                 & 
+                 I_a_B >= 1 
+                 &
+                 S_a_B + E_a_B + I_a_B + R_a_B  >= 2 # Presence of a pair 
+      ) { 
+        I_a_B = I_a_B - 1
+        I_a_NB = I_a_NB + 1
+        # The nestling dies
+        if (S_a_N + E_a_N + I_a_N + R_a_N >= 1){
+          nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
+                            size = 1)
+          if (nestling == "S_a_N"){
+            S_a_N = S_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "E_a_N"){
+            E_a_N = E_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "I_a_N"){
+            I_a_N = I_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "R_a_N"){
+            R_a_N = R_a_N - 1
+            D_a_N = D_a_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
+                           rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
+                         size = 1)
+        if (partner == "S_a_B"){
+          S_a_B = S_a_B - 1
+          S_a_NB = S_a_NB + 1
+        } else if (partner == "E_a_B"){
+          E_a_B= E_a_B- 1
+          E_a_NB = E_a_NB + 1
+        } else if (partner == "I_a_B"){
+          I_a_B = I_a_B - 1
+          I_a_NB = I_a_NB + 1
+        } else if (partner == "R_a_B"){
+          R_a_B = R_a_B - 1
+          R_a_NB = R_a_NB + 1
+        } else if (partner == "S_sea_a_B"){
+          S_sea_a_B = S_sea_a_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_a_B"){
+          E_sea_a_B = E_sea_a_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_a_B"){
+          I_sea_a_B = I_sea_a_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_a_B"){
+          R_sea_a_B = R_sea_a_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+      
+      # Status R
+      } else if (transition %in% c("R_a_B_to_R_a_NB")  
+                 & 
+                 R_a_B >= 1 
+                 &
+                 S_a_B + E_a_B + I_a_B + R_a_B  >= 2 # Presence of a pair 
+      ) { 
+        R_a_B = R_a_B - 1
+        R_a_NB = R_a_NB + 1
+        # The nestling dies
+        if (S_a_N + E_a_N + I_a_N + R_a_N >= 1){
+          nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
+                            size = 1)
+          if (nestling == "S_a_N"){
+            S_a_N = S_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "E_a_N"){
+            E_a_N = E_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "I_a_N"){
+            I_a_N = I_a_N - 1
+            D_a_N = D_a_N + 1
+          } else if (nestling == "R_a_N"){
+            R_a_N = R_a_N - 1
+            D_a_N = D_a_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
+                           rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
+                         size = 1)
+        if (partner == "S_a_B"){
+          S_a_B = S_a_B - 1
+          S_a_NB = S_a_NB + 1
+        } else if (partner == "E_a_B"){
+          E_a_B= E_a_B- 1
+          E_a_NB = E_a_NB + 1
+        } else if (partner == "I_a_B"){
+          I_a_B = I_a_B - 1
+          I_a_NB = I_a_NB + 1
+        } else if (partner == "R_a_B"){
+          R_a_B = R_a_B - 1
+          R_a_NB = R_a_NB + 1
+        } else if (partner == "S_sea_a_B"){
+          S_sea_a_B = S_sea_a_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_a_B"){
+          E_sea_a_B = E_sea_a_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_a_B"){
+          I_sea_a_B = I_sea_a_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_a_B"){
+          R_sea_a_B = R_sea_a_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        # In B
+        # Status S
+      } else if (transition %in% c("S_b_B_to_S_b_NB")  
+                 & 
+                 S_b_B >= 1 
+                 &
+                 S_b_B + E_b_B + I_b_B + R_b_B  >= 2 # Presence of a pair 
+      ) { 
+        S_b_B = S_b_B - 1
+        S_b_NB = S_b_NB + 1
+        # The nestling dies
+        if (S_b_N + E_b_N + I_b_N + R_b_N >= 1){
+          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
+                            size = 1)
+          if (nestling == "S_b_N"){
+            S_b_N = S_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "E_b_N"){
+            E_b_N = E_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "I_b_N"){
+            I_b_N = I_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "R_b_N"){
+            R_b_N = R_b_N - 1
+            D_b_N = D_b_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (partner == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (partner == "E_b_B"){
+          E_b_B= E_b_B- 1
+          E_b_NB = E_b_NB + 1
+        } else if (partner == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (partner == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (partner == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        # Status E
+      } else if (transition %in% c("E_b_B_to_E_b_NB")  
+                 & 
+                 E_b_B >= 1 
+                 &
+                 S_b_B + E_b_B + I_b_B + R_b_B  >= 2 # Presence of a pair 
+      ) { 
+        E_b_B = E_b_B - 1
+        E_b_NB = E_b_NB + 1
+        # The nestling dies
+        if (S_b_N + E_b_N + I_b_N + R_b_N >= 1){
+          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
+                            size = 1)
+          if (nestling == "S_b_N"){
+            S_b_N = S_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "E_b_N"){
+            E_b_N = E_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "I_b_N"){
+            I_b_N = I_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "R_b_N"){
+            R_b_N = R_b_N - 1
+            D_b_N = D_b_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (partner == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (partner == "E_b_B"){
+          E_b_B= E_b_B- 1
+          E_b_NB = E_b_NB + 1
+        } else if (partner == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (partner == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (partner == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        # Status I
+      } else if (transition %in% c("I_b_B_to_I_b_NB")  
+                 & 
+                 I_b_B >= 1 
+                 &
+                 S_b_B + E_b_B + I_b_B + R_b_B  >= 2 # Presence of a pair 
+      ) { 
+        I_b_B = I_b_B - 1
+        I_b_NB = I_b_NB + 1
+        # The nestling dies
+        if (S_b_N + E_b_N + I_b_N + R_b_N >= 1){
+          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
+                            size = 1)
+          if (nestling == "S_b_N"){
+            S_b_N = S_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "E_b_N"){
+            E_b_N = E_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "I_b_N"){
+            I_b_N = I_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "R_b_N"){
+            R_b_N = R_b_N - 1
+            D_b_N = D_b_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (partner == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (partner == "E_b_B"){
+          E_b_B= E_b_B- 1
+          E_b_NB = E_b_NB + 1
+        } else if (partner == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (partner == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (partner == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
         
-        } # transition
+        # Status R
+      } else if (transition %in% c("R_b_B_to_R_b_NB")  
+                 & 
+                 R_b_B >= 1 
+                 &
+                 S_b_B + E_b_B + I_b_B + R_b_B  >= 2 # Presence of a pair 
+      ) { 
+        R_b_B = R_b_B - 1
+        R_b_NB = R_b_NB + 1
+        # The nestling dies
+        if (S_b_N + E_b_N + I_b_N + R_b_N >= 1){
+          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
+                            size = 1)
+          if (nestling == "S_b_N"){
+            S_b_N = S_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "E_b_N"){
+            E_b_N = E_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "I_b_N"){
+            I_b_N = I_b_N - 1
+            D_b_N = D_b_N + 1
+          } else if (nestling == "R_b_N"){
+            R_b_N = R_b_N - 1
+            D_b_N = D_b_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (partner == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (partner == "E_b_B"){
+          E_b_B= E_b_B- 1
+          E_b_NB = E_b_NB + 1
+        } else if (partner == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (partner == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (partner == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+      # In C
+      # Status S
+      } else if (transition %in% c("S_c_B_to_S_c_NB")  
+                 & 
+                 S_c_B >= 1 
+                 &
+                 S_c_B + E_c_B + I_c_B + R_c_B  >= 2 # Presence of a pair 
+      ) { 
+        S_c_B = S_c_B - 1
+        S_c_NB = S_c_NB + 1
+        # The nestling dies
+        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
+          nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
+                            size = 1)
+          if (nestling == "S_c_N"){
+            S_c_N = S_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "E_c_N"){
+            E_c_N = E_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "I_c_N"){
+            I_c_N = I_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "R_c_N"){
+            R_c_N = R_c_N - 1
+            D_c_N = D_c_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                         size = 1)
+        if (partner == "S_c_B"){
+          S_c_B = S_c_B - 1
+          S_c_NB = S_c_NB + 1
+        } else if (partner == "E_c_B"){
+          E_c_B= E_c_B- 1
+          E_c_NB = E_c_NB + 1
+        } else if (partner == "I_c_B"){
+          I_c_B = I_c_B - 1
+          I_c_NB = I_c_NB + 1
+        } else if (partner == "R_c_B"){
+          R_c_B = R_c_B - 1
+          R_c_NB = R_c_NB + 1
+        } else if (partner == "S_sea_c_B"){
+          S_sea_c_B = S_sea_c_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_c_B"){
+          E_sea_c_B = E_sea_c_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_c_B"){
+          I_sea_c_B = I_sea_c_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_c_B"){
+          R_sea_c_B = R_sea_c_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        # Status E
+      } else if (transition %in% c("E_c_B_to_E_c_NB")  
+                 & 
+                 E_c_B >= 1 
+                 &
+                 S_c_B + E_c_B + I_c_B + R_c_B  >= 2 # Presence of a pair 
+      ) { 
+        E_c_B = E_c_B - 1
+        E_c_NB = E_c_NB + 1
+        # The nestling dies
+        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
+          nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
+                            size = 1)
+          if (nestling == "S_c_N"){
+            S_c_N = S_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "E_c_N"){
+            E_c_N = E_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "I_c_N"){
+            I_c_N = I_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "R_c_N"){
+            R_c_N = R_c_N - 1
+            D_c_N = D_c_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                         size = 1)
+        if (partner == "S_c_B"){
+          S_c_B = S_c_B - 1
+          S_c_NB = S_c_NB + 1
+        } else if (partner == "E_c_B"){
+          E_c_B= E_c_B- 1
+          E_c_NB = E_c_NB + 1
+        } else if (partner == "I_c_B"){
+          I_c_B = I_c_B - 1
+          I_c_NB = I_c_NB + 1
+        } else if (partner == "R_c_B"){
+          R_c_B = R_c_B - 1
+          R_c_NB = R_c_NB + 1
+        } else if (partner == "S_sea_c_B"){
+          S_sea_c_B = S_sea_c_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_c_B"){
+          E_sea_c_B = E_sea_c_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_c_B"){
+          I_sea_c_B = I_sea_c_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_c_B"){
+          R_sea_c_B = R_sea_c_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        # Status I
+      } else if (transition %in% c("I_c_B_to_I_c_NB")  
+                 & 
+                 I_c_B >= 1 
+                 &
+                 S_c_B + E_c_B + I_c_B + R_c_B  >= 2 # Presence of a pair 
+      ) { 
+        I_c_B = I_c_B - 1
+        I_c_NB = I_c_NB + 1
+        # The nestling dies
+        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
+          nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
+                            size = 1)
+          if (nestling == "S_c_N"){
+            S_c_N = S_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "E_c_N"){
+            E_c_N = E_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "I_c_N"){
+            I_c_N = I_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "R_c_N"){
+            R_c_N = R_c_N - 1
+            D_c_N = D_c_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                         size = 1)
+        if (partner == "S_c_B"){
+          S_c_B = S_c_B - 1
+          S_c_NB = S_c_NB + 1
+        } else if (partner == "E_c_B"){
+          E_c_B= E_c_B- 1
+          E_c_NB = E_c_NB + 1
+        } else if (partner == "I_c_B"){
+          I_c_B = I_c_B - 1
+          I_c_NB = I_c_NB + 1
+        } else if (partner == "R_c_B"){
+          R_c_B = R_c_B - 1
+          R_c_NB = R_c_NB + 1
+        } else if (partner == "S_sea_c_B"){
+          S_sea_c_B = S_sea_c_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_c_B"){
+          E_sea_c_B = E_sea_c_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_c_B"){
+          I_sea_c_B = I_sea_c_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_c_B"){
+          R_sea_c_B = R_sea_c_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+        
+        # Status R
+      } else if (transition %in% c("R_c_B_to_R_c_NB")  
+                 & 
+                 R_c_B >= 1 
+                 &
+                 S_c_B + E_c_B + I_c_B + R_c_B  >= 2 # Presence of a pair 
+      ) { 
+        R_c_B = R_c_B - 1
+        R_c_NB = R_c_NB + 1
+        # The nestling dies
+        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
+          nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
+                            size = 1)
+          if (nestling == "S_c_N"){
+            S_c_N = S_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "E_c_N"){
+            E_c_N = E_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "I_c_N"){
+            I_c_N = I_c_N - 1
+            D_c_N = D_c_N + 1
+          } else if (nestling == "R_c_N"){
+            R_c_N = R_c_N - 1
+            D_c_N = D_c_N + 1
+          }
+        }
+        # The partner becomes a non-breeder
+        partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                         size = 1)
+        if (partner == "S_c_B"){
+          S_c_B = S_c_B - 1
+          S_c_NB = S_c_NB + 1
+        } else if (partner == "E_c_B"){
+          E_c_B= E_c_B- 1
+          E_c_NB = E_c_NB + 1
+        } else if (partner == "I_c_B"){
+          I_c_B = I_c_B - 1
+          I_c_NB = I_c_NB + 1
+        } else if (partner == "R_c_B"){
+          R_c_B = R_c_B - 1
+          R_c_NB = R_c_NB + 1
+        } else if (partner == "S_sea_c_B"){
+          S_sea_c_B = S_sea_c_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (partner == "E_sea_c_B"){
+          E_sea_c_B = E_sea_c_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (partner == "I_sea_c_B"){
+          I_sea_c_B = I_sea_c_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (partner == "R_sea_c_B"){
+          R_sea_c_B = R_sea_c_B - 1
+          R_sea_NB = R_sea_NB + 1
+        }
+         
+
+         
+         
+         
+        } 
       } # for : transitions_bank
     } # if : transitions_bank
 
@@ -2123,16 +2805,21 @@ output = gillespie_seir(# Parameter of the taul-leap agorithm
   # Number of simu_adultlation days
   total_time = 70,
   # Initial conditions
-  initial_number_infected_breeders_A = 5,
+  initial_number_infected_breeders_A = 0,
+  initial_number_infected_breeders_B = 0,
+  initial_number_infected_breeders_C = 0,
   initial_number_breeders_A = 50,
   initial_number_breeders_B = 50,
-  initial_number_breeders_C = 50,
+  initial_number_breeders_C = 20,
   # Induced dispersion parameters
   # Do we induce dispersion ?
   induced_dispersal = F,
   # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochastic = F
+  dispersal_stochastic = F,
+  # Transition from breeder to non-breeder (reproductive failure)
+  psi = 1/500
   )
+
 time2 <- Sys.time()
 time2 - time1
 
