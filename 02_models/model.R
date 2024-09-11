@@ -361,6 +361,8 @@ psi = 1/500
 # Demographic parameters
 # Hatching date of the chicks
 hatching_date = 10
+## Hatching date standard deviation
+hatching_sd = 1
 # Probability of a nestling becoming a breeder
 reaching.repro.prob = 0.3
 
@@ -393,7 +395,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           # Epidemiological parameters
                           ## Transmission rate from exposed and infectious individuals in a colony
                           beta_E_colony = 0,
-                          beta_I_colony = 0.05,
+                          beta_I_colony = 0.1,
                           ## Rate of progression from exposed to infectious (inverse of incubation period)
                           sigma = 1/1,
                           ## Rate of progression from exposed to susceptible 
@@ -648,9 +650,6 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   first_death = F
   first_death_date = NA
   
-  
-  sum_p = 0
-  
   # Next event
   while (times[length(times)] < total_time) {
     
@@ -768,23 +767,24 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
     
     
     # Hatching
+    ## Proportion of hatching during this time step
+    ## Hatching is normally distributed
     p_hatched = (pnorm(times[length(times)] + time_step, hatching_date,sd = hatching_sd)-pnorm(times[length(times)],mean = hatching_date,sd = hatching_sd))
  
     # In A
     nb_pairs_a = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)
-    nb_hatched_nestling_a = round(p_hatched * nb_pairs_a)
+    nb_hatched_nestling_a = rbinom(1, size = nb_pairs_a, prob = p_hatched)
     S_a_N = S_a_N + nb_hatched_nestling_a
     
     # In B
     nb_pairs_b = round((S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B)/2)
-    nb_hatched_nestling_b = round(p_hatched * nb_pairs_b)
+    nb_hatched_nestling_b = rbinom(1, size = nb_pairs_b, prob = p_hatched)
     S_b_N = S_b_N + nb_hatched_nestling_b
     
     # In C
     nb_pairs_c = round((S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B)/2)
-    nb_hatched_nestling_c = round(p_hatched * nb_pairs_c)
+    nb_hatched_nestling_c = rbinom(1, size = nb_pairs_c, prob = p_hatched)
     S_c_N = S_c_N + nb_hatched_nestling_c
-    
     
     
     # Determining the date of first infection
@@ -2663,7 +2663,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                 simulated_dispersal_date = simulated_dispersal_date,
                 nb_adults_equi = nb_adults_equi,
                 nb_infected_colonies = nb_infected_colonies,
-                infected_X_time = infected_X_time)
+                infected_X_time = infected_X_time,
+                pp = pp)
   
   return(output)
 } # function
@@ -2817,24 +2818,24 @@ time1 <- Sys.time()
 output = gillespie_seir(
   
   ## Hatching date standard deviation
-  hatching_sd = 1,
+  hatching_sd = 3,
   
   # Parameter of the taul-leap agorithm
   tau = 0.05,
   # Number of simu_adultlation days
-  total_time = 20,
+  total_time = 70,
   # Initial conditions
-  initial_number_infected_breeders_A = 0,
+  initial_number_infected_breeders_A = 5,
   initial_number_infected_breeders_B = 0,
   initial_number_infected_breeders_C = 0,
   initial_number_breeders_A = 50,
-  initial_number_breeders_B = 50,
+  initial_number_breeders_B = 80,
   initial_number_breeders_C = 20,
   # Induced dispersion parameters
   # Do we induce dispersion ?
   induced_dispersal = F,
   # Induced dispersion mode (deterministic or stochastic)
-  dispersal_stochastic = F,
+  dispersal_stochastic = T,
   # Transition from breeder to non-breeder (reproductive failure)
   psi = 1/500
   )
@@ -2847,7 +2848,6 @@ plot_seir(output_ = output)
 output$nb_adults_equi
 output$nb_infected_colonies
 output$infected_X_time
-
 
 
 
