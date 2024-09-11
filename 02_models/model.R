@@ -774,17 +774,24 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
     # In A
     nb_pairs_a = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)
     nb_hatched_nestling_a = rbinom(1, size = nb_pairs_a, prob = p_hatched)
-    S_a_N = S_a_N + nb_hatched_nestling_a
+    if (S_a_N + nb_hatched_nestling_a <= nb_pairs_a){
+      S_a_N = S_a_N + nb_hatched_nestling_a
+    }
+    
     
     # In B
     nb_pairs_b = round((S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B)/2)
     nb_hatched_nestling_b = rbinom(1, size = nb_pairs_b, prob = p_hatched)
-    S_b_N = S_b_N + nb_hatched_nestling_b
+    if (S_b_N + nb_hatched_nestling_b <= nb_pairs_b){
+      S_b_N = S_b_N + nb_hatched_nestling_b
+    }
     
     # In C
     nb_pairs_c = round((S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B)/2)
     nb_hatched_nestling_c = rbinom(1, size = nb_pairs_c, prob = p_hatched)
-    S_c_N = S_c_N + nb_hatched_nestling_c
+    if (S_c_N + nb_hatched_nestling_c <= nb_pairs_c){
+      S_c_N = S_c_N + nb_hatched_nestling_c
+    }
     
     
     # Determining the date of first infection
@@ -2663,8 +2670,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                 simulated_dispersal_date = simulated_dispersal_date,
                 nb_adults_equi = nb_adults_equi,
                 nb_infected_colonies = nb_infected_colonies,
-                infected_X_time = infected_X_time,
-                pp = pp)
+                infected_X_time = infected_X_time)
   
   return(output)
 } # function
@@ -2678,7 +2684,8 @@ plot_seir = function(output_){
   output_2 = output_[[2]]
   
   
-  output_long = melt(output_1[1:nrow(output_1)-1, ], id = "time")
+  output_long = melt(output_1[1:nrow(output_1)-1, ], id = "time") %>% 
+    mutate(value = as.integer(value))
   
   # In A
   output_a = output_long %>% filter(variable %in% c("S_a_B_total", "E_a_B_total", "I_a_B_total", "R_a_B_total", "D_a_B_total"))
@@ -2686,33 +2693,36 @@ plot_seir = function(output_){
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_a, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Breeders in A (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_a$value == 0)) 1 else NA) 
+    # ylim(0, if (all(output_a$value == 0)) 1 else NA) + 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_a_N = output_long %>% filter(variable %in% c("S_a_N", "E_a_N", "I_a_N", "R_a_N", "D_a_N"))
   plot_a_N = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_a_N, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in A")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_a_N$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_a_N$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_a_NB = output_long %>% filter(variable %in% c("S_a_NB", "E_a_NB", "I_a_NB", "R_a_NB", "D_a_NB"))
   plot_a_NB =  ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_a_NB, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony A")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_a_NB$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_a_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   # In B
   output_b = output_long %>% filter(variable %in% c("S_b_B_total", "E_b_B_total", "I_b_B_total", "R_b_B_total", "D_b_B_total"))
@@ -2720,33 +2730,36 @@ plot_seir = function(output_){
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_b, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Breeders in B (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_b$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_b$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_b_N = output_long %>% filter(variable %in% c("S_b_N", "E_b_N", "I_b_N", "R_b_N", "D_b_N"))
   plot_b_N = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_b_N, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in B")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_b_N$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_b_N$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_b_NB = output_long %>% filter(variable %in% c("S_b_NB", "E_b_NB", "I_b_NB", "R_b_NB", "D_b_NB"))
   plot_b_NB = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed", 
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_b_NB, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony B")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_b_NB$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_b_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   # In C
   
@@ -2755,33 +2768,36 @@ plot_seir = function(output_){
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_c, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Breeders in C (colony+sea)")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_c$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_c$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_c_N = output_long %>% filter(variable %in% c("S_c_N", "E_c_N", "I_c_N", "R_c_N", "D_c_N"))
   plot_c_N = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_c_N, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Nestlings in C")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_c_N$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_c_N$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   output_c_NB = output_long %>% filter(variable %in% c("S_c_NB", "E_c_NB", "I_c_NB", "R_c_NB", "D_c_NB"))
   plot_c_NB = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 ,linetype= if (is.na(output_2)) "blank" else "dashed",
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_c_NB, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder in colony C")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_c_NB$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_c_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   
   # At sea
@@ -2791,20 +2807,24 @@ plot_seir = function(output_){
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
     geom_line(data = output_sea_NB, aes(x = time, y = value, color = variable)) +
-    labs(x = "Time", y = "Number of individuals", color = "Status") +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
     ggtitle("Non-breeder at sea")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    ylim(0, if (all(output_sea_NB$value == 0)) 1 else NA)
+    # ylim(0, if (all(output_sea_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   
-  plot_grid_seir = plot_grid(plot_a, plot_a_N, plot_sea_NB,
-                             plot_b, plot_b_N, plot_b_NB,
-                             plot_c, plot_c_N, plot_c_NB,
+  plot_grid_seir = plot_grid(plot_a_N, plot_b_N, plot_c_N,
+                             plot_a, plot_b, plot_c,
+                             plot_a_NB, plot_b_NB, plot_c_NB,
+                             NULL, plot_sea_NB, NULL,
                              labels = c("A", "B", "C",
                                         "D", "E", "F",
-                                        "G", "H", "I"),
-                             label_size = 12)
+                                        "G", "H", "I",
+                                        " ", "J", " "),
+                             label_size = 12,
+                             ncol = 3)
   
   print(plot_grid_seir)
   
@@ -2816,7 +2836,6 @@ plot_seir = function(output_){
 
 time1 <- Sys.time()
 output = gillespie_seir(
-  
   ## Hatching date standard deviation
   hatching_sd = 3,
   
@@ -2833,13 +2852,12 @@ output = gillespie_seir(
   initial_number_breeders_C = 20,
   # Induced dispersion parameters
   # Do we induce dispersion ?
-  induced_dispersal = F,
+  induced_dispersal = T,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochastic = T,
   # Transition from breeder to non-breeder (reproductive failure)
   psi = 1/500
   )
-
 time2 <- Sys.time()
 time2 - time1
 
