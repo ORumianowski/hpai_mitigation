@@ -2,6 +2,11 @@
 
 ##
 
+# error
+# 
+#   c(rep("S_b_B", S_b_B)
+# )
+
 ##
 
 
@@ -1048,62 +1053,64 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
       I_b_N = I_b_N - 1
       D_b_N = D_b_N + 1
       # If a nestling dies, both parents become non-breeders.
-      parent1 = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
-                         rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
-                       size = 1)
-      if (parent1 == "S_b_B"){
-        S_b_B = S_b_B - 1
-        S_b_NB = S_b_NB + 1
-      } else if (parent1 == "E_b_B"){
-        E_b_B = E_b_B - 1
-        E_b_NB = E_b_NB + 1
-      } else if (parent1 == "I_b_B"){
-        I_b_B = I_b_B - 1
-        I_b_NB = I_b_NB + 1
-      } else if (parent1 == "R_b_B"){
-        R_b_B = R_b_B - 1
-        R_b_NB = R_b_NB + 1
-      } else if (parent1 == "S_sea_b_B"){
-        S_sea_b_B = S_sea_b_B - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (parent1 == "E_sea_b_B"){
-        E_sea_b_B = E_sea_b_B - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (parent1 == "I_sea_b_B"){
-        I_sea_b_B = I_sea_b_B - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (parent1 == "R_sea_b_B"){
-        R_sea_b_B = R_sea_b_B - 1
-        R_sea_NB = R_sea_NB + 1
-      }
-      parent2 = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
-                         rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
-                       size = 1)
-      if (parent2 == "S_b_B"){
-        S_b_B = S_b_B - 1
-        S_b_NB = S_b_NB + 1
-      } else if (parent2 == "E_b_B"){
-        E_b_B = E_b_B - 1
-        E_b_NB = E_b_NB + 1
-      } else if (parent2 == "I_b_B"){
-        I_b_B = I_b_B - 1
-        I_b_NB = I_b_NB + 1
-      } else if (parent2 == "R_b_B"){
-        R_b_B = R_b_B - 1
-        R_b_NB = R_b_NB + 1
-      } else if (parent2 == "S_sea_b_B"){
-        S_sea_b_B = S_sea_b_B - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (parent2 == "E_sea_b_B"){
-        E_sea_b_B = E_sea_b_B - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (parent2 == "I_sea_b_B"){
-        I_sea_b_B = I_sea_b_B - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (parent2 == "R_sea_b_B"){
-        R_sea_b_B = R_sea_b_B - 1
-        R_sea_NB = R_sea_NB + 1
+      if (S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B >= 2){
+        parent1 = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (parent1 == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (parent1 == "E_b_B"){
+          E_b_B = E_b_B - 1
+          E_b_NB = E_b_NB + 1
+        } else if (parent1 == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (parent1 == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (parent1 == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (parent1 == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (parent1 == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (parent1 == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
         }
+        parent2 = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                         size = 1)
+        if (parent2 == "S_b_B"){
+          S_b_B = S_b_B - 1
+          S_b_NB = S_b_NB + 1
+        } else if (parent2 == "E_b_B"){
+          E_b_B = E_b_B - 1
+          E_b_NB = E_b_NB + 1
+        } else if (parent2 == "I_b_B"){
+          I_b_B = I_b_B - 1
+          I_b_NB = I_b_NB + 1
+        } else if (parent2 == "R_b_B"){
+          R_b_B = R_b_B - 1
+          R_b_NB = R_b_NB + 1
+        } else if (parent2 == "S_sea_b_B"){
+          S_sea_b_B = S_sea_b_B - 1
+          S_sea_NB = S_sea_NB + 1
+        } else if (parent2 == "E_sea_b_B"){
+          E_sea_b_B = E_sea_b_B - 1
+          E_sea_NB = E_sea_NB + 1
+        } else if (parent2 == "I_sea_b_B"){
+          I_sea_b_B = I_sea_b_B - 1
+          I_sea_NB = I_sea_NB + 1
+        } else if (parent2 == "R_sea_b_B"){
+          R_sea_b_B = R_sea_b_B - 1
+          R_sea_NB = R_sea_NB + 1
+        } 
+      }
       ### In C
       }else if (transition == "S_c_N_to_E_c_N" & S_c_N > 0){
         S_c_N = S_c_N - 1
@@ -1123,62 +1130,64 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
       }else if (transition == "I_c_N_to_D_c_N" & I_c_N > 0){
         I_c_N = I_c_N - 1
         D_c_N = D_c_N + 1
-        # If a nestling dies, both parents become non-breeders.
-        parent1 = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
-                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
-                         size = 1)
-        if (parent1 == "S_c_B"){
-          S_c_B = S_c_B - 1
-          S_c_NB = S_c_NB + 1
-        } else if (parent1 == "E_c_B"){
-          E_c_B = E_c_B - 1
-          E_c_NB = E_c_NB + 1
-        } else if (parent1 == "I_c_B"){
-          I_c_B = I_c_B - 1
-          I_c_NB = I_c_NB + 1
-        } else if (parent1 == "R_c_B"){
-          R_c_B = R_c_B - 1
-          R_c_NB = R_c_NB + 1
-        } else if (parent1 == "S_sea_c_B"){
-          S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
-        } else if (parent1 == "E_sea_c_B"){
-          E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
-        } else if (parent1 == "I_sea_c_B"){
-          I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
-        } else if (parent1 == "R_sea_c_B"){
-          R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
-        }
-        parent2 = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
-                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
-                         size = 1)
-        if (parent2 == "S_c_B"){
-          S_c_B = S_c_B - 1
-          S_c_NB = S_c_NB + 1
-        } else if (parent2 == "E_c_B"){
-          E_c_B = E_c_B - 1
-          E_c_NB = E_c_NB + 1
-        } else if (parent2 == "I_c_B"){
-          I_c_B = I_c_B - 1
-          I_c_NB = I_c_NB + 1
-        } else if (parent2 == "R_c_B"){
-          R_c_B = R_c_B - 1
-          R_c_NB = R_c_NB + 1
-        } else if (parent2 == "S_sea_c_B"){
-          S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
-        } else if (parent2 == "E_sea_c_B"){
-          E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
-        } else if (parent2 == "I_sea_c_B"){
-          I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
-        } else if (parent2 == "R_sea_c_B"){
-          R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+        if (S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B >= 2){
+          # If a nestling dies, both parents become non-breeders.
+          parent1 = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                             rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                           size = 1)
+          if (parent1 == "S_c_B"){
+            S_c_B = S_c_B - 1
+            S_c_NB = S_c_NB + 1
+          } else if (parent1 == "E_c_B"){
+            E_c_B = E_c_B - 1
+            E_c_NB = E_c_NB + 1
+          } else if (parent1 == "I_c_B"){
+            I_c_B = I_c_B - 1
+            I_c_NB = I_c_NB + 1
+          } else if (parent1 == "R_c_B"){
+            R_c_B = R_c_B - 1
+            R_c_NB = R_c_NB + 1
+          } else if (parent1 == "S_sea_c_B"){
+            S_sea_c_B = S_sea_c_B - 1
+            S_sea_NB = S_sea_NB + 1
+          } else if (parent1 == "E_sea_c_B"){
+            E_sea_c_B = E_sea_c_B - 1
+            E_sea_NB = E_sea_NB + 1
+          } else if (parent1 == "I_sea_c_B"){
+            I_sea_c_B = I_sea_c_B - 1
+            I_sea_NB = I_sea_NB + 1
+          } else if (parent1 == "R_sea_c_B"){
+            R_sea_c_B = R_sea_c_B - 1
+            R_sea_NB = R_sea_NB + 1
+          }
+          parent2 = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                             rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                           size = 1)
+          if (parent2 == "S_c_B"){
+            S_c_B = S_c_B - 1
+            S_c_NB = S_c_NB + 1
+          } else if (parent2 == "E_c_B"){
+            E_c_B = E_c_B - 1
+            E_c_NB = E_c_NB + 1
+          } else if (parent2 == "I_c_B"){
+            I_c_B = I_c_B - 1
+            I_c_NB = I_c_NB + 1
+          } else if (parent2 == "R_c_B"){
+            R_c_B = R_c_B - 1
+            R_c_NB = R_c_NB + 1
+          } else if (parent2 == "S_sea_c_B"){
+            S_sea_c_B = S_sea_c_B - 1
+            S_sea_NB = S_sea_NB + 1
+          } else if (parent2 == "E_sea_c_B"){
+            E_sea_c_B = E_sea_c_B - 1
+            E_sea_NB = E_sea_NB + 1
+          } else if (parent2 == "I_sea_c_B"){
+            I_sea_c_B = I_sea_c_B - 1
+            I_sea_NB = I_sea_NB + 1
+          } else if (parent2 == "R_sea_c_B"){
+            R_sea_c_B = R_sea_c_B - 1
+            R_sea_NB = R_sea_NB + 1
+          }
         }
       ## Breeders
       ### In A
@@ -1345,36 +1354,39 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
             D_b_N = D_b_N + 1
           }
         }
-        # The partner becomes a non-breeder
-        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
-                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
-                         size = 1)
-       
-        if (partner == "S_b_B"){
-          S_b_B = S_b_B - 1
-          S_b_NB = S_b_NB + 1
-        } else if (partner == "E_b_B"){
-          E_b_B = E_b_B - 1
-          E_b_NB = E_b_NB + 1
-        } else if (partner == "I_b_B"){
-          I_b_B = I_b_B - 1
-          I_b_NB = I_b_NB + 1
-        } else if (partner == "R_b_B"){
-          R_b_B = R_b_B - 1
-          R_b_NB = R_b_NB + 1
-        } else if (partner == "S_sea_b_B"){
-          S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
-        } else if (partner == "E_sea_b_B"){
-          E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
-        } else if (partner == "I_sea_b_B"){
-          I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
-        } else if (partner == "R_sea_b_B"){
-          R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+        if (S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B >= 1){
+          # The partner becomes a non-breeder
+          partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                             rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                           size = 1)
+          
+          if (partner == "S_b_B"){
+            S_b_B = S_b_B - 1
+            S_b_NB = S_b_NB + 1
+          } else if (partner == "E_b_B"){
+            E_b_B = E_b_B - 1
+            E_b_NB = E_b_NB + 1
+          } else if (partner == "I_b_B"){
+            I_b_B = I_b_B - 1
+            I_b_NB = I_b_NB + 1
+          } else if (partner == "R_b_B"){
+            R_b_B = R_b_B - 1
+            R_b_NB = R_b_NB + 1
+          } else if (partner == "S_sea_b_B"){
+            S_sea_b_B = S_sea_b_B - 1
+            S_sea_NB = S_sea_NB + 1
+          } else if (partner == "E_sea_b_B"){
+            E_sea_b_B = E_sea_b_B - 1
+            E_sea_NB = E_sea_NB + 1
+          } else if (partner == "I_sea_b_B"){
+            I_sea_b_B = I_sea_b_B - 1
+            I_sea_NB = I_sea_NB + 1
+          } else if (partner == "R_sea_b_B"){
+            R_sea_b_B = R_sea_b_B - 1
+            R_sea_NB = R_sea_NB + 1
+          }
         }
+        
       #### At sea
       } else if (transition == "S_sea_b_B_to_E_sea_b_B" & S_sea_b_B > 0) {
         S_sea_b_B = S_sea_b_B - 1
@@ -1391,53 +1403,55 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
       } else if (transition == "I_sea_b_B_to_D_sea_b_B" & I_sea_b_B > 0) {
         I_sea_b_B = I_sea_b_B - 1
         D_sea_b_B = D_sea_b_B + 1
-        # The nestling dies
-        if (S_b_N + E_b_N + I_b_N + R_b_N > 0){
-          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
-                            size = 1)
-          if (nestling == "S_b_N"){
-            S_b_N = S_b_N - 1
-            D_b_N = D_b_N + 1
-          } else if (nestling == "E_b_N"){
-            E_b_N = E_b_N - 1
-            D_b_N = D_b_N + 1
-          } else if (nestling == "I_b_N"){
-            I_b_N = I_b_N - 1
-            D_b_N = D_b_N + 1
-          } else if (nestling == "R_b_N"){
-            R_b_N = R_b_N - 1
-            D_b_N = D_b_N + 1
+        if (S_b_B + E_b_B + I_b_B + R_b_B + S_sea_b_B + E_sea_b_B + I_sea_b_B + R_sea_b_B >= 1){
+          # The nestling dies
+          if (S_b_N + E_b_N + I_b_N + R_b_N > 0){
+            nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
+                              size = 1)
+            if (nestling == "S_b_N"){
+              S_b_N = S_b_N - 1
+              D_b_N = D_b_N + 1
+            } else if (nestling == "E_b_N"){
+              E_b_N = E_b_N - 1
+              D_b_N = D_b_N + 1
+            } else if (nestling == "I_b_N"){
+              I_b_N = I_b_N - 1
+              D_b_N = D_b_N + 1
+            } else if (nestling == "R_b_N"){
+              R_b_N = R_b_N - 1
+              D_b_N = D_b_N + 1
+            }
           }
-        }
-        # The partner becomes a non-breeder
-        partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
-                           rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
-                         size = 1)
-        
-        if (partner == "S_b_B"){
-          S_b_B = S_b_B - 1
-          S_b_NB = S_b_NB + 1
-        } else if (partner == "E_b_B"){
-          E_b_B = E_b_B - 1
-          E_b_NB = E_b_NB + 1
-        } else if (partner == "I_b_B"){
-          I_b_B = I_b_B - 1
-          I_b_NB = I_b_NB + 1
-        } else if (partner == "R_b_B"){
-          R_b_B = R_b_B - 1
-          R_b_NB = R_b_NB + 1
-        } else if (partner == "S_sea_b_B"){
-          S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
-        } else if (partner == "E_sea_b_B"){
-          E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
-        } else if (partner == "I_sea_b_B"){
-          I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
-        } else if (partner == "R_sea_b_B"){
-          R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          # The partner becomes a non-breeder
+          partner = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
+                             rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
+                           size = 1)
+          
+          if (partner == "S_b_B"){
+            S_b_B = S_b_B - 1
+            S_b_NB = S_b_NB + 1
+          } else if (partner == "E_b_B"){
+            E_b_B = E_b_B - 1
+            E_b_NB = E_b_NB + 1
+          } else if (partner == "I_b_B"){
+            I_b_B = I_b_B - 1
+            I_b_NB = I_b_NB + 1
+          } else if (partner == "R_b_B"){
+            R_b_B = R_b_B - 1
+            R_b_NB = R_b_NB + 1
+          } else if (partner == "S_sea_b_B"){
+            S_sea_b_B = S_sea_b_B - 1
+            S_sea_NB = S_sea_NB + 1
+          } else if (partner == "E_sea_b_B"){
+            E_sea_b_B = E_sea_b_B - 1
+            E_sea_NB = E_sea_NB + 1
+          } else if (partner == "I_sea_b_B"){
+            I_sea_b_B = I_sea_b_B - 1
+            I_sea_NB = I_sea_NB + 1
+          } else if (partner == "R_sea_b_B"){
+            R_sea_b_B = R_sea_b_B - 1
+            R_sea_NB = R_sea_NB + 1
+          }
         }
       ### In C
       #### At colony
@@ -1458,7 +1472,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
         I_c_B = I_c_B - 1
         D_c_B = D_c_B + 1
         # The nestling dies
-        if (S_c_N + E_c_N + I_c_N + R_c_N > 0){
+        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
           nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
                             size = 1)
           if (nestling == "S_c_N"){
@@ -1475,35 +1489,38 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
             D_c_N = D_c_N + 1
           }
         }
-        # The partner becomes a non-breeder
-        partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
-                           rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
-                         size = 1)
-        
-        if (partner == "S_c_B"){
-          S_c_B = S_c_B - 1
-          S_c_NB = S_c_NB + 1
-        } else if (partner == "E_c_B"){
-          E_c_B = E_c_B - 1
-          E_c_NB = E_c_NB + 1
-        } else if (partner == "I_c_B"){
-          I_c_B = I_c_B - 1
-          I_c_NB = I_c_NB + 1
-        } else if (partner == "R_c_B"){
-          R_c_B = R_c_B - 1
-          R_c_NB = R_c_NB + 1
-        } else if (partner == "S_sea_c_B"){
-          S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
-        } else if (partner == "E_sea_c_B"){
-          E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
-        } else if (partner == "I_sea_c_B"){
-          I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
-        } else if (partner == "R_sea_c_B"){
-          R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+        if (S_c_B + E_c_B + I_c_B + R_c_B + S_sea_c_B + E_sea_c_B + I_sea_c_B + R_sea_c_B >= 1){
+          # The partner becomes a non-breeder
+          partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
+                             rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
+                           size = 1)
+          
+          if (partner == "S_c_B"){
+            S_c_B = S_c_B - 1
+            S_c_NB = S_c_NB + 1
+          } else if (partner == "E_c_B"){
+            E_c_B = E_c_B - 1
+            E_c_NB = E_c_NB + 1
+          } else if (partner == "I_c_B"){
+            I_c_B = I_c_B - 1
+            I_c_NB = I_c_NB + 1
+          } else if (partner == "R_c_B"){
+            R_c_B = R_c_B - 1
+            R_c_NB = R_c_NB + 1
+          } else if (partner == "S_sea_c_B"){
+            S_sea_c_B = S_sea_c_B - 1
+            S_sea_NB = S_sea_NB + 1
+          } else if (partner == "E_sea_c_B"){
+            E_sea_c_B = E_sea_c_B - 1
+            E_sea_NB = E_sea_NB + 1
+          } else if (partner == "I_sea_c_B"){
+            I_sea_c_B = I_sea_c_B - 1
+            I_sea_NB = I_sea_NB + 1
+          } else if (partner == "R_sea_c_B"){
+            R_sea_c_B = R_sea_c_B - 1
+            R_sea_NB = R_sea_NB + 1
+          }
+          
         }
         #### At sea
       } else if (transition == "S_sea_c_B_to_E_sea_c_B" & S_sea_c_B > 0) {
@@ -1539,6 +1556,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
             D_c_N = D_c_N + 1
           }
         }
+
         # The partner becomes a non-breeder
         partner = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
                            rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
@@ -2859,7 +2877,234 @@ output$nb_infected_colonies
 output$infected_X_time
 
 
+# LHS ---------------------------------------------------------------------
+
+library(lhs)
+
+param_range = data.frame(
+  
+# Integer Parameters (9 parameters)
+  
+# Initial conditions
+
+initial_number_infected_breeders_A_LHS = c(1,1),
+initial_number_infected_breeders_B_LHS = c(0,0),
+initial_number_infected_breeders_C_LHS = c(0,0),
+initial_number_breeders_A_LHS = c(50,50),
+initial_number_breeders_B_LHS = c(50,50),
+initial_number_breeders_C_LHS = c(50,50),
+# Reaction time between 1st death and induced dispersal
+dispersal_reaction_time_LHS = c(5,5),
+# Date of induced dispersion (if deterministic)
+dispersal_date_LHS = c(0,0),
+# Hatching date of the chicks
+hatching_date_LHS = c(10,10),
+
+# Continuous Parameters 
+
+# Parameter of the taul-leap algorithm
+tau_LHS = c(0.25,0.25),
+# Number of simulation days
+total_time_LHS = c(70,70),
+# Proportion of dispersed adults
+prop_dispersal_LHS = c(1,1),
+# Epidemiological parameters
+# Transmission rate from exposed and infectious individuals in a colony
+beta_E_colony_LHS = c(0,0),
+beta_I_colony_LHS = c(0.01,0.50),
+# Rate of progression from exposed to infectious (inverse of incubation period)
+sigma_LHS = c(1/1,1/1),
+# Rate of progression from exposed to susceptible 
+eta_LHS =  c(0,0),
+# Recovery rate (inverse of infectious period)
+gamma_LHS = c(1/6,1/6),
+# Disease-related mortality rate
+# Death probability = mu / (mu + gamma)
+# Adult
+mu_adult_LHS = c(1/6 * (0.5/(1-0.5)),1/6 * (0.5/(1-0.5))), # 50% of mortality
+# Nestling
+mu_nestling_LHS = c(1/6 * (0.8/(1-0.8)),1/6 * (0.8/(1-0.8))), # 80% of mortality
+# Mobility parameters
+# Transition from colony to the sea (breeders)
+zeta_to_sea_LHS = c(1/2,1/2),
+# Transition from sea to the colony (breeders)
+zeta_to_colony_LHS = c(1/2,1/2),
+# Transition from colony to the sea (non-breeders)
+rho_to_sea_LHS = c(1/2,1/2),
+# Transition from sea to the colony (non-breeders)
+rho_to_colony_LHS = c(1/40,1/2),
+# Transition from breeder to non-breeder (reproductive failure)
+psi_LHS = c(1/500,1/500),
+# Demographic parameters
+## Hatching date standard deviation
+hatching_sd_LHS = c(3,3),
+# Probability of a nestling becoming a breeder
+reaching.repro.prob_LHS = c(0.2,0.8)
+)
+
+
+nb_integer_param = 9
+nb_param = ncol(param_range)
+nb_samples = 500
+
+X <- randomLHS(nb_samples, nb_param)  # (nb samples, nb parameters)
+
+# Integer parameters
+for (i in 1:nb_integer_param){
+  X[,i] <- qinteger(X[,i], param_range[,i][1], param_range[,i][2]) 
+}
+# Continuous parameters
+for (i in (nb_integer_param+1):nb_param){
+  X[,i] <- qunif(X[,i], param_range[,i][1], param_range[,i][2]) 
+}
+
+
+output_bank = cbind(X,
+                    data.frame(nb_adults_equi = rep(NA, nb_samples)),
+                    data.frame(nb_infected_colonies = rep(NA, nb_samples)),
+                    data.frame(infected_X_time = rep(NA, nb_samples)))
+
+for (i in 1:nb_samples){
+  
+  output = gillespie_seir(
+    
+    # Integer Parameters (9 parameters)
+    
+    # Initial conditions
+    initial_number_infected_breeders_A = X[i,1],
+    initial_number_infected_breeders_B = X[i,2],
+    initial_number_infected_breeders_C = X[i,3],
+    initial_number_breeders_A = X[i,4],
+    initial_number_breeders_B = X[i,5],
+    initial_number_breeders_C = X[i,6],
+    # Reaction time between 1st death and induced dispersal
+    dispersal_reaction_time = X[i,7],
+    # Date of induced dispersion (if deterministic)
+    dispersal_date = X[i,8],
+    # Hatching date of the chicks
+    hatching_date = X[i,9],
+    
+    # Continuous Parameters 
+    
+    # Parameter of the taul-leap algorithm
+    tau = X[i,10],
+    # Number of simulation days
+    total_time = X[i,11],
+    # Proportion of dispersed adults
+    prop_dispersal = X[i,12],
+    # Epidemiological parameters
+    # Transmission rate from exposed and infectious individuals in a colony
+    beta_E_colony = X[i,13],
+    beta_I_colony = X[i,14],
+    # Rate of progression from exposed to infectious (inverse of incubation period)
+    sigma = X[i,15],
+    # Rate of progression from exposed to susceptible 
+    eta =  X[i,16],
+    # Recovery rate (inverse of infectious period)
+    gamma = X[i,17],
+    # Disease-related mortality rate
+    # Death probability = mu / (mu + gamma)
+    # Adult
+    mu_adult = X[i,18], # 50% of mortality
+    # Nestling
+    mu_nestling = X[i,19], # 80% of mortality
+    # Mobility parameters
+    # Transition from colony to the sea (breeders)
+    zeta_to_sea = X[i,20],
+    # Transition from sea to the colony (breeders)
+    zeta_to_colony = X[i,21],
+    # Transition from colony to the sea (non-breeders)
+    rho_to_sea = X[i,22],
+    # Transition from sea to the colony (non-breeders)
+    rho_to_colony = X[i,23],
+    # Transition from breeder to non-breeder (reproductive failure)
+    psi = X[i,24],
+    # Demographic parameters
+    ## Hatching date standard deviation
+    hatching_sd = X[i,25],
+    # Probability of a nestling becoming a breeder
+    reaching.repro.prob = X[i,26]  
+  )
+  
+  
+  output_bank[i, "nb_adults_equi"] = output$nb_adults_equi
+  output_bank[i, "nb_infected_colonies"] = output$nb_infected_colonies
+  output_bank[i, "infected_X_time"] = output$infected_X_time
+  
+}
+
+
+plot_dt = output_bank[, c(14, 23, 27)] %>% 
+  data.frame()
+
+ggplot()+
+  geom_tile(data = plot_dt, aes(x = X14, y = X23, fill = nb_adults_equi),
+            width = 0.01, height = 0.01)+
+  scale_fill_gradient(low = "yellow", high = "blue") +
+  theme_minimal() + 
+  labs(title = "",
+       x = "beta",
+       y = "mobility",
+       fill = "ENLA")
+  
+
+
+# Charger les bibliothèques nécessaires
+library(ggplot2)
+library(dplyr)
+
+# Taille des blocs à regrouper
+block_size <- 0.05 
+
+# Regrouper les données par blocs et calculer la moyenne dans chaque bloc
+plot_dt_binned <- plot_dt %>%
+  mutate(
+    beta_bin = cut(X14, breaks = seq(min(X14), max(X14), by = block_size), include.lowest = TRUE),
+    mobility_bin = cut(X23, breaks = seq(min(X23), max(X23), by = block_size), include.lowest = TRUE)
+  ) %>%
+  group_by(beta_bin, mobility_bin) %>%
+  summarise(nb_adults_equi_avg = mean(nb_adults_equi, na.rm = TRUE)) %>%
+  ungroup()
+
+# Transformer les bins en valeurs numériques pour pouvoir les utiliser dans ggplot
+plot_dt_binned <- plot_dt_binned %>%
+  mutate(
+    beta_mid = as.numeric(sub("\\((.+),.*", "\\1", beta_bin)) + block_size / 2,
+    mobility_mid = as.numeric(sub("\\((.+),.*", "\\1", mobility_bin)) + block_size / 2
+  )
+
+# Création du plot avec des tuiles plus grandes
+ggplot() +
+  geom_tile(data = plot_dt_binned, aes(x = beta_mid, y = mobility_mid, fill = nb_adults_equi_avg),
+            width = block_size, height = block_size) +
+  scale_fill_gradient(low = "yellow", high = "blue") +
+  theme_minimal() +
+  labs(title = "",
+       x = "beta",
+       y = "mobility",
+       fill = "ENLA")
 
 
 
+# Taille des intervalles pour la variable X14 (ajuste selon tes besoins)
+interval_size <- 0.05
+
+# Créer des intervalles pour X14
+plot_dt_binned <- plot_dt %>%
+  mutate(X14_bin = cut(X14, breaks = seq(param_range$beta_I_colony_LHS[1],
+                                         param_range$beta_I_colony_LHS[2],
+                                         by = interval_size),
+                       include.lowest = TRUE)) %>% 
+  na.omit()
+
+
+# Tracer des boxplots pour nb_adults_equi dans chaque intervalle de X14
+ggplot(plot_dt_binned, aes(x = X14_bin, y = nb_adults_equi)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  labs(title = "",
+       x = "Transmission rate",
+       y = "ENLA",
+       fill = "X14")
 
