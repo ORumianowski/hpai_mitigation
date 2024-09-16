@@ -2,17 +2,6 @@
 
 ##
 
-# Meilleur dicernement de la prob recrutement
-
-# sortir les paramters
-
-# regroupe le parametre de probabilite de recrutement
-
-# Should I add failures unrelated to the disease?
-
-
-# color in relation the position compared to baseline outbreak
-
 ##
 
 
@@ -362,7 +351,7 @@ psi = 1/500
 # Hatching date of the chicks
 hatching_date = 10
 ## Hatching date standard deviation
-hatching_sd = 1
+hatching_sd = 3
 # Probability of a nestling becoming a breeder
 reaching.repro.prob = 0.3
 
@@ -423,7 +412,7 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           ## Hatching date of the chicks
                           hatching_date = 10,
                           ## Hatching date standard deviation
-                          hatching_sd = 1,
+                          hatching_sd = 3,
                           # Probability of a nestling becoming a breeder
                           reaching.repro.prob = 0.3
                           
@@ -2648,16 +2637,21 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
     max()
   
   
-  nb_adults = N_a + N_b + N_c - dead_a - dead_b - dead_c
-  nb_nestlings = a_N + b_N + c_N
+  
+  # Equivalent Number of Lost Adult (ENLA)
+  # ENLA = number of died adult + number of non-appearing nestling compared to the maximum possible (pairs/2)
+  
+  nb_adults = dead_a + dead_b + dead_c
+  nb_nestlings = (N_a + N_b  + N_c)/2 - (a_N + b_N + c_N)
   nb_adults_equi = nb_adults + reaching.repro.prob * nb_nestlings
   
-  
+  # Number of infected colonies
   nb_infected_colonies = 
     sum(max_infected_a > 0,
         max_infected_b > 0,
         max_infected_c > 0)
   
+  # Infected X time
   infected_X_time = 0
   for (t in 1:(length(all_states$time)-1)){
     
@@ -2836,13 +2830,10 @@ plot_seir = function(output_){
 
 time1 <- Sys.time()
 output = gillespie_seir(
-  ## Hatching date standard deviation
-  hatching_sd = 3,
-  
   # Parameter of the taul-leap agorithm
   tau = 0.05,
   # Number of simu_adultlation days
-  total_time = 70,
+  total_time = 60,
   # Initial conditions
   initial_number_infected_breeders_A = 5,
   initial_number_infected_breeders_B = 0,
@@ -2852,7 +2843,7 @@ output = gillespie_seir(
   initial_number_breeders_C = 20,
   # Induced dispersion parameters
   # Do we induce dispersion ?
-  induced_dispersal = T,
+  induced_dispersal = F,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochastic = T,
   # Transition from breeder to non-breeder (reproductive failure)
