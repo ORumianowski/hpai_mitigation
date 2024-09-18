@@ -1,4 +1,7 @@
 
+setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
+
+#
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
