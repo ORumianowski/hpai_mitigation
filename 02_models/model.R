@@ -2688,7 +2688,8 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
 } # function
 
 
-# Plot results
+
+# Function to plot the evolution of states --------------------------------
 
 plot_seir = function(output_){
   
