@@ -80,9 +80,13 @@ convert_samples = function(lhs_samples, param_ranges, nb_params) {
 
 # Run simulations and store results ---------------------------------------
 
-run_simulations = function(samples, nb_samples,
+run_simulations = function(samples,
                             induced_dispersal_, 
-                            dispersal_stochastic_) {
+                            dispersal_stochastic_,
+                             initially_infected_) {
+  
+  nb_samples = nrow(samples)
+  
   output_bank = data.frame(
     nb_adults_equi = numeric(nb_samples),
     nb_infected_colonies = numeric(nb_samples),
@@ -95,6 +99,7 @@ run_simulations = function(samples, nb_samples,
       # Scenario
       induced_dispersal = induced_dispersal_,
       dispersal_stochastic  = dispersal_stochastic_,
+      initially_infected = initially_infected_,
       
       # Parameter samples
       initial_number_infected_breeders_A = samples[i, 1],
@@ -132,7 +137,7 @@ run_simulations = function(samples, nb_samples,
 }
 
 # Number of samples
-nb_samples = 100
+nb_samples = 500
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -142,28 +147,52 @@ lhs_samples = randomLHS(nb_samples, nb_params)
 samples = convert_samples(lhs_samples, param_ranges, nb_params)
 colnames(samples) = names(param_ranges)
 
+# Describe the 5 scenario
+scenarios = data.frame(
+  induced_dispersal = c(F,F,T,T,T),
+  dispersal_stochastic = c(F,F,F,F,T),
+  initially_infected = c(F,T,F,T,T))
 
-scenarios = list(
+rownames(scenarios) = c("HS","BO","PS","P2","RS")
+
+
+
+# Get outputs for all scenarios -------------------------------------------
+
+simulation_dt = data.frame(
   
-  HS = c(),
-  BO = ,
-  RS = ,
-  PA = ,
-  P2 = ,
+  scenario = numeric(),
+  nb_adults_equi = numeric(),
+  nb_infected_colonies = numeric(),
+  infected_X_time = numeric()
 )
 
+for (i in 1:nrow(scenarios)){
+  
+  scenario_output = run_simulations(samples, 
+                                       induced_dispersal_= scenarios[i,"induced_dispersal"],
+                                       dispersal_stochastic_ = scenarios[i,"dispersal_stochastic"],
+                                       initially_infected_ = scenarios[i,"initially_infected"])
+  
+  scenario =  data.frame(scenario = rep(rownames(scenarios)[i], nrow(samples)))
+  
+  scenario_output = cbind(scenario, scenario_output)
+  
+  simulation_dt = rbind(simulation_dt, scenario_output)
+  
+}
 
-simulation_results = run_simulations(samples, nb_samples,
-                                      induced_dispersal_= T,
-                                      dispersal_stochastic_ = T)
+
+simulation_dt = cbind(samples, simulation_dt)
 
 
-simulation_dt = cbind(samples, simulation_results)
 
-
-# Plot heatmap ------------------------------------------------------------
+# Plots -------------------------------------------------------------------
 
 evaluated_parameter = c("rho_to_colony", "reaching_repro_prob")
+plotted_scenario = "BO"
+
+# Plot heatmap ------------------------------------------------------------
 
 plot_heatmap = function(data, params) {
   ggplot(data) +
@@ -177,15 +206,23 @@ plot_heatmap = function(data, params) {
          fill = "ENLA")
 }
 
-plot_heatmap(simulation_dt, evaluated_parameter)
+plot_heatmap(simulation_dt %>% subset(., scenario == plotted_scenario),
+             evaluated_parameter)
 
 
 # Plot binned heatmap -----------------------------------------------------
 
+# changer les arguments de tailles de blocs  car ne fonctionne plus avec la transformation logarithmique
+
+
 evaluated_parameter = evaluated_parameter #c("rho_to_colony", "reaching_repro_prob")
 
 # Block size
-block_size = 0.05
+block_size = 0.01
+
+params = evaluated_parameter
+
+data = plotted_scenario
 
 # Function to create binned data with dynamic parameters
 create_binned_data = function(data, params, block_size) {
@@ -213,7 +250,7 @@ plot_heatmap_binned = function(data, params) {
 }
 
 # Create binned data with dynamic parameters
-plot_data_binned = create_binned_data(simulation_dt, evaluated_parameter, block_size)
+plot_data_binned = create_binned_data(simulation_dt %>% subset(., scenario == plotted_scenario), evaluated_parameter, block_size)
 
 # Visualize the heatmap with dynamic parameters
 plot_heatmap_binned(plot_data_binned, evaluated_parameter)

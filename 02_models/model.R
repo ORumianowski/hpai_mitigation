@@ -307,6 +307,12 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
 tau = 0.25
 # Number of simulation days
 total_time = 70
+# Do we induce dispersion ?
+induced_dispersal = T
+# Induced dispersion mode (deterministic or stochastic)
+dispersal_stochastic = T
+# Are there infected individuals at the start of the simulation?
+initially_infected = T
 # Initial conditions
 initial_number_infected_breeders_A = 1
 initial_number_infected_breeders_B = 0
@@ -315,10 +321,6 @@ initial_number_breeders_A = 50
 initial_number_breeders_B = 50
 initial_number_breeders_C = 50
 # Induced dispersion parameters
-# Do we induce dispersion ?
-induced_dispersal = T
-# Induced dispersion mode (deterministic or stochastic)
-dispersal_stochastic = T
 # Reaction time between 1st death and induced dispersal
 dispersal_reaction_time = 5
 # Proportion of dispersed adults
@@ -364,10 +366,16 @@ reaching_repro_prob = 0.3
 
 # Gillespie SEIR model function -------------------------------------------
 
-gillespie_seir = function(# Parameter of the taul-leap agorithm
-                          tau = 0.25,
-                          # Number of simu_adultlation days
+gillespie_seir = function(# Parameter of the taul-leap algorithm
+                          tau = 0.10,
+                          # Number of simulation days
                           total_time = 70,
+                          # Do we induce dispersion ?
+                          induced_dispersal = T,
+                          # Induced dispersion mode (deterministic or stochastic)
+                          dispersal_stochastic = T,
+                          # Are there infected individuals at the start of the simulation?
+                          initially_infected = T,
                           # Initial conditions
                           initial_number_infected_breeders_A = 1,
                           initial_number_infected_breeders_B = 0,
@@ -376,10 +384,6 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
                           initial_number_breeders_B = 50,
                           initial_number_breeders_C = 50,
                           # Induced dispersion parameters
-                          # Do we induce dispersion ?
-                          induced_dispersal = T,
-                          # Induced dispersion mode (deterministic or stochastic)
-                          dispersal_stochastic = T,
                           # Reaction time between 1rst death and induced dispersal
                           dispersal_reaction_time = 5,
                           ## Proportion of dispersed adults
@@ -426,6 +430,12 @@ gillespie_seir = function(# Parameter of the taul-leap agorithm
   # Parameters --------------------------------------------------------------
   
   # Initial state
+  ## Number of infected
+  if (!initially_infected){
+    initial_number_infected_breeders_A = 0
+    initial_number_infected_breeders_B = 0
+    initial_number_infected_breeders_C = 0
+  }
   
   ## Nestlings
   ## In colony A
@@ -2846,13 +2856,19 @@ plot_seir = function(output_){
 
 
 # Run simulation ----------------------------------------------------------
-
+# 
 # time1 <- Sys.time()
 # output = gillespie_seir(
-#   # Parameter of the taul-leap agorithm
+#   # Parameter of the taul-leap algorithm
 #   tau = 0.05,
-#   # Number of simu_adultlation days
-#   total_time = 60,
+#   # Number of simulation days
+#   total_time = 70,
+#   # Do we induce dispersion ?
+#   induced_dispersal = T,
+#   # Induced dispersion mode (deterministic or stochastic)
+#   dispersal_stochastic = T,
+#   # Are there infected individuals at the start of the simulation?
+#   initially_infected = F,
 #   # Initial conditions
 #   initial_number_infected_breeders_A = 5,
 #   initial_number_infected_breeders_B = 0,
@@ -2860,11 +2876,6 @@ plot_seir = function(output_){
 #   initial_number_breeders_A = 50,
 #   initial_number_breeders_B = 80,
 #   initial_number_breeders_C = 20,
-#   # Induced dispersion parameters
-#   # Do we induce dispersion ?
-#   induced_dispersal = F,
-#   # Induced dispersion mode (deterministic or stochastic)
-#   dispersal_stochastic = T,
 #   # Transition from breeder to non-breeder (reproductive failure)
 #   psi = 1/500
 #   )
@@ -2876,4 +2887,4 @@ plot_seir = function(output_){
 # output$nb_adults_equi
 # output$nb_infected_colonies
 # output$infected_X_time
-
+# 
