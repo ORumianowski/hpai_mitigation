@@ -21,24 +21,25 @@ source("model.R")
 library(lhs)
 library(ggplot2)
 library(dplyr)
+library(stringr)
 
 # Parameter ranges --------------------------------------------------------
 
 param_ranges = list(
   
   # Integer parameters
-  initial_number_infected_breeders_A = list(range = c(1, 1), distribution = "integer"),
+  initial_number_infected_breeders_A = list(range = c(1, 5), distribution = "integer"),
   initial_number_infected_breeders_B = list(range = c(0, 0), distribution = "integer"),
   initial_number_infected_breeders_C = list(range = c(0, 0), distribution = "integer"),
   initial_number_breeders_A = list(range = c(50, 50), distribution = "integer"),
   initial_number_breeders_B = list(range = c(80, 80), distribution = "integer"),
   initial_number_breeders_C = list(range = c(20, 20), distribution = "integer"),
-  dispersal_reaction_time =  list(range = c(5, 5), distribution = "integer"),
+  dispersal_reaction_time =  list(range = c(1, 10), distribution = "integer"),
   dispersal_date = list(range = c(0, 0), distribution = "integer"),
   hatching_date = list(range = c(10, 10), distribution = "integer"),
   
   # Continuous parameters
-  tau = list(range = c(0.25, 0.25), distribution = "simple_uniform"),
+  tau = list(range = c(0.15, 0.15), distribution = "simple_uniform"),
   total_time = list(range = c(70, 70), distribution = "simple_uniform"),
   prop_dispersal = list(range = c(1, 1), distribution = "simple_uniform"),
   beta_E_colony = list(range = c(0, 0), distribution = "simple_uniform"),
@@ -54,7 +55,7 @@ param_ranges = list(
   rho_to_colony = list(range = c(1/40, 1/2), distribution = "logarithmic"),
   psi = list(range = c(1/500, 1/500), distribution = "logarithmic"),
   hatching_sd = list(range = c(3, 3), distribution = "simple_uniform"),
-  reaching_repro_prob = list(range = c(0.2, 0.8), distribution = "simple_uniform")
+  reaching_repro_prob = list(range = c(0.3, 0.7), distribution = "simple_uniform")
 )
 
 
@@ -185,99 +186,170 @@ for (i in 1:nrow(scenarios)){
 
 simulation_dt = cbind(samples, simulation_dt)
 
+save(simulation_dt, file = "simulation_dt_2.RData")
+load("simulation_dt.RData")
 
 
 # Plots -------------------------------------------------------------------
 
-evaluated_parameter = c("rho_to_colony", "reaching_repro_prob")
+evaluated_parameter = c("beta_I_colony", "reaching_repro_prob")
 plotted_scenario = "BO"
 
 # Plot heatmap ------------------------------------------------------------
 
-plot_heatmap = function(data, params) {
-  ggplot(data) +
+plot_heatmap = function(data, params, param_ranges) {
+  
+  p = ggplot(data) +
     geom_tile(aes(x = get(params[1]), 
                   y = get(params[2]), 
-                  fill = nb_adults_equi), width = 0.01, height = 0.01) +
+                  fill = nb_adults_equi),
+              width = 0.03, height = 0.02) +
     scale_fill_gradient(low = "yellow", high = "blue") +
     theme_minimal() +
     labs(x = params[1],  
          y = params[2],
          fill = "ENLA")
+  
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+  return(p)
 }
 
 plot_heatmap(simulation_dt %>% subset(., scenario == plotted_scenario),
-             evaluated_parameter)
+             evaluated_parameter,
+             param_ranges)
+
+
+
 
 
 # Plot binned heatmap -----------------------------------------------------
 
-# changer les arguments de tailles de blocs  car ne fonctionne plus avec la transformation logarithmique
+# Number of bins (same for both dimensions)
+n_bins = 6  # You can adjust this number
 
-
-evaluated_parameter = evaluated_parameter #c("rho_to_colony", "reaching_repro_prob")
-
-# Block size
-block_size = 0.01
-
+data = simulation_dt %>% subset(., scenario == plotted_scenario)
 params = evaluated_parameter
 
-data = plotted_scenario
 
-# Function to create binned data with dynamic parameters
-create_binned_data = function(data, params, block_size) {
-  data %>%
+
+# Function to create binned data with dynamic parameters and variable block sizes
+create_binned_data = function(data, params, param_ranges, n_bins) {
+  
+  # Apply log transformation if specified
+  if (param_ranges[[params[1]]][[2]] == "logarithmic") {
+    data$var1 = log(data[[params[1]]])
+  } else {
+    data$var1 = data[[params[1]]]
+  }
+  
+  if (param_ranges[[params[2]]][[2]] == "logarithmic") {
+    data$var2 = log(data[[params[2]]])
+  } else {
+    data$var2 = data[[params[2]]]
+  }
+  
+
+  # Calculate min and max for both parameters
+  min_x = min(data$var1, na.rm = TRUE)
+  max_x = max(data$var1, na.rm = TRUE)
+  min_y = min(data$var2, na.rm = TRUE)
+  max_y = max(data$var2, na.rm = TRUE)
+  
+  # Define dynamic block sizes
+  block_size_x = (max_x - min_x) / n_bins
+  block_size_y = (max_y - min_y) / n_bins
+
+  
+  data = data %>%
     mutate(
-      V1 = cut(get(params[1]), breaks = seq(min(get(params[1])), max(get(params[1])), by = block_size), include.lowest = TRUE),
-      V2 = cut(get(params[2]), breaks = seq(min(get(params[2])), max(get(params[2])), by = block_size), include.lowest = TRUE)
+      V1 = cut(data$var1, breaks = seq(min_x, max_x, by = block_size_x), include.lowest = TRUE),
+      V2 = cut(data$var2, breaks = seq(min_y, max_y, by = block_size_y), include.lowest = TRUE)
     ) %>%
     group_by(V1, V2) %>%
-    summarise(nb_adults_equi_avg = mean(nb_adults_equi, na.rm = TRUE)) %>%
+    summarise(nb_adults_equi_avg = mean(nb_adults_equi, na.rm = TRUE), .groups = 'drop') %>%
     ungroup() %>%
     mutate(
-      x_mid = as.numeric(sub("\\((.+),.*", "\\1", V1)) + block_size / 2,
-      y_mid = as.numeric(sub("\\((.+),.*", "\\1", V2)) + block_size / 2
+      # Use str_extract to extract the first numeric value from V1 and V2
+      x_mid = as.numeric(str_extract(V1, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_x / 2,
+      y_mid = as.numeric(str_extract(V2, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_y / 2
     )
+  
+  # Apply exp transformation if specified
+  if (param_ranges[[params[1]]][[2]] == "logarithmic") {
+    data$x_mid = exp(data$x_mid)
+  } else {
+    data$x_mid = data$x_mid
+  }
+  
+  if (param_ranges[[params[2]]][[2]] == "logarithmic") {
+    data$y_mid = exp(data$y_mid)
+  } else {
+    data$y_mid = data$y_mid
+  }
+  
+  return(data)
 }
 
-# Function to create a heatmap with dynamic parameters
-plot_heatmap_binned = function(data, params) {
-  ggplot(data) +
-    geom_tile(aes(x = x_mid, y = y_mid, fill = nb_adults_equi_avg), width = block_size, height = block_size) +
+# Function to create a heatmap with dynamic block sizes
+plot_heatmap_binned = function(data, params, param_ranges) {
+  p = ggplot(data) +
+    geom_tile(aes(x = x_mid, y = y_mid, fill = nb_adults_equi_avg)
+              ) +
     scale_fill_gradient(low = "yellow", high = "blue") +
     theme_minimal() +
     labs(x = params[1], y = params[2], fill = "ENLA")
+  
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+  
+  return(p)
 }
 
-# Create binned data with dynamic parameters
-plot_data_binned = create_binned_data(simulation_dt %>% subset(., scenario == plotted_scenario), evaluated_parameter, block_size)
+# Create binned data with dynamic parameters and dynamic block sizes
+plot_data_binned = create_binned_data(simulation_dt %>% subset(., scenario == plotted_scenario),
+                                      evaluated_parameter,
+                                      param_ranges,
+                                      n_bins)
 
-# Visualize the heatmap with dynamic parameters
-plot_heatmap_binned(plot_data_binned, evaluated_parameter)
 
-# Plot boxplots
 
-# Définir la taille des intervalles et le nom du paramètre
-interval_size = 0.05
-evaluated_parameter = "reaching_repro_prob"
+# Visualize the heatmap with dynamic block sizes
+plot_heatmap_binned(plot_data_binned, evaluated_parameter, param_ranges)
 
-# Préparer les données pour le boxplot avec des noms de variables dynamiques
-boxplot_dt = simulation_dt %>%
-  mutate(parameter = cut(
-    get(evaluated_parameter),  # Utiliser get() pour accéder dynamiquement à la variable
-    breaks = seq(
-      param_ranges[[evaluated_parameter]][1],  # Accéder dynamiquement à la plage de paramètres
-      param_ranges[[evaluated_parameter]][2],
-      by = interval_size
-    ),
-    include.lowest = TRUE
-  )) %>%
-  na.omit()
 
-# Créer le boxplot
-ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
-  geom_boxplot(fill = "lightblue", color = "darkblue") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = evaluated_parameter, y = "ENLA")
+
+# # Plot boxplots
+# 
+# 
+# interval_size = 0.05
+# evaluated_parameter = "beta_I_colony"
+# 
+# 
+# boxplot_dt = simulation_dt %>%
+#   mutate(parameter = cut(
+#     get(evaluated_parameter),  
+#     breaks = seq(
+#       param_ranges[[evaluated_parameter]][[1]][[1]],  
+#       param_ranges[[evaluated_parameter]][[1]][[2]],
+#       by = interval_size
+#     ),
+#     include.lowest = TRUE
+#   )) %>%
+#   na.omit()
+# 
+# 
+# ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
+#   geom_boxplot(fill = "lightblue", color = "darkblue") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   labs(x = evaluated_parameter, y = "ENLA")
 
