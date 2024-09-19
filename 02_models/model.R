@@ -1,16 +1,7 @@
 
 
-##
 
-# error
-# 
-#   c(rep("S_b_B", S_b_B)
-# )
-
-##
-
-
-
+setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
 
 
 
@@ -314,7 +305,7 @@ dispersal_stochastic = T
 # Are there infected individuals at the start of the simulation?
 initially_infected = T
 # Initial conditions
-initial_number_infected_breeders_A = 1
+initial_number_infected_breeders_A = 5
 initial_number_infected_breeders_B = 0
 initial_number_infected_breeders_C = 0
 initial_number_breeders_A = 50
@@ -377,12 +368,12 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           # Are there infected individuals at the start of the simulation?
                           initially_infected = T,
                           # Initial conditions
-                          initial_number_infected_breeders_A = 1,
+                          initial_number_infected_breeders_A = 5,
                           initial_number_infected_breeders_B = 0,
                           initial_number_infected_breeders_C = 0,
                           initial_number_breeders_A = 50,
-                          initial_number_breeders_B = 50,
-                          initial_number_breeders_C = 50,
+                          initial_number_breeders_B = 80,
+                          initial_number_breeders_C = 20,
                           # Induced dispersion parameters
                           # Reaction time between 1rst death and induced dispersal
                           dispersal_reaction_time = 5,
@@ -393,7 +384,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           # Epidemiological parameters
                           ## Transmission rate from exposed and infectious individuals in a colony
                           beta_E_colony = 0,
-                          beta_I_colony = 0.1,
+                          beta_I_colony = 0.8,
                           ## Rate of progression from exposed to infectious (inverse of incubation period)
                           sigma = 1/1,
                           ## Rate of progression from exposed to susceptible 
@@ -414,7 +405,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           ## Transition from colony to the sea (non-breeders)
                           rho_to_sea = 1/2,
                           ## Transition from sea to the colony (non-breeders)
-                          rho_to_colony = 1/40 , 
+                          rho_to_colony = 1/2 , 
                           # Transition from breeder to non-breeder (reproductive failure)
                           psi = 1/500,  
                           # Demographic parameters
@@ -423,7 +414,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           ## Hatching date standard deviation
                           hatching_sd = 3,
                           # Probability of a nestling becoming a breeder
-                          reaching_repro_prob = 0.3
+                          reaching_repro_prob = 0.5
                           
                           ) {
   
@@ -2856,35 +2847,35 @@ plot_seir = function(output_){
 
 
 # Run simulation ----------------------------------------------------------
-# 
-# time1 <- Sys.time()
-# output = gillespie_seir(
-#   # Parameter of the taul-leap algorithm
-#   tau = 0.05,
-#   # Number of simulation days
-#   total_time = 70,
-#   # Do we induce dispersion ?
-#   induced_dispersal = T,
-#   # Induced dispersion mode (deterministic or stochastic)
-#   dispersal_stochastic = T,
-#   # Are there infected individuals at the start of the simulation?
-#   initially_infected = F,
-#   # Initial conditions
-#   initial_number_infected_breeders_A = 5,
-#   initial_number_infected_breeders_B = 0,
-#   initial_number_infected_breeders_C = 0,
-#   initial_number_breeders_A = 50,
-#   initial_number_breeders_B = 80,
-#   initial_number_breeders_C = 20,
-#   # Transition from breeder to non-breeder (reproductive failure)
-#   psi = 1/500
-#   )
-# time2 <- Sys.time()
-# time2 - time1
-# 
-# plot_seir(output_ = output)
-# 
-# output$nb_adults_equi
-# output$nb_infected_colonies
-# output$infected_X_time
-# 
+
+time1 <- Sys.time()
+output = gillespie_seir(
+  # Parameter of the taul-leap algorithm
+  tau = 0.10,
+  # Number of simulation days
+  total_time = 70,
+  # Do we induce dispersion ?
+  induced_dispersal = F,
+  # Induced dispersion mode (deterministic or stochastic)
+  dispersal_stochastic = T,
+  # Are there infected individuals at the start of the simulation?
+  initially_infected = T,
+  # Initial conditions
+  initial_number_infected_breeders_A = 5,
+  initial_number_infected_breeders_B = 0,
+  initial_number_infected_breeders_C = 0,
+  initial_number_breeders_A = 50,
+  initial_number_breeders_B = 80,
+  initial_number_breeders_C = 20,
+  # Transition from breeder to non-breeder (reproductive failure)
+  psi = 1/500
+  )
+time2 <- Sys.time()
+time2 - time1
+
+plot_seir(output_ = output)
+
+output$nb_adults_equi
+output$nb_infected_colonies
+output$infected_X_time
+
