@@ -105,7 +105,7 @@ run_simulations = function(samples,
 }
 
 # Number of samples
-nb_samples = 1500
+nb_samples = 5
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -143,9 +143,11 @@ for (i in 1:nrow(scenarios)){
 }
 
 
-simulation_dt = cbind(samples, simulation_dt)
+#save(simulation_dt, file = "simulation_dt_100_1.RData")
 
-save(simulation_dt, file = "simulation_dt_1500_1.RData")
+simulation_dt = cbind(samples, simulation_dt) # même nombre de lignes ? duplicate samples automatic? 
+
+
 #load("simulation_dt.RData")
 
 
