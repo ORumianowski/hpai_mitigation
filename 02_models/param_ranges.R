@@ -18,7 +18,7 @@ param_ranges = list(
   total_time = list(range = c(70, 70), distribution = "simple_uniform"),
   prop_dispersal = list(range = c(1, 1), distribution = "simple_uniform"),
   beta_E_colony = list(range = c(0, 0), distribution = "simple_uniform"),
-  beta_I_colony = list(range = c(0.10, 0.80), distribution = "logarithmic"),
+  beta_I_colony = list(range = c(0.05, 0.80), distribution = "simple_uniform"),
   sigma = list(range = c(1/1, 1/1), distribution = "logarithmic"),
   eta = list(range = c(0, 0), distribution = "simple_uniform"),
   gamma = list(range = c(1/6, 1/6), distribution = "logarithmic"),

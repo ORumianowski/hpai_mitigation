@@ -55,11 +55,7 @@ run_simulations = function(samples,
   
   nb_samples = nrow(samples)
   
-  output_bank = data.frame(
-    nb_adults_equi = numeric(nb_samples),
-    nb_infected_colonies = numeric(nb_samples),
-    infected_X_time = numeric(nb_samples)
-  )
+  output_bank = data.frame()
   
   for (i in 1:nb_samples) {
     output = gillespie_seir(
@@ -98,14 +94,23 @@ run_simulations = function(samples,
       reaching_repro_prob = samples[[i, 26]]
     )
   
-    output_bank[i, ] = c(output$nb_adults_equi, output$nb_infected_colonies, output$infected_X_time)
+    output_bank = rbind(output_bank,
+                        cbind(
+                         data.frame(
+                         nb_adults_equi = output$nb_adults_equi,
+                         nb_infected_colonies = output$nb_infected_colonies,
+                         infected_X_time = output$infected_X_time),
+                         
+                         data.frame(output$final_states[1,])
+                         )  
+                        )
   }
   
   return(output_bank)
 }
 
 # Number of samples
-nb_samples = 5
+nb_samples = 50
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -119,13 +124,7 @@ colnames(samples) = names(param_ranges)
 
 # Get outputs for all scenarios -------------------------------------------
 
-simulation_dt = data.frame(
-  
-  scenario = numeric(),
-  nb_adults_equi = numeric(),
-  nb_infected_colonies = numeric(),
-  infected_X_time = numeric()
-)
+simulation_dt = data.frame()
 
 for (i in 1:nrow(scenarios)){
 
@@ -134,56 +133,55 @@ for (i in 1:nrow(scenarios)){
                                        dispersal_stochastic_ = scenarios[i,"dispersal_stochastic"],
                                        initially_infected_ = scenarios[i,"initially_infected"])
 
-  scenario =  data.frame(scenario = rep(rownames(scenarios)[i], nrow(samples)))
-
-  scenario_output = cbind(scenario, scenario_output)
-
-  simulation_dt = rbind(simulation_dt, scenario_output)
+  
+  scenario_output = cbind(data.frame(scenario = rep(rownames(scenarios)[i], nrow(samples))),
+                          scenario_output)
+  
+  simulation_dt = rbind(simulation_dt, cbind(samples, scenario_output))
+  
 
 }
 
 
-#save(simulation_dt, file = "simulation_dt_100_1.RData")
-
-simulation_dt = cbind(samples, simulation_dt) # même nombre de lignes ? duplicate samples automatic? 
+save(simulation_dt, file = "simulation_dt_50_2.RData")
 
 
 #load("simulation_dt.RData")
 
 
-# Plots -------------------------------------------------------------------
-
-evaluated_parameter = c("beta_I_colony", "reaching_repro_prob")
-plotted_scenario = "BO"
-
-# Plot heatmap ------------------------------------------------------------
-
-plot_heatmap = function(data, params, param_ranges) {
-  
-  p = ggplot(data) +
-    geom_tile(aes(x = get(params[1]), 
-                  y = get(params[2]), 
-                  fill = nb_adults_equi),
-              width = 0.03, height = 0.02) +
-    scale_fill_gradient(low = "yellow", high = "blue") +
-    theme_minimal() +
-    labs(x = params[1],  
-         y = params[2],
-         fill = "ENLA")
-  
-  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
-    p = p + scale_x_log10()
-  }
-  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
-    p = p + scale_y_log10()
-  }
-  return(p)
-}
-
-# plot_heatmap(simulation_dt %>% subset(., scenario == plotted_scenario),
-#              evaluated_parameter,
-#              param_ranges)
-
-
-
-
+# # Plots -------------------------------------------------------------------
+# 
+# evaluated_parameter = c("beta_I_colony", "reaching_repro_prob")
+# plotted_scenario = "BO"
+# 
+# # Plot heatmap ------------------------------------------------------------
+# 
+# plot_heatmap = function(data, params, param_ranges) {
+#   
+#   p = ggplot(data) +
+#     geom_tile(aes(x = get(params[1]), 
+#                   y = get(params[2]), 
+#                   fill = nb_adults_equi),
+#               width = 0.03, height = 0.02) +
+#     scale_fill_gradient(low = "yellow", high = "blue") +
+#     theme_minimal() +
+#     labs(x = params[1],  
+#          y = params[2],
+#          fill = "ENLA")
+#   
+#   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+#     p = p + scale_x_log10()
+#   }
+#   if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+#     p = p + scale_y_log10()
+#   }
+#   return(p)
+# }
+# 
+# # plot_heatmap(simulation_dt %>% subset(., scenario == plotted_scenario),
+# #              evaluated_parameter,
+# #              param_ranges)
+# 
+# 
+# 
+# 
