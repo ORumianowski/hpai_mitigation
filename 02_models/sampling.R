@@ -110,7 +110,7 @@ run_simulations = function(samples,
 }
 
 # Number of samples
-nb_samples = 50
+nb_samples = 500
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -143,7 +143,7 @@ for (i in 1:nrow(scenarios)){
 }
 
 
-save(simulation_dt, file = "simulation_dt_50_2.RData")
+save(simulation_dt, file = "simulation_dt_500_2.RData")
 
 
 #load("simulation_dt.RData")

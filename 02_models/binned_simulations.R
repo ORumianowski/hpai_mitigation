@@ -26,39 +26,37 @@ source("param_ranges.R")
 source("scenarios.R")
 
 # source("sampling.R")
-load("simulation_dt_4.RData")
+load("simulation_dt/simulation_dt_50_2.RData")
+simulation_dt1 = simulation_dt
+load("simulation_dt/simulation_dt_150_2.RData")
+simulation_dt2 = simulation_dt
+load("simulation_dt/simulation_dt_300_2.RData")
+simulation_dt3 = simulation_dt
 
+simulation_dt = rbind(simulation_dt1,
+                      simulation_dt2,
+                      simulation_dt3)
 
 # Plot binned heatmap -----------------------------------------------------
-
-evaluated_parameter = c("beta_I_colony", "reaching_repro_prob")
-plotted_scenario = "BO"
-
-# Number of bins (same for both dimensions)
-n_bins = 10  
-
-
-data = simulation_dt %>% subset(., scenario == "BO")
-
 # Function to create binned data with dynamic parameters and variable block sizes
 create_binned_data = function(data,
-                              params, param_ranges,
+                              params,
+                              param_ranges_,
                               selected_output,
                               n_bins) {
   
   # Apply log transformation if specified
-  if (param_ranges[[params[1]]][[2]] == "logarithmic") {
+  if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
     data$var1 = log(data[[params[1]]])
   } else {
     data$var1 = data[[params[1]]]
   }
   
-  if (param_ranges[[params[2]]][[2]] == "logarithmic") {
+  if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
     data$var2 = log(data[[params[2]]])
   } else {
     data$var2 = data[[params[2]]]
   }
-  
   
   # Calculate min and max for both parameters
   min_x = min(data$var1, na.rm = TRUE)
@@ -71,8 +69,7 @@ create_binned_data = function(data,
   block_size_y = (max_y - min_y) / n_bins
   
   # Convert selected_output to a symbol
-  selected_output_sym = ensym(selected_output)
-  
+  selected_output_sym = sym(selected_output)
   
   res = data %>%
     mutate(
@@ -89,19 +86,52 @@ create_binned_data = function(data,
     )
   
   # Apply exp transformation if specified
-  if (param_ranges[[params[1]]][[2]] == "logarithmic") {
+  if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
     res$x_mid = exp(res$x_mid)
   } else {
     res$x_mid = res$x_mid
   }
   
-  if (param_ranges[[params[2]]][[2]] == "logarithmic") {
+  if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
     res$y_mid = exp(res$y_mid)
   } else {
     res$y_mid = res$y_mid
   }
   
   return(res)
+}
+
+# Define a function to create the binned data and calculate the difference
+create_diff_between_scenarios <- function(scenario_1,
+                                          scenario_2,
+                                          simulation_dt,
+                                          evaluated_parameter,
+                                          param_ranges,
+                                          selected_output,
+                                          n_bins) {
+  
+  # Create binned data for scenario 1
+  data_binned_1 <- create_binned_data(data = simulation_dt %>% subset(., scenario == scenario_1),
+                                      params = evaluated_parameter,
+                                      param_ranges,
+                                      selected_output,
+                                      n_bins) %>%
+    dplyr::select(output_avg, x_mid, y_mid)
+  
+  # Create binned data for scenario 2
+  data_binned_2 <- create_binned_data(simulation_dt %>% subset(., scenario == scenario_2),
+                                      evaluated_parameter,
+                                      param_ranges,
+                                      selected_output,
+                                      n_bins = n_bins) %>%
+    dplyr::select(output_avg, x_mid, y_mid)
+  
+  # Merge the two datasets and calculate the difference
+  diff_data <- merge(data_binned_1, data_binned_2, by = c("x_mid", "y_mid")) %>%
+    mutate(diff = output_avg.x - output_avg.y) %>%
+    dplyr::select(x_mid, y_mid, diff)
+  
+  return(diff_data)
 }
 
 # Function to create a heatmap with dynamic block sizes
@@ -112,6 +142,7 @@ plot_heatmap_binned = function(data, params, param_ranges) {
     ) +
     scale_fill_gradient(low = "blue", high = "yellow") +
     theme_minimal() +
+    theme(panel.background = element_rect(fill = "lightgray", color = NA))+
     labs(x = params[1], y = params[2], fill = "ENLA")
   
   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
@@ -124,50 +155,35 @@ plot_heatmap_binned = function(data, params, param_ranges) {
   return(p)
 }
 
-# Create binned data with dynamic parameters and dynamic block sizes
-plot_data_binned = create_binned_data(simulation_dt %>% subset(., scenario == "BO"),
-                                      evaluated_parameter, param_ranges,
-                                      selected_output = "nb_infected_colonies",
-                                      n_bins)
-
-
-
-# Visualize the heatmap with dynamic block sizes
-p0 = plot_heatmap_binned(plot_data_binned, 
-                         evaluated_parameter, param_ranges)
-
-
-# -------------------------------------------------------------------------
-
-# Define a function to create the binned data and calculate the difference
-create_diff_between_scenarios <- function(scenario_1,
-                                          scenario_2,
-                                          simulation_dt,
-                                          evaluated_parameter,
-                                          param_ranges,
-                                          n_bins) {
+# Function to create a heatmap with dynamic block sizes
+plot_heatmap_binned_diff = function(data, params, param_ranges) {
+  p = ggplot(data) +
+    geom_tile(aes(x = x_mid, y = y_mid, fill = diff)
+    ) +
+    scale_fill_gradient2(low = "red", mid = "white", high = "green", midpoint = 0)+
+    theme_minimal() +
+    theme(panel.background = element_rect(fill = "lightgray", color = NA)) +
+    labs(x = params[1], y = params[2], fill = "ENLA")
   
-  # Create binned data for scenario 1
-  data_binned_1 <- create_binned_data(simulation_dt %>% subset(., scenario == scenario_1),
-                                      evaluated_parameter,
-                                      param_ranges,
-                                      n_bins) %>%
-    dplyr::select(nb_adults_equi_avg, x_mid, y_mid)
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
   
-  # Create binned data for scenario 2
-  data_binned_2 <- create_binned_data(simulation_dt %>% subset(., scenario == scenario_2),
-                                      evaluated_parameter,
-                                      param_ranges,
-                                      n_bins) %>%
-    dplyr::select(nb_adults_equi_avg, x_mid, y_mid)
-  
-  # Merge the two datasets and calculate the difference
-  diff_data <- merge(data_binned_1, data_binned_2, by = c("x_mid", "y_mid")) %>%
-    mutate(diff = nb_adults_equi_avg.x - nb_adults_equi_avg.y) %>%
-    dplyr::select(x_mid, y_mid, diff)
-  
-  return(diff_data)
+  return(p)
 }
+
+
+#   -----------------------------------------------------------------------
+
+################################################################
+N_BINS = 10
+evaluated_parameter = c("beta_I_colony", "rho_to_colony")
+SELECTED_OUTPUT = "nb_adults_equi"
+################################################################
+
 
 scenarios_to_compare <- rownames(scenarios) # List of scenarios
 
@@ -177,21 +193,85 @@ all_diff_results <- list()
 # Loop through scenarios and calculate differences
 for (scenario_name in scenarios_to_compare) {
   if (scenario_name != "BO") {  # We already calculated BO vs RS, skip it to avoid redundancy
-    diff_result <- create_diff_between_scenarios("BO", scenario_name, simulation_dt, evaluated_parameter, param_ranges, n_bins)
+    diff_result <- create_diff_between_scenarios("BO",
+                                                 scenario_name, 
+                                                 simulation_dt, 
+                                                 evaluated_parameter,
+                                                 param_ranges, 
+                                                 selected_output = SELECTED_OUTPUT, 
+                                                 n_bins = N_BINS)
     all_diff_results[[paste("BO_vs", scenario_name, sep = "_")]] <- diff_result
   }
 }
 
 
+# Create binned data with dynamic parameters and dynamic block sizes
+plot_data_binned = create_binned_data(data = simulation_dt %>% subset(., scenario == "BO"),
+                                      params = evaluated_parameter,
+                                      param_ranges, 
+                                      selected_output = SELECTED_OUTPUT,
+                                      n_bins = N_BINS)
 
-# Function to create a heatmap with dynamic block sizes
-plot_heatmap_binned_diff = function(data, params, param_ranges) {
+
+
+# Visualize the heatmap with dynamic block sizes
+p0 = plot_heatmap_binned(plot_data_binned, evaluated_parameter, param_ranges)+
+  ggtitle("BO")
+  #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
+p1 = plot_heatmap_binned_diff(all_diff_results$BO_vs_HS, evaluated_parameter, param_ranges)+
+  ggtitle("BO - HS")
+ #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
+p2 = plot_heatmap_binned_diff(all_diff_results$BO_vs_RS, evaluated_parameter, param_ranges)+
+  ggtitle("BO - RS")
+  #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
+p3 = plot_heatmap_binned_diff(all_diff_results$BO_vs_PS, evaluated_parameter, param_ranges)+
+  ggtitle("BO - PS")
+ #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
+p4 = plot_heatmap_binned_diff(all_diff_results$BO_vs_P2, evaluated_parameter, param_ranges)+
+  ggtitle("BO - P2")
+  #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
+
+
+# gridExtra::grid.arrange(p0, grid::rectGrob(gp = grid::gpar(col = NA)),
+#                         p1, p2,
+#                         p3, p4,
+#                         ncol = 2, nrow = 3,
+#                         top = " ")
+
+gridExtra::grid.arrange(p0, p2,
+                        p3, p4,
+                        ncol = 2, nrow = 2,
+                        top = " ")
+
+
+best_strat_dt = 
+  data.frame(
+  x_mid = all_diff_results$BO_vs_HS$x_mid,
+  y_mid = all_diff_results$BO_vs_HS$y_mid,
+  BO_vs_RS = all_diff_results$BO_vs_RS$diff,
+  #BO_vs_PS = all_diff_results$BO_vs_PS$diff,
+  BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>% 
+  mutate(
+    best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
+      if (all(row < 0)) {
+        return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
+      } else {
+        return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
+      }
+    })
+    )
+
+best_strat_dt
+
+
+plot_heatmap_best_strat = function(data, params, param_ranges) {
+  
   p = ggplot(data) +
-    geom_tile(aes(x = x_mid, y = y_mid, fill = diff)
+    geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
     ) +
-    scale_fill_gradient2(low = "red", mid = "white", high = "green", midpoint = 0)+
     theme_minimal() +
-    labs(x = params[1], y = params[2], fill = "ENLA")
+    theme(panel.background = element_rect(fill = "lightgray", color = NA))+
+    labs(x = params[1], y = params[2], fill = "Best \n Strategy")
   
   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
     p = p + scale_x_log10()
@@ -203,20 +283,7 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
   return(p)
 }
 
-
-p1 = plot_heatmap_binned_diff(all_diff_results$BO_vs_RS, evaluated_parameter, param_ranges)
-p2 = plot_heatmap_binned_diff(all_diff_results$BO_vs_PS, evaluated_parameter, param_ranges)
-p3 = plot_heatmap_binned_diff(all_diff_results$BO_vs_P2, evaluated_parameter, param_ranges)
-
-gridExtra::grid.arrange(p0, p1, p2, p3, ncol = 2, nrow = 2)
-
-
-
-# -------------------------------------------------------------------------
-
-
-
-
+plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
 
 
 # Plot boxplots -----------------------------------------------------------
@@ -224,11 +291,12 @@ gridExtra::grid.arrange(p0, p1, p2, p3, ncol = 2, nrow = 2)
 
 
 
-interval_size = 0.05
-evaluated_parameter = "beta_I_colony"
+interval_size = 0.5
+evaluated_parameter = "initial_number_infected_breeders_A"
 
 
-boxplot_dt = simulation_dt %>%
+boxplot_dt = simulation_dt  %>%
+  subset(., scenario == "P2")%>%
   mutate(parameter = cut(
     get(evaluated_parameter),
     breaks = seq(
