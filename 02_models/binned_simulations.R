@@ -26,16 +26,22 @@ source("param_ranges.R")
 source("scenarios.R")
 
 # source("sampling.R")
-load("simulation_dt/simulation_dt_50_2.RData")
-simulation_dt1 = simulation_dt
-load("simulation_dt/simulation_dt_150_2.RData")
-simulation_dt2 = simulation_dt
-load("simulation_dt/simulation_dt_300_2.RData")
-simulation_dt3 = simulation_dt
+# load("simulation_dt/simulation_dt_50_2.RData")
+# simulation_dt1 = simulation_dt
+# load("simulation_dt/simulation_dt_150_2.RData")
+# simulation_dt2 = simulation_dt
+# load("simulation_dt/simulation_dt_300_2.RData")
+# simulation_dt3 = simulation_dt
+# load("simulation_dt/simulation_dt_500_2.RData")
+# simulation_dt4 = simulation_dt
+# 
+# simulation_dt = rbind(simulation_dt1,
+#                       simulation_dt2,
+#                       simulation_dt3,
+#                       simulation_dt4)
 
-simulation_dt = rbind(simulation_dt1,
-                      simulation_dt2,
-                      simulation_dt3)
+load("simulation_dt/simulation_dt_50_3.RData")
+
 
 # Plot binned heatmap -----------------------------------------------------
 # Function to create binned data with dynamic parameters and variable block sizes
@@ -179,20 +185,20 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
 #   -----------------------------------------------------------------------
 
 ################################################################
-N_BINS = 10
+N_BINS = 6
 evaluated_parameter = c("beta_I_colony", "rho_to_colony")
 SELECTED_OUTPUT = "nb_adults_equi"
 ################################################################
 
-
-scenarios_to_compare <- rownames(scenarios) # List of scenarios
+# List of scenarios
+scenarios_to_compare <- rownames(scenarios) 
 
 # Empty list to store results
 all_diff_results <- list()
 
 # Loop through scenarios and calculate differences
 for (scenario_name in scenarios_to_compare) {
-  if (scenario_name != "BO") {  # We already calculated BO vs RS, skip it to avoid redundancy
+  if (scenario_name != "BO") {  
     diff_result <- create_diff_between_scenarios("BO",
                                                  scenario_name, 
                                                  simulation_dt, 
