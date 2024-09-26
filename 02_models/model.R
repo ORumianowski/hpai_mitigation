@@ -22,8 +22,8 @@ library(cowplot)
 # the reproductive status : Breeders (B), Non-Breeders (NB), Nestlings (N)
 # the localisation : 
 # colony A (A), colony (B),
-# "sea associted to colony A (sea_a), sea associted to colony B (sea_B),
-# sea Non-Breeders (sea_NB)
+# sea associated to colony A (sea_a), sea associated to colony B (sea_B)
+
 
 
 # Event rates -------------------------------------------------------------
@@ -31,25 +31,26 @@ library(cowplot)
 
 calculate_rates = function(  beta_E_colony, beta_I_colony,
                              sigma,eta, gamma, mu_adult, mu_nestling,
-                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea, theta,
                              # A
                              S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                              S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
                              S_sea_a_B, E_sea_a_B, I_sea_a_B, R_sea_a_B, D_sea_a_B,
                              S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                             S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
                              # B
                              S_b_N, E_b_N, I_b_N, R_b_N, D_b_N,
                              S_b_B, E_b_B, I_b_B, R_b_B, D_b_B,
                              S_sea_b_B, E_sea_b_B, I_sea_b_B, R_sea_b_B, D_sea_b_B,
                              S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                             S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
                              # C
                              S_c_N, E_c_N, I_c_N, R_c_N, D_c_N,
                              S_c_B, E_c_B, I_c_B, R_c_B, D_c_B,
                              S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
                              S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
-                             # Non-breeders at sea
-                             S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB
-                             
+                             S_sea_c_NB, E_sea_c_NB, I_sea_c_NB, R_sea_c_NB, D_sea_c_NB
+
                              )
                             
                              {
@@ -82,33 +83,41 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "I_c_N_to_D_c_N" = mu_nestling * I_c_N,
   
   ## Non-Breeders
-  ### Colony A
-  "S_a_NB_to_E_a_NB" = beta_E_colony * S_a_NB * (E_a_B+E_a_NB+E_a_N) +
-                       beta_I_colony * S_a_NB * (I_a_B+I_a_NB+I_a_N),
+  "S_a_NB_to_E_a_NB" = beta_E_colony * S_a_NB * (E_a_B+E_a_NB+E_a_N) +  beta_I_colony * S_a_NB * (I_a_B+I_a_NB+I_a_N),
   "E_a_NB_to_S_a_NB" = eta * E_a_NB,
   "E_a_NB_to_I_a_NB" = sigma * E_a_NB,
   "I_a_NB_to_R_a_NB" = gamma * I_a_NB,
   "I_a_NB_to_D_a_NB" = mu_adult * I_a_NB,
+  ### Sea A
+  "S_sea_a_NB_to_E_sea_a_NB" = 0,
+  "E_sea_a_NB_to_S_sea_a_NB" = eta * E_sea_a_NB,
+  "E_sea_a_NB_to_I_sea_a_NB" = sigma * E_sea_a_NB,
+  "I_sea_a_NB_to_R_sea_a_NB" = gamma * I_sea_a_NB,
+  "I_sea_a_NB_to_D_sea_a_NB" = mu_adult * I_sea_a_NB,
   ### Colony B
-  "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b_B+E_b_NB+E_b_N) + 
-                       beta_I_colony * S_b_NB * (I_b_B+I_b_NB+I_b_N),
+  "S_b_NB_to_E_b_NB" = beta_E_colony * S_b_NB * (E_b_B+E_b_NB+E_b_N) +   beta_I_colony * S_b_NB * (I_b_B+I_b_NB+I_b_N),
   "E_b_NB_to_S_b_NB" = eta * E_b_NB,
   "E_b_NB_to_I_b_NB" = sigma * E_b_NB,
   "I_b_NB_to_R_b_NB" = gamma * I_b_NB,
   "I_b_NB_to_D_b_NB" = mu_adult * I_b_NB,
+  ### Sea B
+  "S_sea_b_NB_to_E_sea_b_NB" = 0,
+  "E_sea_b_NB_to_S_sea_b_NB" = eta * E_sea_b_NB,
+  "E_sea_b_NB_to_I_sea_b_NB" = sigma * E_sea_b_NB,
+  "I_sea_b_NB_to_R_sea_b_NB" = gamma * I_sea_b_NB,
+  "I_sea_b_NB_to_D_sea_b_NB" = mu_adult * I_sea_b_NB,
   ### Colony C
-  "S_c_NB_to_E_c_NB" = beta_E_colony * S_c_NB * (E_c_B+E_c_NB+E_c_N) + 
-                       beta_I_colony * S_c_NB * (I_c_B+I_c_NB+I_c_N),
+  "S_c_NB_to_E_c_NB" = beta_E_colony * S_c_NB * (E_c_B+E_c_NB+E_c_N) +  beta_I_colony * S_c_NB * (I_c_B+I_c_NB+I_c_N),
   "E_c_NB_to_S_c_NB" = eta * E_c_NB,
   "E_c_NB_to_I_c_NB" = sigma * E_c_NB,
   "I_c_NB_to_R_c_NB" = gamma * I_c_NB,
   "I_c_NB_to_D_c_NB" = mu_adult * I_c_NB,
-  ### Sea 
-  "S_sea_NB_to_E_sea_NB" = 0,
-  "E_sea_NB_to_S_sea_NB" = eta * E_sea_NB,
-  "E_sea_NB_to_I_sea_NB" = sigma * E_sea_NB,
-  "I_sea_NB_to_R_sea_NB" = gamma * I_sea_NB,
-  "I_sea_NB_to_D_sea_NB" = mu_adult * I_sea_NB,
+  ### Sea C
+  "S_sea_c_NB_to_E_sea_c_NB" = 0,
+  "E_sea_c_NB_to_S_sea_c_NB" = eta * E_sea_c_NB,
+  "E_sea_c_NB_to_I_sea_c_NB" = sigma * E_sea_c_NB,
+  "I_sea_c_NB_to_R_sea_c_NB" = gamma * I_sea_c_NB,
+  "I_sea_c_NB_to_D_sea_c_NB" = mu_adult * I_sea_c_NB,
 
   
   ## Breeders
@@ -152,92 +161,148 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   "I_sea_c_B_to_R_sea_c_B" = gamma * I_sea_c_B,
   "I_sea_c_B_to_D_sea_c_B" = mu_adult * I_sea_c_B,
 
-  
+
   
   # Mobility
   ## Non-Breeders
   ### In A
-  ### From colony A to sea 
-  "S_a_NB_to_S_sea_NB" = rho_to_sea * S_a_NB,
-  "E_a_NB_to_E_sea_NB" = rho_to_sea * E_a_NB,
-  "I_a_NB_to_I_sea_NB" = rho_to_sea * I_a_NB,
-  "R_a_NB_to_R_sea_NB" = rho_to_sea * R_a_NB,
-  ### From sea to colony A (conspecific attraction)
-  "S_sea_NB_to_S_a_NB" = rho_to_colony * S_sea_NB * ( (S_a_B+E_a_B+I_a_B+R_a_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  
-  "E_sea_NB_to_E_a_NB" = rho_to_colony * E_sea_NB * ( (S_a_B+E_a_B+I_a_B+R_a_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  "I_sea_NB_to_I_a_NB" = rho_to_colony * I_sea_NB * ( (S_a_B+E_a_B+I_a_B+R_a_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  "R_sea_NB_to_R_a_NB" = rho_to_colony * R_sea_NB * ( (S_a_B+E_a_B+I_a_B+R_a_B)
-                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                        S_b_B+E_b_B+I_b_B+R_b_B+
-                                                        S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                      ),
+  ### From colony A to sea A
+  "S_a_NB_to_S_sea_a_NB" = rho_to_sea * S_a_NB,
+  "E_a_NB_to_E_sea_a_NB" = rho_to_sea * E_a_NB,
+  "I_a_NB_to_I_sea_a_NB" = rho_to_sea * I_a_NB,
+  "R_a_NB_to_R_sea_a_NB" = rho_to_sea * R_a_NB,
+  ### From sea A to colony A 
+  "S_sea_a_NB_to_S_a_NB" = rho_to_colony * S_sea_a_NB ,
+  "E_sea_a_NB_to_E_a_NB" = rho_to_colony * E_sea_a_NB ,
+  "I_sea_a_NB_to_I_a_NB" = rho_to_colony * I_sea_a_NB,
+  "R_sea_a_NB_to_R_a_NB" = rho_to_colony * R_sea_a_NB,
   ### In B
-  ### From colony B to sea
-  "S_b_NB_to_S_sea_NB" = rho_to_sea * S_b_NB,
-  "E_b_NB_to_E_sea_NB" = rho_to_sea * E_b_NB,
-  "I_b_NB_to_I_sea_NB" = rho_to_sea * I_b_NB,
-  "R_b_NB_to_R_sea_NB" = rho_to_sea * R_b_NB,
-  ### From sea to colony B
-  "S_sea_NB_to_S_b_NB" = rho_to_colony * S_sea_NB * ( (S_b_B+E_b_B+I_b_B+R_b_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  "E_sea_NB_to_E_b_NB" = rho_to_colony * E_sea_NB * ( (S_b_B+E_b_B+I_b_B+R_b_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  "I_sea_NB_to_I_b_NB" = rho_to_colony * I_sea_NB * ( (S_b_B+E_b_B+I_b_B+R_b_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
-  "R_sea_NB_to_R_b_NB" = rho_to_colony * R_sea_NB * ( (S_b_B+E_b_B+I_b_B+R_b_B)
-                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                       S_b_B+E_b_B+I_b_B+R_b_B+
-                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                     ),
+  ### From colony B to sea B
+  "S_b_NB_to_S_sea_b_NB" = rho_to_sea * S_b_NB,
+  "E_b_NB_to_E_sea_b_NB" = rho_to_sea * E_b_NB,
+  "I_b_NB_to_I_sea_b_NB" = rho_to_sea * I_b_NB,
+  "R_b_NB_to_R_sea_b_NB" = rho_to_sea * R_b_NB,
+  ### From sea B to colony AB
+  "S_sea_b_NB_to_S_b_NB" = rho_to_colony * S_sea_b_NB ,
+  "E_sea_b_NB_to_E_b_NB" = rho_to_colony * E_sea_b_NB ,
+  "I_sea_b_NB_to_I_b_NB" = rho_to_colony * I_sea_b_NB,
+  "R_sea_b_NB_to_R_b_NB" = rho_to_colony * R_sea_b_NB,
   ### In C
-  ### From colony C to sea
-  "S_c_NB_to_S_sea_NB" = rho_to_sea * S_c_NB,
-  "E_c_NB_to_E_sea_NB" = rho_to_sea * E_c_NB,
-  "I_c_NB_to_I_sea_NB" = rho_to_sea * I_c_NB,
-  "R_c_NB_to_R_sea_NB" = rho_to_sea * R_c_NB,
-  ### From sea to colony C
-  "S_sea_NB_to_S_c_NB" = rho_to_colony * S_sea_NB * ( (S_c_B+E_c_B+I_c_B+R_c_B)
+  ### From colony C to sea C
+  "S_c_NB_to_S_sea_c_NB" = rho_to_sea * S_c_NB,
+  "E_c_NB_to_E_sea_c_NB" = rho_to_sea * E_c_NB,
+  "I_c_NB_to_I_sea_c_NB" = rho_to_sea * I_c_NB,
+  "R_c_NB_to_R_sea_c_NB" = rho_to_sea * R_c_NB,
+  ### From sea C to colony C 
+  "S_sea_c_NB_to_S_c_NB" = rho_to_colony * S_sea_c_NB ,
+  "E_sea_c_NB_to_E_c_NB" = rho_to_colony * E_sea_c_NB ,
+  "I_sea_c_NB_to_I_c_NB" = rho_to_colony * I_sea_c_NB,
+  "R_sea_c_NB_to_R_c_NB" = rho_to_colony * R_sea_c_NB,
+  ## Connectivity between colonies
+  ### From A to B
+  "S_sea_a_NB_to_S_sea_b_NB" = theta * S_sea_a_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
+                                                     /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                       S_b_B+E_b_B+I_b_B+R_b_B+
+                                                       S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_a_NB_to_E_sea_b_NB" = theta * E_sea_a_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
                                                       /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                        S_b_B+E_b_B+I_b_B+R_b_B+
-                                                        S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                      ),
-  "E_sea_NB_to_E_c_NB" = rho_to_colony * E_sea_NB * ( (S_c_B+E_c_B+I_c_B+R_c_B)
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "I_sea_a_NB_to_I_sea_b_NB" = theta * I_sea_a_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
                                                       /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                        S_b_B+E_b_B+I_b_B+R_b_B+
-                                                        S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                      ),
-  "I_sea_NB_to_I_c_NB" = rho_to_colony * I_sea_NB * ( (S_c_B+E_c_B+I_c_B+R_c_B)
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_a_NB_to_R_sea_b_NB" = theta * R_sea_a_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
                                                       /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                        S_b_B+E_b_B+I_b_B+R_b_B+
-                                                        S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                      ),
-  "R_sea_NB_to_R_c_NB" = rho_to_colony * R_sea_NB * ( (S_c_B+E_c_B+I_c_B+R_c_B)
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  ### From B to C
+  "S_sea_b_NB_to_S_sea_c_NB" = theta * S_sea_b_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                  /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                      S_b_B+E_b_B+I_b_B+R_b_B+
+                                                      S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_b_NB_to_E_sea_c_NB" = theta * E_sea_b_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
                                                       /(S_a_B+E_a_B+I_a_B+R_a_B+
-                                                        S_b_B+E_b_B+I_b_B+R_b_B+
-                                                        S_c_B+E_c_B+I_c_B+R_c_B+1)
-                                                      ),
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "I_sea_b_NB_to_I_sea_c_NB" = theta * I_sea_b_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_b_NB_to_R_sea_c_NB" = theta * R_sea_b_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  ### From C to A
+  "S_sea_c_NB_to_S_sea_a_NB" = theta * S_sea_c_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                  /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                      S_b_B+E_b_B+I_b_B+R_b_B+
+                                                      S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_c_NB_to_E_sea_a_NB" = theta * E_sea_c_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+    "I_sea_c_NB_to_I_sea_a_NB" = theta * I_sea_c_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                  /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                      S_b_B+E_b_B+I_b_B+R_b_B+
+                                                      S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_c_NB_to_R_sea_a_NB" = theta * R_sea_c_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  ### From B to A
+  "S_sea_b_NB_to_S_sea_a_NB" = theta * S_sea_b_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_b_NB_to_E_sea_a_NB" = theta * E_sea_b_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "I_sea_b_NB_to_I_sea_a_NB" = theta * I_sea_b_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_b_NB_to_R_sea_a_NB" = theta * R_sea_b_NB *  ((S_a_B+E_a_B+I_a_B+R_a_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  
+  ### From C to B
+  "S_sea_c_NB_to_S_sea_b_NB" = theta * S_sea_c_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_c_NB_to_E_sea_b_NB" = theta * E_sea_c_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "I_sea_c_NB_to_I_sea_b_NB" = theta * I_sea_c_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_c_NB_to_R_sea_b_NB" = theta * R_sea_c_NB *  ((S_b_B+E_b_B+I_b_B+R_b_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  ### From A to C
+  "S_sea_a_NB_to_S_sea_c_NB" = theta * S_sea_a_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "E_sea_a_NB_to_E_sea_c_NB" = theta * E_sea_a_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "I_sea_a_NB_to_I_sea_c_NB" = theta * I_sea_a_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  "R_sea_a_NB_to_R_sea_c_NB" = theta * R_sea_a_NB *  ((S_c_B+E_c_B+I_c_B+R_c_B)
+                                                      /(S_a_B+E_a_B+I_a_B+R_a_B+
+                                                          S_b_B+E_b_B+I_b_B+R_b_B+
+                                                          S_c_B+E_c_B+I_c_B+R_c_B+1)),
+  
   
   ## Breeders
   ### In A
@@ -295,64 +360,65 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
 }
 
 # Parameter of the taul-leap algorithm
-tau = 0.25
+tau = 0.10
 # Number of simulation days
-total_time = 70
+total_time = 70 
 # Do we induce dispersion ?
-induced_dispersal = T
+induced_dispersal = T 
 # Induced dispersion mode (deterministic or stochastic)
-dispersal_stochastic = T
+dispersal_stochastic = T 
 # Are there infected individuals at the start of the simulation?
-initially_infected = T
+initially_infected = T 
 # Initial conditions
-initial_number_infected_breeders_A = 5
-initial_number_infected_breeders_B = 0
-initial_number_infected_breeders_C = 0
-initial_number_breeders_A = 50
-initial_number_breeders_B = 50
-initial_number_breeders_C = 50
+initial_number_infected_breeders_A = 5 
+initial_number_infected_breeders_B = 0 
+initial_number_infected_breeders_C = 0 
+initial_number_breeders_A = 50 
+initial_number_breeders_B = 80 
+initial_number_breeders_C = 20 
 # Induced dispersion parameters
-# Reaction time between 1st death and induced dispersal
-dispersal_reaction_time = 5
-# Proportion of dispersed adults
-prop_dispersal = 1
-# Date of induced dispersion (if deterministic)
-dispersal_date = 0
+# Reaction time between 1rst death and induced dispersal
+dispersal_reaction_time = 5 
+## Proportion of dispersed adults
+prop_dispersal = 1 
+## Date of induced dispersion (if deterministic)
+dispersal_date = 0 
 # Epidemiological parameters
-# Transmission rate from exposed and infectious individuals in a colony
-beta_E_colony = 0
-beta_I_colony = 0.05
-# Rate of progression from exposed to infectious (inverse of incubation period)
-sigma = 1/1
-# Rate of progression from exposed to susceptible 
-eta =  0
-# Recovery rate (inverse of infectious period)
-gamma = 1/6
-# Disease-related mortality rate
-# Death probability = mu / (mu + gamma)
-# Adult
-mu_adult = 1/6 * (0.5/(1-0.5)) # 50% of mortality
-# Nestling
-mu_nestling = 1/6 * (0.8/(1-0.8)) # 80% of mortality
-# Mobility parameters
-# Transition from colony to the sea (breeders)
-zeta_to_sea = 1/2
-# Transition from sea to the colony (breeders)
-zeta_to_colony = 1/2
-# Transition from colony to the sea (non-breeders)
-rho_to_sea = 1/2
-# Transition from sea to the colony (non-breeders)
-rho_to_colony = 1/40
+## Transmission rate from exposed and infectious individuals in a colony
+beta_E_colony = 0 
+beta_I_colony = 0.8 
+## Incubation period
+incubation_period = 1 
+## Rate of progression from exposed to susceptible 
+eta =  0  
+## Infectious period
+infectious_period = 6 
+## Disease-related mortality rate
+## Death probability
+## Adult
+adult_mortality = 0.5 
+## Nestling
+nestling_mortality = 0.8 
+# Mobility  parameters
+## Average stay of Breeders at colony
+avrg_stay_B_colony = 2 
+## Average stay of Breeders at sea
+avrg_stay_B_sea = 2 
+## Average stay of Non-Breeders at colony
+avrg_stay_NB_colony = 2 
+## Average stay of Non-Breeders at sea
+avrg_stay_NB_sea = 2   
+# Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
+theta = 1/50 
 # Transition from breeder to non-breeder (reproductive failure)
-psi = 1/500
+psi = 1/500   
 # Demographic parameters
-# Hatching date of the chicks
-hatching_date = 10
+## Hatching date of the chicks
+hatching_date = 10 
 ## Hatching date standard deviation
-hatching_sd = 3
+hatching_sd = 3 
 # Probability of a nestling becoming a breeder
-reaching_repro_prob = 0.3
-
+reaching_repro_prob = 0.5
 
 
 # Gillespie SEIR model function -------------------------------------------
@@ -406,6 +472,8 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           avrg_stay_NB_colony = 2,
                           ## Average stay of Non-Breeders at sea
                           avrg_stay_NB_sea = 2 , 
+                          # Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
+                          theta = 1/50,
                           # Transition from breeder to non-breeder (reproductive failure)
                           psi = 1/500,  
                           # Demographic parameters
@@ -426,11 +494,11 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
   ## Recovery rate (inverse of infectious period)
   gamma = 1/infectious_period
   ## Disease-related mortality rate
-  ## Death probability = mu / (mu + gamma)
+  ## Death probability = 1/mu / (1/mu + 1/gamma)
   ## Adult
-  mu_adult = 1/gamma * (adult_mortality/(1-adult_mortality)) 
+  mu_adult = gamma * (adult_mortality/(1-adult_mortality))
   ## Nestling
-  mu_nestling = 1/gamma * (nestling_mortality/(1-nestling_mortality))
+  mu_nestling = gamma * (nestling_mortality/(1-nestling_mortality))
   # Mobility  parameters
   ## Transition from colony to the sea (breeders)
   zeta_to_sea = 1/avrg_stay_B_colony
@@ -595,6 +663,19 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                          I = initial_infected,
                          R = initial_recovered,
                          D = initial_dead)
+  ## At sea A
+  N = 0                  
+  initial_infected = 0
+  initial_exposed = 0
+  initial_recovered = 0
+  initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
+  initial_dead = 0
+  
+  initial_state_sea_a_NB = c(S = initial_susceptible,
+                           E = initial_exposed,
+                           I = initial_infected,
+                           R = initial_recovered,
+                           D = initial_dead)
   
   ## In colony B
   N = 0                  
@@ -609,6 +690,19 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           I = initial_infected,
                           R = initial_recovered,
                           D = initial_dead)
+  ## At sea B
+  N = 0                  
+  initial_infected = 0
+  initial_exposed = 0
+  initial_recovered = 0
+  initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
+  initial_dead = 0
+  
+  initial_state_sea_b_NB = c(S = initial_susceptible,
+                             E = initial_exposed,
+                             I = initial_infected,
+                             R = initial_recovered,
+                             D = initial_dead)
   
   ## In colony C
   N = 0                  
@@ -623,8 +717,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           I = initial_infected,
                           R = initial_recovered,
                           D = initial_dead)
-  
-  ## At sea 
+  ## At sea C
   N = 0                  
   initial_infected = 0
   initial_exposed = 0
@@ -632,11 +725,13 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
   initial_susceptible = N - initial_infected - initial_exposed - initial_recovered
   initial_dead = 0
   
-  initial_state_sea_NB = c(S = initial_susceptible,
+  initial_state_sea_c_NB = c(S = initial_susceptible,
                              E = initial_exposed,
                              I = initial_infected,
                              R = initial_recovered,
                              D = initial_dead)
+  
+
   
   
   initial_state = matrix(data = c(initial_state_a_N,
@@ -653,16 +748,19 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                                   initial_state_c_B,
                                   initial_state_sea_c_B,
                                   initial_state_c_NB,
-  
-                                  initial_state_sea_NB
+                                  
+                                  initial_state_sea_b_NB,
+                                  initial_state_sea_a_NB,
+                                  initial_state_sea_c_NB
+                            
                                   ), 
-                         nrow = 13, ncol = 5, 
+                         nrow = 15, ncol = 5, 
                          byrow = T)
   
   
   # Initialization
   times = c(0)
-  states = array(dim = c(13,5,1), data = initial_state)
+  states = array(dim = c(15,5,1), data = initial_state)
   already_dispersed = F
   simulated_dispersal_date = NA
   already_hatched = F
@@ -744,35 +842,49 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
     R_c_NB = states[12, 4, dim(states)[3]]
     D_c_NB = states[12, 5, dim(states)[3]]
     
-    S_sea_NB = states[13, 1, dim(states)[3]]
-    E_sea_NB = states[13, 2, dim(states)[3]]
-    I_sea_NB = states[13, 3, dim(states)[3]]
-    R_sea_NB = states[13, 4, dim(states)[3]]
-    D_sea_NB = states[13, 5, dim(states)[3]]
+    S_sea_a_NB = states[13, 1, dim(states)[3]]
+    E_sea_a_NB = states[13, 2, dim(states)[3]]
+    I_sea_a_NB = states[13, 3, dim(states)[3]]
+    R_sea_a_NB = states[13, 4, dim(states)[3]]
+    D_sea_a_NB = states[13, 5, dim(states)[3]]
+    
+    S_sea_b_NB = states[14, 1, dim(states)[3]]
+    E_sea_b_NB = states[14, 2, dim(states)[3]]
+    I_sea_b_NB = states[14, 3, dim(states)[3]]
+    R_sea_b_NB = states[14, 4, dim(states)[3]]
+    D_sea_b_NB = states[14, 5, dim(states)[3]]
+    
+    S_sea_c_NB = states[15, 1, dim(states)[3]]
+    E_sea_c_NB = states[15, 2, dim(states)[3]]
+    I_sea_c_NB = states[15, 3, dim(states)[3]]
+    R_sea_c_NB = states[15, 4, dim(states)[3]]
+    D_sea_c_NB = states[15, 5, dim(states)[3]]
     
 
     
     # Rates of each possible event
     rates = calculate_rates(beta_E_colony, beta_I_colony,
                             sigma,eta, gamma, mu_adult, mu_nestling,
-                            zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                            zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,theta,
                             # A
                             S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                             S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
                             S_sea_a_B, E_sea_a_B, I_sea_a_B, R_sea_a_B, D_sea_a_B,
                             S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                            S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
                             # B
                             S_b_N, E_b_N, I_b_N, R_b_N, D_b_N,
                             S_b_B, E_b_B, I_b_B, R_b_B, D_b_B,
                             S_sea_b_B, E_sea_b_B, I_sea_b_B, R_sea_b_B, D_sea_b_B,
                             S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                            S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
                             # C
                             S_c_N, E_c_N, I_c_N, R_c_N, D_c_N,
                             S_c_B, E_c_B, I_c_B, R_c_B, D_c_B,
                             S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
                             S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
-                            # Non-breeders at sea
-                            S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB)
+                            S_sea_c_NB, E_sea_c_NB, I_sea_c_NB, R_sea_c_NB, D_sea_c_NB
+    )
 
     total_rate = sum(rates)
     
@@ -849,7 +961,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             # Update of the number of susceptible adults
             S_a_B = S_a_B - disp_S_a_B
             S_sea_a_B = S_sea_a_B - disp_S_sea_a_B
-            S_sea_NB = S_sea_NB + disp_S_a_B + disp_S_sea_a_B
+            S_sea_a_NB = S_sea_a_NB + disp_S_a_B + disp_S_sea_a_B
             
             # Number of exposed  adults who are dispersed from A
             disp_E_a_B= disp_a_B["E_a_B"]
@@ -857,7 +969,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             # Update of the number of exposed adults
             E_a_B= E_a_B- disp_E_a_B
             E_sea_a_B = E_sea_a_B - disp_E_sea_a_B
-            E_sea_NB = E_sea_NB + disp_E_a_B+ disp_E_sea_a_B
+            E_sea_a_NB = E_sea_a_NB + disp_E_a_B+ disp_E_sea_a_B
             
             # Number of infectious adults who are dispersed from A
             disp_I_a_B = disp_a_B["I_a_B"]
@@ -865,7 +977,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             # Update of the number of infectious adults
             I_a_B = I_a_B - disp_I_a_B
             I_sea_a_B = I_sea_a_B - disp_I_sea_a_B
-            I_sea_NB = I_sea_NB + disp_I_a_B + disp_I_sea_a_B
+            I_sea_a_NB = I_sea_a_NB + disp_I_a_B + disp_I_sea_a_B
             
             # Number of recovered adults who are dispersed from A
             disp_R_a_B = disp_a_B["R_a_B"]
@@ -873,7 +985,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             # Update of the number of recovered adults
             R_a_B = R_a_B - disp_R_a_B
             R_sea_a_B = R_sea_a_B - disp_R_sea_a_B
-            R_sea_NB = R_sea_NB + disp_R_a_B + disp_R_sea_a_B
+            R_sea_a_NB = R_sea_a_NB + disp_R_a_B + disp_R_sea_a_B
             
           }
 
@@ -904,9 +1016,11 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                                       S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
                                       S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
                                       
-                                      S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB
+                                      S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                                      S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                      S_sea_c_NB, E_sea_c_NB, I_sea_c_NB, R_sea_c_NB, D_sea_c_NB
           ),
-          nrow = 13, ncol = 5, 
+          nrow = 15, ncol = 5, 
           byrow = T)
           
           states = abind(states, new_state)
@@ -918,24 +1032,26 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           # Rates of each possible event
           rates =     rates = calculate_rates(beta_E_colony, beta_I_colony,
                                               sigma,eta, gamma, mu_adult, mu_nestling,
-                                              zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,
+                                              zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea, theta,
                                               # A
                                               S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                                               S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
                                               S_sea_a_B, E_sea_a_B, I_sea_a_B, R_sea_a_B, D_sea_a_B,
                                               S_a_NB, E_a_NB, I_a_NB, R_a_NB, D_a_NB,
+                                              S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
                                               # B
                                               S_b_N, E_b_N, I_b_N, R_b_N, D_b_N,
                                               S_b_B, E_b_B, I_b_B, R_b_B, D_b_B,
                                               S_sea_b_B, E_sea_b_B, I_sea_b_B, R_sea_b_B, D_sea_b_B,
                                               S_b_NB, E_b_NB, I_b_NB, R_b_NB, D_b_NB,
+                                              S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
                                               # C
                                               S_c_N, E_c_N, I_c_N, R_c_N, D_c_N,
                                               S_c_B, E_c_B, I_c_B, R_c_B, D_c_B,
                                               S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
                                               S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
-                                              # Non-breeders at sea
-                                              S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB)
+                                              S_sea_c_NB, E_sea_c_NB, I_sea_c_NB, R_sea_c_NB, D_sea_c_NB
+          )
           
           total_rate = sum(rates)
           
@@ -1026,16 +1142,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_a_NB = R_a_NB + 1
         } else if (parent1 == "S_sea_a_B"){
           S_sea_a_B = S_sea_a_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_a_NB = S_sea_a_NB + 1
         } else if (parent1 == "E_sea_a_B"){
           E_sea_a_B = E_sea_a_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_a_NB = E_sea_a_NB + 1
         } else if (parent1 == "I_sea_a_B"){
           I_sea_a_B = I_sea_a_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_a_NB = I_sea_a_NB + 1
         } else if (parent1 == "R_sea_a_B"){
           R_sea_a_B = R_sea_a_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_a_NB = R_sea_a_NB + 1
         }
         parent2 = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
                            rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
@@ -1054,16 +1170,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_a_NB = R_a_NB + 1
         } else if (parent2 == "S_sea_a_B"){
           S_sea_a_B = S_sea_a_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_a_NB = S_sea_a_NB + 1
         } else if (parent2 == "E_sea_a_B"){
           E_sea_a_B = E_sea_a_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_a_NB = E_sea_a_NB + 1
         } else if (parent2 == "I_sea_a_B"){
           I_sea_a_B = I_sea_a_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_a_NB = I_sea_a_NB + 1
         } else if (parent2 == "R_sea_a_B"){
           R_sea_a_B = R_sea_a_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_a_NB = R_sea_a_NB + 1
         }
       }
       ### In B
@@ -1104,16 +1220,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (parent1 == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (parent1 == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (parent1 == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (parent1 == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         }
         parent2 = sample(c(rep("S_b_B", S_b_B), rep("E_b_B", E_b_B),rep("I_b_B", I_b_B),rep("R_b_B", R_b_B),
                            rep("S_sea_b_B", S_sea_b_B), rep("E_sea_b_B", E_sea_b_B),rep("I_sea_b_B", I_sea_b_B),rep("R_sea_b_B", R_sea_b_B)),
@@ -1132,16 +1248,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (parent2 == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (parent2 == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (parent2 == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (parent2 == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         } 
       }
       ### In C
@@ -1182,16 +1298,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_c_NB = R_c_NB + 1
           } else if (parent1 == "S_sea_c_B"){
             S_sea_c_B = S_sea_c_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_c_NB = S_sea_c_NB + 1
           } else if (parent1 == "E_sea_c_B"){
             E_sea_c_B = E_sea_c_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_c_NB = E_sea_c_NB + 1
           } else if (parent1 == "I_sea_c_B"){
             I_sea_c_B = I_sea_c_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_c_NB = I_sea_c_NB + 1
           } else if (parent1 == "R_sea_c_B"){
             R_sea_c_B = R_sea_c_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_c_NB = R_sea_c_NB + 1
           }
           parent2 = sample(c(rep("S_c_B", S_c_B), rep("E_c_B", E_c_B),rep("I_c_B", I_c_B),rep("R_c_B", R_c_B),
                              rep("S_sea_c_B", S_sea_c_B), rep("E_sea_c_B", E_sea_c_B),rep("I_sea_c_B", I_sea_c_B),rep("R_sea_c_B", R_sea_c_B)),
@@ -1210,16 +1326,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_c_NB = R_c_NB + 1
           } else if (parent2 == "S_sea_c_B"){
             S_sea_c_B = S_sea_c_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_c_NB = S_sea_c_NB + 1
           } else if (parent2 == "E_sea_c_B"){
             E_sea_c_B = E_sea_c_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_c_NB = E_sea_c_NB + 1
           } else if (parent2 == "I_sea_c_B"){
             I_sea_c_B = I_sea_c_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_c_NB = I_sea_c_NB + 1
           } else if (parent2 == "R_sea_c_B"){
             R_sea_c_B = R_sea_c_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_c_NB = R_sea_c_NB + 1
           }
         }
       ## Breeders
@@ -1279,16 +1395,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_a_NB = R_a_NB + 1
           } else if (partner == "S_sea_a_B"){
             S_sea_a_B = S_sea_a_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_a_NB = S_sea_a_NB + 1
           } else if (partner == "E_sea_a_B"){
             E_sea_a_B = E_sea_a_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_a_NB = E_sea_a_NB + 1
           } else if (partner == "I_sea_a_B"){
             I_sea_a_B = I_sea_a_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_a_NB = I_sea_a_NB + 1
           } else if (partner == "R_sea_a_B"){
             R_sea_a_B = R_sea_a_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_a_NB = R_sea_a_NB + 1
           }
         }
       #### At sea
@@ -1345,16 +1461,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_a_NB = R_a_NB + 1
           } else if (partner == "S_sea_a_B"){
             S_sea_a_B = S_sea_a_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_a_NB = S_sea_a_NB + 1
           } else if (partner == "E_sea_a_B"){
             E_sea_a_B = E_sea_a_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_a_NB = E_sea_a_NB + 1
           } else if (partner == "I_sea_a_B"){
             I_sea_a_B = I_sea_a_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_a_NB = I_sea_a_NB + 1
           } else if (partner == "R_sea_a_B"){
             R_sea_a_B = R_sea_a_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_a_NB = R_sea_a_NB + 1
           }
         }
       ### In B
@@ -1413,16 +1529,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_b_NB = R_b_NB + 1
           } else if (partner == "S_sea_b_B"){
             S_sea_b_B = S_sea_b_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_b_NB = S_sea_b_NB + 1
           } else if (partner == "E_sea_b_B"){
             E_sea_b_B = E_sea_b_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_b_NB = E_sea_b_NB + 1
           } else if (partner == "I_sea_b_B"){
             I_sea_b_B = I_sea_b_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_b_NB = I_sea_b_NB + 1
           } else if (partner == "R_sea_b_B"){
             R_sea_b_B = R_sea_b_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_b_NB = R_sea_b_NB + 1
           }
         }
         
@@ -1480,16 +1596,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_b_NB = R_b_NB + 1
           } else if (partner == "S_sea_b_B"){
             S_sea_b_B = S_sea_b_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_b_NB = S_sea_b_NB + 1
           } else if (partner == "E_sea_b_B"){
             E_sea_b_B = E_sea_b_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_b_NB = E_sea_b_NB + 1
           } else if (partner == "I_sea_b_B"){
             I_sea_b_B = I_sea_b_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_b_NB = I_sea_b_NB + 1
           } else if (partner == "R_sea_b_B"){
             R_sea_b_B = R_sea_b_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_b_NB = R_sea_b_NB + 1
           }
         }
       ### In C
@@ -1548,16 +1664,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_c_NB = R_c_NB + 1
           } else if (partner == "S_sea_c_B"){
             S_sea_c_B = S_sea_c_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_c_NB = S_sea_c_NB + 1
           } else if (partner == "E_sea_c_B"){
             E_sea_c_B = E_sea_c_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_c_NB = E_sea_c_NB + 1
           } else if (partner == "I_sea_c_B"){
             I_sea_c_B = I_sea_c_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_c_NB = I_sea_c_NB + 1
           } else if (partner == "R_sea_c_B"){
             R_sea_c_B = R_sea_c_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_c_NB = R_sea_c_NB + 1
           }
           
         }
@@ -1615,16 +1731,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_c_NB = R_c_NB + 1
           } else if (partner == "S_sea_c_B"){
             S_sea_c_B = S_sea_c_B - 1
-            S_sea_NB = S_sea_NB + 1
+            S_sea_c_NB = S_sea_c_NB + 1
           } else if (partner == "E_sea_c_B"){
             E_sea_c_B = E_sea_c_B - 1
-            E_sea_NB = E_sea_NB + 1
+            E_sea_c_NB = E_sea_c_NB + 1
           } else if (partner == "I_sea_c_B"){
             I_sea_c_B = I_sea_c_B - 1
-            I_sea_NB = I_sea_NB + 1
+            I_sea_c_NB = I_sea_c_NB + 1
           } else if (partner == "R_sea_c_B"){
             R_sea_c_B = R_sea_c_B - 1
-            R_sea_NB = R_sea_NB + 1
+            R_sea_c_NB = R_sea_c_NB + 1
           }
         }
       ## Non-Breeders
@@ -1676,23 +1792,55 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
       } else if (transition == "I_c_NB_to_D_c_NB" & I_c_NB > 0) {
         I_c_NB = I_c_NB - 1
         D_c_NB = D_c_NB + 1
-        ### At sea
-      } else if (transition == "S_sea_NB_to_E_sea_NB" & S_sea_NB > 0) {
-        S_sea_NB = S_sea_NB - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (transition == "E_sea_NB_to_S_sea_NB" & E_sea_NB > 0) {
-        E_sea_NB = E_sea_NB - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (transition == "E_sea_NB_to_I_sea_NB" & E_sea_NB > 0) {
-        E_sea_NB = E_sea_NB - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (transition == "I_sea_NB_to_R_sea_NB" & I_sea_NB > 0) {
-        I_sea_NB = I_sea_NB - 1
-        R_sea_NB = R_sea_NB + 1
-      } else if (transition == "I_sea_NB_to_D_sea_NB" & I_sea_NB > 0) {
-        I_sea_NB = I_sea_NB - 1
-        D_sea_NB = D_sea_NB + 1
-
+        ### At sea A
+      } else if (transition == "S_sea_a_NB_to_E_sea_a_NB" & S_sea_a_NB > 0) {
+        S_sea_a_NB = S_sea_a_NB - 1
+        E_sea_a_NB = E_sea_a_NB + 1
+      } else if (transition == "E_sea_a_NB_to_S_sea_a_NB" & E_sea_a_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB - 1
+        S_sea_a_NB = S_sea_a_NB + 1
+      } else if (transition == "E_sea_a_NB_to_I_sea_a_NB" & E_sea_a_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB - 1
+        I_sea_a_NB = I_sea_a_NB + 1
+      } else if (transition == "I_sea_a_NB_to_R_sea_a_NB" & I_sea_a_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB - 1
+        R_sea_a_NB = R_sea_a_NB + 1
+      } else if (transition == "I_sea_a_NB_to_D_sea_a_NB" & I_sea_a_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB - 1
+        D_sea_a_NB = D_sea_a_NB + 1
+        ### At sea B
+      } else if (transition == "S_sea_b_NB_to_E_sea_b_NB" & S_sea_b_NB > 0) {
+        S_sea_b_NB = S_sea_b_NB - 1
+        E_sea_b_NB = E_sea_b_NB + 1
+      } else if (transition == "E_sea_b_NB_to_S_sea_b_NB" & E_sea_b_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB - 1
+        S_sea_b_NB = S_sea_b_NB + 1
+      } else if (transition == "E_sea_b_NB_to_I_sea_b_NB" & E_sea_b_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB - 1
+        I_sea_b_NB = I_sea_b_NB + 1
+      } else if (transition == "I_sea_b_NB_to_R_sea_b_NB" & I_sea_b_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB - 1
+        R_sea_b_NB = R_sea_b_NB + 1
+      } else if (transition == "I_sea_b_NB_to_D_sea_b_NB" & I_sea_b_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB - 1
+        D_sea_b_NB = D_sea_b_NB + 1
+        ### At sea C
+      } else if (transition == "S_sea_c_NB_to_E_sea_c_NB" & S_sea_c_NB > 0) {
+        S_sea_c_NB = S_sea_c_NB - 1
+        E_sea_c_NB = E_sea_c_NB + 1
+      } else if (transition == "E_sea_c_NB_to_S_sea_c_NB" & E_sea_c_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB - 1
+        S_sea_c_NB = S_sea_c_NB + 1
+      } else if (transition == "E_sea_c_NB_to_I_sea_c_NB" & E_sea_c_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB - 1
+        I_sea_c_NB = I_sea_c_NB + 1
+      } else if (transition == "I_sea_c_NB_to_R_sea_c_NB" & I_sea_c_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB - 1
+        R_sea_c_NB = R_sea_c_NB + 1
+      } else if (transition == "I_sea_c_NB_to_D_sea_c_NB" & I_sea_c_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB - 1
+        D_sea_c_NB = D_sea_c_NB + 1
+        
         # Mobility
         ## Breeders
         ### From colony A to sea A
@@ -1776,83 +1924,187 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
         
       ## Non-Breeders
       ### From colony A to sea 
-      } else if (transition == "S_a_NB_to_S_sea_NB" & S_a_NB > 0) {
+      } else if (transition == "S_a_NB_to_S_sea_a_NB" & S_a_NB > 0) {
         S_a_NB = S_a_NB - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (transition == "E_a_NB_to_E_sea_NB" & E_a_NB > 0) {
+        S_sea_a_NB = S_sea_a_NB + 1
+      } else if (transition == "E_a_NB_to_E_sea_a_NB" & E_a_NB > 0) {
         E_a_NB = E_a_NB - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (transition == "I_a_NB_to_I_sea_NB" & I_a_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB + 1
+      } else if (transition == "I_a_NB_to_I_sea_a_NB" & I_a_NB > 0) {
         I_a_NB = I_a_NB - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (transition == "R_a_NB_to_R_sea_NB" & R_a_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB + 1
+      } else if (transition == "R_a_NB_to_R_sea_a_NB" & R_a_NB > 0) {
         R_a_NB = R_a_NB - 1
-        R_sea_NB = R_sea_NB + 1
+        R_sea_a_NB = R_sea_a_NB + 1
       ### From sea to colony A
-      }else if (transition == "S_sea_NB_to_S_a_NB" & S_sea_NB > 0) {
+      }else if (transition == "S_sea_a_NB_to_S_a_NB" & S_sea_a_NB > 0) {
         S_a_NB = S_a_NB + 1
-        S_sea_NB = S_sea_NB - 1
-      } else if (transition == "E_sea_NB_to_E_a_NB" & E_sea_NB > 0) {
+        S_sea_a_NB = S_sea_a_NB - 1
+      } else if (transition == "E_sea_a_NB_to_E_a_NB" & E_sea_a_NB > 0) {
         E_a_NB = E_a_NB + 1
-        E_sea_NB = E_sea_NB - 1
-      } else if (transition == "I_sea_NB_to_I_a_NB" & I_sea_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB - 1
+      } else if (transition == "I_sea_a_NB_to_I_a_NB" & I_sea_a_NB > 0) {
         I_a_NB = I_a_NB + 1
-        I_sea_NB = I_sea_NB - 1
-      } else if (transition == "R_sea_NB_to_R_a_NB" & R_sea_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB - 1
+      } else if (transition == "R_sea_a_NB_to_R_a_NB" & R_sea_a_NB > 0) {
         R_a_NB = R_a_NB + 1
-        R_sea_NB = R_sea_NB - 1
+        R_sea_a_NB = R_sea_a_NB - 1
       ### From colony B to sea 
-      } else if (transition == "S_b_NB_to_S_sea_NB" & S_b_NB > 0) {
+      } else if (transition == "S_b_NB_to_S_sea_b_NB" & S_b_NB > 0) {
         S_b_NB = S_b_NB - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (transition == "E_b_NB_to_E_sea_NB" & E_b_NB > 0) {
+        S_sea_b_NB = S_sea_b_NB + 1
+      } else if (transition == "E_b_NB_to_E_sea_b_NB" & E_b_NB > 0) {
         E_b_NB = E_b_NB - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (transition == "I_b_NB_to_I_sea_NB" & I_b_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB + 1
+      } else if (transition == "I_b_NB_to_I_sea_b_NB" & I_b_NB > 0) {
         I_b_NB = I_b_NB - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (transition == "R_b_NB_to_R_sea_NB" & R_b_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB + 1
+      } else if (transition == "R_b_NB_to_R_sea_b_NB" & R_b_NB > 0) {
         R_b_NB = R_b_NB - 1
-        R_sea_NB = R_sea_NB + 1
+        R_sea_b_NB = R_sea_b_NB + 1
       ### From sea to colony B
-      } else if (transition == "S_sea_NB_to_S_b_NB" & S_sea_NB > 0) {
+      } else if (transition == "S_sea_b_NB_to_S_b_NB" & S_sea_b_NB > 0) {
         S_b_NB = S_b_NB + 1
-        S_sea_NB = S_sea_NB - 1
-      } else if (transition == "E_sea_NB_to_E_b_NB" & E_sea_NB > 0) {
+        S_sea_b_NB = S_sea_b_NB - 1
+      } else if (transition == "E_sea_b_NB_to_E_b_NB" & E_sea_b_NB > 0) {
         E_b_NB = E_b_NB + 1
-        E_sea_NB = E_sea_NB - 1
-      } else if (transition == "I_sea_NB_to_I_b_NB" & I_sea_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB - 1
+      } else if (transition == "I_sea_b_NB_to_I_b_NB" & I_sea_b_NB > 0) {
         I_b_NB = I_b_NB + 1
-        I_sea_NB = I_sea_NB - 1
-      } else if (transition == "R_sea_NB_to_R_b_NB" & R_sea_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB - 1
+      } else if (transition == "R_sea_b_NB_to_R_b_NB" & R_sea_b_NB > 0) {
         R_b_NB = R_b_NB + 1
-        R_sea_NB = R_sea_NB - 1
+        R_sea_b_NB = R_sea_b_NB - 1
         ### From colony C to sea 
-      } else if (transition == "S_c_NB_to_S_sea_NB" & S_c_NB > 0) {
+      } else if (transition == "S_c_NB_to_S_sea_c_NB" & S_c_NB > 0) {
         S_c_NB = S_c_NB - 1
-        S_sea_NB = S_sea_NB + 1
-      } else if (transition == "E_c_NB_to_E_sea_NB" & E_c_NB > 0) {
+        S_sea_c_NB = S_sea_c_NB + 1
+      } else if (transition == "E_c_NB_to_E_sea_c_NB" & E_c_NB > 0) {
         E_c_NB = E_c_NB - 1
-        E_sea_NB = E_sea_NB + 1
-      } else if (transition == "I_c_NB_to_I_sea_NB" & I_c_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB + 1
+      } else if (transition == "I_c_NB_to_I_sea_c_NB" & I_c_NB > 0) {
         I_c_NB = I_c_NB - 1
-        I_sea_NB = I_sea_NB + 1
-      } else if (transition == "R_c_NB_to_R_sea_NB" & R_c_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB + 1
+      } else if (transition == "R_c_NB_to_R_sea_c_NB" & R_c_NB > 0) {
         R_c_NB = R_c_NB - 1
-        R_sea_NB = R_sea_NB + 1
+        R_sea_c_NB = R_sea_c_NB + 1
         ### From sea to colony C
-      } else if (transition == "S_sea_NB_to_S_c_NB" & S_sea_NB > 0) {
+      } else if (transition == "S_sea_c_NB_to_S_c_NB" & S_sea_c_NB > 0) {
         S_c_NB = S_c_NB + 1
-        S_sea_NB = S_sea_NB - 1
-      } else if (transition == "E_sea_NB_to_E_c_NB" & E_sea_NB > 0) {
+        S_sea_c_NB = S_sea_c_NB - 1
+      } else if (transition == "E_sea_c_NB_to_E_c_NB" & E_sea_c_NB > 0) {
         E_c_NB = E_c_NB + 1
-        E_sea_NB = E_sea_NB - 1
-      } else if (transition == "I_sea_NB_to_I_c_NB" & I_sea_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB - 1
+      } else if (transition == "I_sea_c_NB_to_I_c_NB" & I_sea_c_NB > 0) {
         I_c_NB = I_c_NB + 1
-        I_sea_NB = I_sea_NB - 1
-      } else if (transition == "R_sea_NB_to_R_c_NB" & R_sea_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB - 1
+      } else if (transition == "R_sea_c_NB_to_R_c_NB" & R_sea_c_NB > 0) {
         R_c_NB = R_c_NB + 1
-        R_sea_NB = R_sea_NB - 1
+        R_sea_c_NB = R_sea_c_NB - 1
+        
+        
+        ## Connectivity between colonies
+        ### For S
+        ### From A to B
+      } else if (transition == "S_sea_a_NB_to_S_sea_b_NB" & S_sea_a_NB > 0) {
+        S_sea_a_NB = S_sea_a_NB - 1
+        S_sea_b_NB = S_sea_b_NB + 1
+        ### From B to C
+      } else if (transition == "S_sea_b_NB_to_S_sea_c_NB" & S_sea_b_NB > 0) {
+        S_sea_b_NB = S_sea_b_NB - 1
+        S_sea_c_NB = S_sea_c_NB + 1
+        ### From C to A
+      } else if (transition == "S_sea_c_NB_to_S_sea_a_NB" & S_sea_c_NB > 0) {
+        S_sea_c_NB = S_sea_c_NB - 1
+        S_sea_a_NB = S_sea_a_NB + 1
+        ### From B to A
+      } else if (transition == "S_sea_b_NB_to_S_sea_a_NB" & S_sea_b_NB > 0) {
+        S_sea_b_NB = S_sea_b_NB - 1
+        S_sea_a_NB = S_sea_a_NB + 1
+        ### From C to B
+      } else if (transition == "S_sea_c_NB_to_S_sea_b_NB" & S_sea_c_NB > 0) {
+        S_sea_c_NB = S_sea_c_NB - 1
+        S_sea_b_NB = S_sea_b_NB + 1
+        ### From A to C
+      } else if (transition == "S_sea_a_NB_to_S_sea_c_NB" & S_sea_a_NB > 0) {
+        S_sea_a_NB = S_sea_a_NB - 1
+        S_sea_c_NB = S_sea_c_NB + 1
+        #### For E
+        ### From A to B
+      } else if (transition == "E_sea_a_NB_to_E_sea_b_NB" & E_sea_a_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB - 1
+        E_sea_b_NB = E_sea_b_NB + 1
+        ### From B to C
+      } else if (transition == "E_sea_b_NB_to_E_sea_c_NB" & E_sea_b_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB - 1
+        E_sea_c_NB = E_sea_c_NB + 1
+        ### From C to A
+      } else if (transition == "E_sea_c_NB_to_E_sea_a_NB" & E_sea_c_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB - 1
+        E_sea_a_NB = E_sea_a_NB + 1
+        ### From B to A
+      } else if (transition == "E_sea_b_NB_to_E_sea_a_NB" & E_sea_b_NB > 0) {
+        E_sea_b_NB = E_sea_b_NB - 1
+        E_sea_a_NB = E_sea_a_NB + 1
+        ### From C to B
+      } else if (transition == "E_sea_c_NB_to_E_sea_b_NB" & E_sea_c_NB > 0) {
+        E_sea_c_NB = E_sea_c_NB - 1
+        E_sea_b_NB = E_sea_b_NB + 1
+        ### From A to C
+      } else if (transition == "E_sea_a_NB_to_E_sea_c_NB" & E_sea_a_NB > 0) {
+        E_sea_a_NB = E_sea_a_NB - 1
+        E_sea_c_NB = E_sea_c_NB + 1
+        #### For I
+        ### From A to B
+      } else if (transition == "I_sea_a_NB_to_I_sea_b_NB" & I_sea_a_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB - 1
+        I_sea_b_NB = I_sea_b_NB + 1
+        ### From B to C
+      } else if (transition == "I_sea_b_NB_to_I_sea_c_NB" & I_sea_b_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB - 1
+        I_sea_c_NB = I_sea_c_NB + 1
+        ### From C to A
+      } else if (transition == "I_sea_c_NB_to_I_sea_a_NB" & I_sea_c_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB - 1
+        I_sea_a_NB = I_sea_a_NB + 1
+        ### From B to A
+      } else if (transition == "I_sea_b_NB_to_I_sea_a_NB" & I_sea_b_NB > 0) {
+        I_sea_b_NB = I_sea_b_NB - 1
+        I_sea_a_NB = I_sea_a_NB + 1
+        ### From C to B
+      } else if (transition == "I_sea_c_NB_to_I_sea_b_NB" & I_sea_c_NB > 0) {
+        I_sea_c_NB = I_sea_c_NB - 1
+        I_sea_b_NB = I_sea_b_NB + 1
+        ### From A to C
+      } else if (transition == "I_sea_a_NB_to_I_sea_c_NB" & I_sea_a_NB > 0) {
+        I_sea_a_NB = I_sea_a_NB - 1
+        I_sea_c_NB = I_sea_c_NB + 1
+        #### For R
+        ### From A to B
+      } else if (transition == "R_sea_a_NB_to_R_sea_b_NB" & R_sea_a_NB > 0) {
+        R_sea_a_NB = R_sea_a_NB - 1
+        R_sea_b_NB = R_sea_b_NB + 1
+        ### From B to C
+      } else if (transition == "R_sea_b_NB_to_R_sea_c_NB" & R_sea_b_NB > 0) {
+        R_sea_b_NB = R_sea_b_NB - 1
+        R_sea_c_NB = R_sea_c_NB + 1
+        ### From C to A
+      } else if (transition == "R_sea_c_NB_to_R_sea_a_NB" & R_sea_c_NB > 0) {
+        R_sea_c_NB = R_sea_c_NB - 1
+        R_sea_a_NB = R_sea_a_NB + 1
+        ### From B to A
+      } else if (transition == "R_sea_b_NB_to_R_sea_a_NB" & R_sea_b_NB > 0) {
+        R_sea_b_NB = R_sea_b_NB - 1
+        R_sea_a_NB = R_sea_a_NB + 1
+        ### From C to B
+      } else if (transition == "R_sea_c_NB_to_R_sea_b_NB" & R_sea_c_NB > 0) {
+        R_sea_c_NB = R_sea_c_NB - 1
+        R_sea_b_NB = R_sea_b_NB + 1
+        ### From A to C
+      } else if (transition == "R_sea_a_NB_to_R_sea_c_NB" & R_sea_a_NB > 0) {
+        R_sea_a_NB = R_sea_a_NB - 1
+        R_sea_c_NB = R_sea_c_NB + 1
+        
       # Breeders become Non-Breeders (baseline reproductive failure)
       # In A
       # Status S
@@ -1900,16 +2152,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
            R_a_NB = R_a_NB + 1
          } else if (partner == "S_sea_a_B"){
            S_sea_a_B = S_sea_a_B - 1
-           S_sea_NB = S_sea_NB + 1
+           S_sea_a_NB = S_sea_a_NB + 1
          } else if (partner == "E_sea_a_B"){
            E_sea_a_B = E_sea_a_B - 1
-           E_sea_NB = E_sea_NB + 1
+           E_sea_a_NB = E_sea_a_NB + 1
          } else if (partner == "I_sea_a_B"){
            I_sea_a_B = I_sea_a_B - 1
-           I_sea_NB = I_sea_NB + 1
+           I_sea_a_NB = I_sea_a_NB + 1
          } else if (partner == "R_sea_a_B"){
            R_sea_a_B = R_sea_a_B - 1
-           R_sea_NB = R_sea_NB + 1
+           R_sea_a_NB = R_sea_a_NB + 1
          }
       # Status E
       } else if (transition %in% c("E_a_B_to_E_a_NB")  
@@ -1956,16 +2208,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_a_NB = R_a_NB + 1
         } else if (partner == "S_sea_a_B"){
           S_sea_a_B = S_sea_a_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_a_NB = S_sea_a_NB + 1
         } else if (partner == "E_sea_a_B"){
           E_sea_a_B = E_sea_a_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_a_NB = E_sea_a_NB + 1
         } else if (partner == "I_sea_a_B"){
           I_sea_a_B = I_sea_a_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_a_NB = I_sea_a_NB + 1
         } else if (partner == "R_sea_a_B"){
           R_sea_a_B = R_sea_a_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_a_NB = R_sea_a_NB + 1
         }
       # Status I
       } else if (transition %in% c("I_a_B_to_I_a_NB")  
@@ -2012,16 +2264,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_a_NB = R_a_NB + 1
         } else if (partner == "S_sea_a_B"){
           S_sea_a_B = S_sea_a_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_a_NB = S_sea_a_NB + 1
         } else if (partner == "E_sea_a_B"){
           E_sea_a_B = E_sea_a_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_a_NB = E_sea_a_NB + 1
         } else if (partner == "I_sea_a_B"){
           I_sea_a_B = I_sea_a_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_a_NB = I_sea_a_NB + 1
         } else if (partner == "R_sea_a_B"){
           R_sea_a_B = R_sea_a_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_a_NB = R_sea_a_NB + 1
         }
       
       # Status R
@@ -2069,16 +2321,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_a_NB = R_a_NB + 1
         } else if (partner == "S_sea_a_B"){
           S_sea_a_B = S_sea_a_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_a_NB = S_sea_a_NB + 1
         } else if (partner == "E_sea_a_B"){
           E_sea_a_B = E_sea_a_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_a_NB = E_sea_a_NB + 1
         } else if (partner == "I_sea_a_B"){
           I_sea_a_B = I_sea_a_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_a_NB = I_sea_a_NB + 1
         } else if (partner == "R_sea_a_B"){
           R_sea_a_B = R_sea_a_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_a_NB = R_sea_a_NB + 1
         }
         # In B
         # Status S
@@ -2126,16 +2378,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (partner == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (partner == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (partner == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (partner == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         }
         # Status E
       } else if (transition %in% c("E_b_B_to_E_b_NB")  
@@ -2182,16 +2434,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (partner == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (partner == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (partner == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (partner == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         }
         # Status I
       } else if (transition %in% c("I_b_B_to_I_b_NB")  
@@ -2238,16 +2490,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (partner == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (partner == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (partner == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (partner == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         }
         
         # Status R
@@ -2295,16 +2547,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_b_NB = R_b_NB + 1
         } else if (partner == "S_sea_b_B"){
           S_sea_b_B = S_sea_b_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_b_NB = S_sea_b_NB + 1
         } else if (partner == "E_sea_b_B"){
           E_sea_b_B = E_sea_b_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_b_NB = E_sea_b_NB + 1
         } else if (partner == "I_sea_b_B"){
           I_sea_b_B = I_sea_b_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_b_NB = I_sea_b_NB + 1
         } else if (partner == "R_sea_b_B"){
           R_sea_b_B = R_sea_b_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_b_NB = R_sea_b_NB + 1
         }
       # In C
       # Status S
@@ -2352,16 +2604,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_c_NB = R_c_NB + 1
         } else if (partner == "S_sea_c_B"){
           S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_c_NB = S_sea_c_NB + 1
         } else if (partner == "E_sea_c_B"){
           E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_c_NB = E_sea_c_NB + 1
         } else if (partner == "I_sea_c_B"){
           I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_c_NB = I_sea_c_NB + 1
         } else if (partner == "R_sea_c_B"){
           R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_c_NB = R_sea_c_NB + 1
         }
         # Status E
       } else if (transition %in% c("E_c_B_to_E_c_NB")  
@@ -2408,16 +2660,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_c_NB = R_c_NB + 1
         } else if (partner == "S_sea_c_B"){
           S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_c_NB = S_sea_c_NB + 1
         } else if (partner == "E_sea_c_B"){
           E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_c_NB = E_sea_c_NB + 1
         } else if (partner == "I_sea_c_B"){
           I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_c_NB = I_sea_c_NB + 1
         } else if (partner == "R_sea_c_B"){
           R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_c_NB = R_sea_c_NB + 1
         }
         # Status I
       } else if (transition %in% c("I_c_B_to_I_c_NB")  
@@ -2464,16 +2716,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_c_NB = R_c_NB + 1
         } else if (partner == "S_sea_c_B"){
           S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_c_NB = S_sea_c_NB + 1
         } else if (partner == "E_sea_c_B"){
           E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_c_NB = E_sea_c_NB + 1
         } else if (partner == "I_sea_c_B"){
           I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_c_NB = I_sea_c_NB + 1
         } else if (partner == "R_sea_c_B"){
           R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_c_NB = R_sea_c_NB + 1
         }
         
         # Status R
@@ -2521,16 +2773,16 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_c_NB = R_c_NB + 1
         } else if (partner == "S_sea_c_B"){
           S_sea_c_B = S_sea_c_B - 1
-          S_sea_NB = S_sea_NB + 1
+          S_sea_c_NB = S_sea_c_NB + 1
         } else if (partner == "E_sea_c_B"){
           E_sea_c_B = E_sea_c_B - 1
-          E_sea_NB = E_sea_NB + 1
+          E_sea_c_NB = E_sea_c_NB + 1
         } else if (partner == "I_sea_c_B"){
           I_sea_c_B = I_sea_c_B - 1
-          I_sea_NB = I_sea_NB + 1
+          I_sea_c_NB = I_sea_c_NB + 1
         } else if (partner == "R_sea_c_B"){
           R_sea_c_B = R_sea_c_B - 1
-          R_sea_NB = R_sea_NB + 1
+          R_sea_c_NB = R_sea_c_NB + 1
         }
          
 
@@ -2557,9 +2809,11 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                                 S_sea_c_B, E_sea_c_B, I_sea_c_B, R_sea_c_B, D_sea_c_B,
                                 S_c_NB, E_c_NB, I_c_NB, R_c_NB, D_c_NB,
                                 
-                                S_sea_NB, E_sea_NB, I_sea_NB, R_sea_NB, D_sea_NB
+                                S_sea_a_NB, E_sea_a_NB, I_sea_a_NB, R_sea_a_NB, D_sea_a_NB,
+                                S_sea_b_NB, E_sea_b_NB, I_sea_b_NB, R_sea_b_NB, D_sea_b_NB,
+                                S_sea_c_NB, E_sea_c_NB, I_sea_c_NB, R_sea_c_NB, D_sea_c_NB
     ),
-    nrow = 13, ncol = 5, 
+    nrow = 15, ncol = 5, 
     byrow = T)
     
     
@@ -2643,11 +2897,23 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
     R_c_NB = states[12, 4, ],
     D_c_NB = states[12, 5, ],
 
-    S_sea_NB = states[13, 1, ],
-    E_sea_NB = states[13, 2, ],
-    I_sea_NB = states[13, 3, ],
-    R_sea_NB = states[13, 4, ],
-    D_sea_NB = states[13, 5, ]
+    S_sea_a_NB = states[13, 1, ],
+    E_sea_a_NB = states[13, 2, ],
+    I_sea_a_NB = states[13, 3, ],
+    R_sea_a_NB = states[13, 4, ],
+    D_sea_a_NB = states[13, 5, ],
+    
+    S_sea_b_NB = states[14, 1, ],
+    E_sea_b_NB = states[14, 2, ],
+    I_sea_b_NB = states[14, 3, ],
+    R_sea_b_NB = states[14, 4, ],
+    D_sea_b_NB = states[14, 5, ],
+    
+    S_sea_c_NB = states[15, 1, ],
+    E_sea_c_NB = states[15, 2, ],
+    I_sea_c_NB = states[15, 3, ],
+    R_sea_c_NB = states[15, 4, ],
+    D_sea_c_NB = states[15, 5, ]
 
 ) %>% 
     mutate(
@@ -2710,10 +2976,14 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
   
   # Infected X time
   infected_X_time = 0
+  I_sea_NB = c()
+  
   for (t in 1:(length(all_states$time)-1)){
     
+    I_sea_NB[t] =  all_states$I_sea_a_NB[t] + all_states$I_sea_a_NB[t] + all_states$I_sea_a_NB[t]
+    
     infected_X_time = infected_X_time + 
-      all_states$I_sea_NB[t] * (all_states$time[t+1] - all_states$time[t])
+      I_sea_NB[t] * (all_states$time[t+1] - all_states$time[t])
     
   }
   
@@ -2857,29 +3127,57 @@ plot_seir = function(output_){
     scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
   
   
-  # At sea
+  # At seas of NB
   
-  output_sea_NB = output_long %>% filter(variable %in% c("S_sea_NB", "E_sea_NB", "I_sea_NB", "R_sea_NB", "D_sea_NB"))
-  plot_sea_NB = ggplot() +
+  output_sea_a_NB = output_long %>% filter(variable %in% c("S_sea_a_NB", "E_sea_a_NB", "I_sea_a_NB", "R_sea_a_NB", "D_sea_a_NB"))
+  plot_sea_a_NB = ggplot() +
     geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
                color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
-    geom_line(data = output_sea_NB, aes(x = time, y = value, color = variable)) +
+    geom_line(data = output_sea_a_NB, aes(x = time, y = value, color = variable)) +
     labs(x = "Time", y = "Indiv. Count", color = "Status") +
     theme_minimal() +
-    ggtitle("Non-breeder at sea")+
+    ggtitle("Non-breeder at sea A")+
     scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
-    # ylim(0, if (all(output_sea_NB$value == 0)) 1 else NA)+ 
+    # ylim(0, if (all(output_sea_a_NB$value == 0)) 1 else NA)+ 
     scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
+  
+  output_sea_b_NB = output_long %>% filter(variable %in% c("S_sea_b_NB", "E_sea_b_NB", "I_sea_b_NB", "R_sea_b_NB", "D_sea_b_NB"))
+  plot_sea_b_NB = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_sea_b_NB, aes(x = time, y = value, color = variable)) +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
+    theme_minimal() +
+    ggtitle("Non-breeder at sea B")+
+    scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
+    # ylim(0, if (all(output_sea_b_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
+  
+  
+  output_sea_c_NB = output_long %>% filter(variable %in% c("S_sea_c_NB", "E_sea_c_NB", "I_sea_c_NB", "R_sea_c_NB", "D_sea_c_NB"))
+  plot_sea_c_NB = ggplot() +
+    geom_vline(xintercept = if (is.na(output_2)) 1 else output_2 , linetype= if (is.na(output_2)) "blank" else "dashed", 
+               color = if (is.na(output_2)) "white" else "grey", linewidth=0.65) +
+    geom_line(data = output_sea_c_NB, aes(x = time, y = value, color = variable)) +
+    labs(x = "Time", y = "Indiv. Count", color = "Status") +
+    theme_minimal() +
+    ggtitle("Non-breeder at sea C")+
+    scale_color_brewer(palette="Set2", labels = c("S", "E", "I", "R", "D"))+
+    # ylim(0, if (all(output_sea_c_NB$value == 0)) 1 else NA)+ 
+    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
+  
+  
+  
   
   
   plot_grid_seir = plot_grid(plot_a_N, plot_b_N, plot_c_N,
                              plot_a, plot_b, plot_c,
                              plot_a_NB, plot_b_NB, plot_c_NB,
-                             NULL, plot_sea_NB, NULL,
+                             plot_sea_a_NB, plot_sea_b_NB, plot_sea_c_NB,
                              labels = c("A", "B", "C",
                                         "D", "E", "F",
                                         "G", "H", "I",
-                                        " ", "J", " "),
+                                        "J", "K", "L"),
                              label_size = 12,
                              ncol = 3)
   
@@ -2898,7 +3196,7 @@ output = gillespie_seir(
   # Number of simulation days
   total_time = 70,
   # Do we induce dispersion ?
-  induced_dispersal = T,
+  induced_dispersal = F,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochastic = T,
   # Are there infected individuals at the start of the simulation?
@@ -2920,7 +3218,7 @@ output = gillespie_seir(
   # Epidemiological parameters
   ## Transmission rate from exposed and infectious individuals in a colony
   beta_E_colony = 0,
-  beta_I_colony = 0.8,
+  beta_I_colony = 0.5,
   ## Incubation period
   incubation_period = 1,
   ## Rate of progression from exposed to susceptible 
@@ -2930,9 +3228,9 @@ output = gillespie_seir(
   ## Disease-related mortality rate
   ## Death probability
   ## Adult
-  adult_mortality = 0.5,
+  adult_mortality = 0.50,
   ## Nestling
-  nestling_mortality = 0.8,
+  nestling_mortality = 0.80,
   # Mobility  parameters
   ## Average stay of Breeders at colony
   avrg_stay_B_colony = 2,
@@ -2941,7 +3239,9 @@ output = gillespie_seir(
   ## Average stay of Non-Breeders at colony
   avrg_stay_NB_colony = 2,
   ## Average stay of Non-Breeders at sea
-  avrg_stay_NB_sea = 2 , 
+  avrg_stay_NB_sea = 8 , 
+  # Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
+  theta = 1/25,
   # Transition from breeder to non-breeder (reproductive failure)
   psi = 1/500,  
   # Demographic parameters
