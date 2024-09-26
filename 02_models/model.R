@@ -3218,13 +3218,13 @@ output = gillespie_seir(
   # Epidemiological parameters
   ## Transmission rate from exposed and infectious individuals in a colony
   beta_E_colony = 0,
-  beta_I_colony = 0.5,
+  beta_I_colony = 0.7,
   ## Incubation period
   incubation_period = 1,
   ## Rate of progression from exposed to susceptible 
   eta =  0, 
   ## Infectious period
-  infectious_period = 6,
+  infectious_period = 12,
   ## Disease-related mortality rate
   ## Death probability
   ## Adult
@@ -3240,7 +3240,7 @@ output = gillespie_seir(
   avrg_stay_NB_colony = 2,
   ## Average stay of Non-Breeders at sea
   avrg_stay_NB_sea = 8 , 
-  # Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
+  # Rate of connectivity (number of transitions from one non-breeder to another per non-breeder per day)
   theta = 1/25,
   # Transition from breeder to non-breeder (reproductive failure)
   psi = 1/500,  
