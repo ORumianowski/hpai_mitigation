@@ -441,6 +441,8 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                           initial_number_breeders_B = 80,
                           initial_number_breeders_C = 20,
                           # Induced dispersion parameters
+                          ## Probability of detecting a death caused by HPAI
+                          prob_detection = 0.8,
                           # Reaction time between 1rst death and induced dispersal
                           dispersal_reaction_time = 5,
                           ## Proportion of dispersed adults
@@ -766,6 +768,8 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
   already_hatched = F
   first_death = F
   first_death_date = NA
+  first_detected_HPAI_date = NA
+  first_detected_HPAI = F
   
   # Next event
   while (times[length(times)] < total_time) {
@@ -921,11 +925,28 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
     }
     
     
-    # Determining the date of first infection
+    # Determining the date of first death
     if (!first_death & D_a_B > 0){
       first_death_date = times[length(times)] 
       first_death = T
     }
+    
+    # Determining the date of first DETECTED infection
+    if ((dim(states)[3])>=2){
+      D_a_B_now = states[2, 5, (dim(states)[3])]
+      D_a_B_just_before = states[2, 5, (dim(states)[3]-1)]
+      nb_new_died = D_a_B_now -  D_a_B_just_before
+      if (nb_new_died>=1){
+        if (rbinom(1, nb_new_died, prob_detection)>=1){
+          first_detected_HPAI_date = times[length(times)] 
+          first_detected_HPAI = T
+        }
+      }
+    }
+    
+    
+    
+    
     
     # Induction of dispersion
     ## Has the induced dispersal strategy been triggered?
@@ -933,7 +954,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
       ## Has the dispersal occured?
       if (!already_dispersed){
         # Is it time to induce dispersion, according to the stochastic case and the deterministic case?
-        if ((dispersal_stochastic & first_death & next_time > first_death_date + dispersal_reaction_time) 
+        if ((dispersal_stochastic & first_detected_HPAI & next_time > first_detected_HPAI_date + dispersal_reaction_time) 
             |
             (!dispersal_stochastic & next_time > dispersal_date)
         ){
@@ -3196,7 +3217,7 @@ output = gillespie_seir(
   # Number of simulation days
   total_time = 70,
   # Do we induce dispersion ?
-  induced_dispersal = F,
+  induced_dispersal = T,
   # Induced dispersion mode (deterministic or stochastic)
   dispersal_stochastic = T,
   # Are there infected individuals at the start of the simulation?
@@ -3209,6 +3230,8 @@ output = gillespie_seir(
   initial_number_breeders_B = 80,
   initial_number_breeders_C = 20,
   # Induced dispersion parameters
+  ## Probability of detecting a death caused by HPAI
+  prob_detection = 0,
   # Reaction time between 1rst death and induced dispersal
   dispersal_reaction_time = 5,
   ## Proportion of dispersed adults
