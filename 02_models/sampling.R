@@ -80,18 +80,19 @@ run_simulations = function(samples,
       prop_dispersal = samples[[i, 12]],
       beta_E_colony = samples[[i, 13]],
       beta_I_colony = samples[[i, 14]],
-      sigma = samples[[i, 15]],
+      incubation_period = samples[[i, 15]],
       eta = samples[[i, 16]],
-      gamma = samples[[i, 17]],
-      mu_adult = samples[[i, 18]],
-      mu_nestling = samples[[i, 19]],
-      zeta_to_sea = samples[[i, 20]],
-      zeta_to_colony = samples[[i, 21]],
-      rho_to_sea = samples[[i, 22]],
-      rho_to_colony = samples[[i, 23]],
-      psi = samples[[i, 24]],
-      hatching_sd = samples[[i, 25]],
-      reaching_repro_prob = samples[[i, 26]]
+      infectious_period = samples[[i, 17]],
+      adult_mortality = samples[[i, 18]],
+      nestling_mortality = samples[[i, 19]],
+      avrg_stay_B_colony = samples[[i, 20]],
+      avrg_stay_B_sea = samples[[i, 21]],
+      avrg_stay_NB_colony = samples[[i, 22]],
+      avrg_stay_NB_sea = samples[[i, 23]],
+      theta = samples[[i, 24]],
+      psi = samples[[i, 25]],
+      hatching_sd = samples[[i, 26]],
+      reaching_repro_prob = samples[[i, 27]]
     )
   
     output_bank = rbind(output_bank,
@@ -110,7 +111,7 @@ run_simulations = function(samples,
 }
 
 # Number of samples
-nb_samples = 150
+nb_samples = 100
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -143,7 +144,8 @@ for (i in 1:nrow(scenarios)){
 }
 
 
-save(simulation_dt, file = "simulation_dt_150_3.RData")
+save(simulation_dt, file = "simulation_dt_modelv21_100_1.RData")
+#save(simulation_dt, file = "simulation_dt_2000_cluster_1.RData")
 
 
 #load("simulation_dt.RData")

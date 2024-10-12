@@ -1,4 +1,5 @@
 
+setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
 
 library(rpart)				        # Popular decision tree algorithm
 library(rattle)					# Fancy tree plot

@@ -40,7 +40,7 @@ source("scenarios.R")
 #                       simulation_dt3,
 #                       simulation_dt4)
 
-load("simulation_dt/simulation_dt_50_3.RData")
+load("simulation_dt/simulation_dt_modelv21_100_1.RData")
 
 
 # Plot binned heatmap -----------------------------------------------------
@@ -186,8 +186,9 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
 
 ################################################################
 N_BINS = 6
-evaluated_parameter = c("beta_I_colony", "rho_to_colony")
+evaluated_parameter = c("theta", "beta_I_colony")
 SELECTED_OUTPUT = "nb_adults_equi"
+
 ################################################################
 
 # List of scenarios

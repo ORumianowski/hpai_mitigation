@@ -1,0 +1,13 @@
+model.R : implementation of the model, take model parameters (e.g. transmission rate) and produce outputs (e.g. number of infected colonies)
+
+sampling : produce de set of parameters according LHS and produce a dataframe with the parameters, the scenario and the outputs
+
+param_ranges : ranges of the parameters in which the Latin Hypercube Sampling is performed
+
+scenarios : dataframe with the description of the scenarios
+
+regression_trees_on_scnearios : for each scenario, application of regresion trees on its outputs
+
+best strategy: for a specific set of parameters, which scenario is the best ? Application of an classifation trees 
+
+
