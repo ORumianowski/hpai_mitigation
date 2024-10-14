@@ -359,66 +359,66 @@ calculate_rates = function(  beta_E_colony, beta_I_colony,
   return(rates)
 }
 
-# Parameter of the taul-leap algorithm
-tau = 0.10
-# Number of simulation days
-total_time = 70 
-# Do we induce dispersion ?
-induced_dispersal = T 
-# Induced dispersion mode (deterministic or stochastic)
-dispersal_stochastic = T 
-# Are there infected individuals at the start of the simulation?
-initially_infected = T 
-# Initial conditions
-initial_number_infected_breeders_A = 5 
-initial_number_infected_breeders_B = 0 
-initial_number_infected_breeders_C = 0 
-initial_number_breeders_A = 50 
-initial_number_breeders_B = 80 
-initial_number_breeders_C = 20 
-# Induced dispersion parameters
-# Reaction time between 1rst death and induced dispersal
-dispersal_reaction_time = 5 
-## Proportion of dispersed adults
-prop_dispersal = 1 
-## Date of induced dispersion (if deterministic)
-dispersal_date = 0 
-# Epidemiological parameters
-## Transmission rate from exposed and infectious individuals in a colony
-beta_E_colony = 0 
-beta_I_colony = 0.8 
-## Incubation period
-incubation_period = 1 
-## Rate of progression from exposed to susceptible 
-eta =  0  
-## Infectious period
-infectious_period = 6 
-## Disease-related mortality rate
-## Death probability
-## Adult
-adult_mortality = 0.5 
-## Nestling
-nestling_mortality = 0.8 
-# Mobility  parameters
-## Average stay of Breeders at colony
-avrg_stay_B_colony = 2 
-## Average stay of Breeders at sea
-avrg_stay_B_sea = 2 
-## Average stay of Non-Breeders at colony
-avrg_stay_NB_colony = 2 
-## Average stay of Non-Breeders at sea
-avrg_stay_NB_sea = 2   
-# Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
-theta = 1/50 
-# Transition from breeder to non-breeder (reproductive failure)
-psi = 1/500   
-# Demographic parameters
-## Hatching date of the chicks
-hatching_date = 10 
-## Hatching date standard deviation
-hatching_sd = 3 
-# Probability of a nestling becoming a breeder
-reaching_repro_prob = 0.5
+# # Parameter of the taul-leap algorithm
+# tau = 0.10
+# # Number of simulation days
+# total_time = 70 
+# # Do we induce dispersion ?
+# induced_dispersal = T 
+# # Induced dispersion mode (deterministic or stochastic)
+# dispersal_stochastic = T 
+# # Are there infected individuals at the start of the simulation?
+# initially_infected = T 
+# # Initial conditions
+# initial_number_infected_breeders_A = 5 
+# initial_number_infected_breeders_B = 0 
+# initial_number_infected_breeders_C = 0 
+# initial_number_breeders_A = 50 
+# initial_number_breeders_B = 80 
+# initial_number_breeders_C = 20 
+# # Induced dispersion parameters
+# # Reaction time between 1rst death and induced dispersal
+# dispersal_reaction_time = 5 
+# ## Proportion of dispersed adults
+# prop_dispersal = 1 
+# ## Date of induced dispersion (if deterministic)
+# dispersal_date = 0 
+# # Epidemiological parameters
+# ## Transmission rate from exposed and infectious individuals in a colony
+# beta_E_colony = 0 
+# beta_I_colony = 0.8 
+# ## Incubation period
+# incubation_period = 1 
+# ## Rate of progression from exposed to susceptible 
+# eta =  0  
+# ## Infectious period
+# infectious_period = 6 
+# ## Disease-related mortality rate
+# ## Death probability
+# ## Adult
+# adult_mortality = 0.5 
+# ## Nestling
+# nestling_mortality = 0.8 
+# # Mobility  parameters
+# ## Average stay of Breeders at colony
+# avrg_stay_B_colony = 2 
+# ## Average stay of Breeders at sea
+# avrg_stay_B_sea = 2 
+# ## Average stay of Non-Breeders at colony
+# avrg_stay_NB_colony = 2 
+# ## Average stay of Non-Breeders at sea
+# avrg_stay_NB_sea = 2   
+# # Taux de connectivité (number of transitions from one non-breeder to another per non-breeder per day)
+# theta = 1/50 
+# # Transition from breeder to non-breeder (reproductive failure)
+# psi = 1/500   
+# # Demographic parameters
+# ## Hatching date of the chicks
+# hatching_date = 10 
+# ## Hatching date standard deviation
+# hatching_sd = 3 
+# # Probability of a nestling becoming a breeder
+# reaching_repro_prob = 0.5
 
 
 # Gillespie SEIR model function -------------------------------------------
@@ -2958,36 +2958,30 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
   )
   
   
-  N_a = all_states[1, c("S_a_B", "I_a_B", "S_sea_a_B", "I_sea_a_B")] %>% sum()
-  dead_a = all_states[nrow(all_states), c("D_a_B","D_sea_a_B")] %>% sum()
-  a_N = all_states[nrow(all_states), c("S_a_N", "E_a_N", "I_a_N", "R_a_N")] %>% sum()
   max_infected_a =  all_states[, c("E_a_B", "E_sea_a_B", "I_a_B","I_sea_a_B")] %>% 
     rowSums() %>% 
     max()
   
-  
-  N_b = all_states[1, c("S_b_B", "I_b_B", "S_sea_b_B", "I_sea_b_B")] %>% sum()
-  dead_b = all_states[nrow(all_states), c("D_b_B","D_sea_b_B")] %>% sum()
-  b_N = all_states[nrow(all_states), c("S_b_N", "E_b_N", "I_b_N", "R_b_N")] %>% sum()
   max_infected_b =  all_states[, c("E_b_B", "E_sea_b_B", "I_b_B","I_sea_b_B")] %>% 
     rowSums() %>% 
     max()
   
-  N_c = all_states[1, c("S_c_B", "I_c_B", "S_sea_c_B", "I_sea_c_B")] %>% sum()
-  dead_c = all_states[nrow(all_states), c("D_c_B","D_sea_c_B")] %>% sum()
-  c_N = all_states[nrow(all_states), c("S_c_N", "E_c_N", "I_c_N", "R_c_N")] %>% sum()
   max_infected_c =  all_states[, c("E_c_B", "E_sea_c_B", "I_c_B","I_sea_c_B")] %>% 
     rowSums() %>% 
     max()
   
-  
-  
   # Equivalent Number of Lost Adult (ENLA)
   # ENLA = number of died adult + number of non-appearing nestling compared to the maximum possible (pairs/2)
   
-  nb_adults = dead_a + dead_b + dead_c
-  nb_nestlings = (N_a + N_b  + N_c)/2 - (a_N + b_N + c_N)
-  nb_adults_equi = nb_adults + reaching_repro_prob * nb_nestlings
+  nb_dead_adults = all_states[nrow(all_states), c("D_a_B","D_sea_a_B","D_a_NB","D_sea_a_NB",
+                                                  "D_b_B","D_sea_b_B","D_b_NB","D_sea_b_NB",
+                                                  "D_c_B","D_sea_c_B","D_c_NB","D_sea_c_NB")] %>% sum()
+  
+  nb_nestlings = all_states[nrow(all_states), c("S_a_N", "E_a_N", "I_a_N", "R_a_N",
+                                                "S_b_N", "E_b_N", "I_b_N", "R_b_N",
+                                                "S_c_N", "E_c_N", "I_c_N", "R_c_N")] %>% sum()
+  
+  nb_adults_equi = nb_dead_adults - (reaching_repro_prob * nb_nestlings)
   
   # Number of infected colonies
   nb_infected_colonies = 
@@ -3209,7 +3203,7 @@ plot_seir = function(output_){
 
 
 # Run simulation ----------------------------------------------------------
-
+# 
 # time1 <- Sys.time()
 # output = gillespie_seir(
 #   # Parameter of the taul-leap algorithm
@@ -3244,8 +3238,8 @@ plot_seir = function(output_){
 #   beta_I_colony = 0.7,
 #   ## Incubation period
 #   incubation_period = 1,
-#   ## Rate of progression from exposed to susceptible 
-#   eta =  0, 
+#   ## Rate of progression from exposed to susceptible
+#   eta =  0,
 #   ## Infectious period
 #   infectious_period = 12,
 #   ## Disease-related mortality rate
@@ -3262,11 +3256,11 @@ plot_seir = function(output_){
 #   ## Average stay of Non-Breeders at colony
 #   avrg_stay_NB_colony = 2,
 #   ## Average stay of Non-Breeders at sea
-#   avrg_stay_NB_sea = 8 , 
+#   avrg_stay_NB_sea = 8 ,
 #   # Rate of connectivity (number of transitions from one non-breeder to another per non-breeder per day)
 #   theta = 1/25,
 #   # Transition from breeder to non-breeder (reproductive failure)
-#   psi = 1/500,  
+#   psi = 1/500,
 #   # Demographic parameters
 #   ## Hatching date of the chicks
 #   hatching_date = 10,
@@ -3285,4 +3279,4 @@ plot_seir = function(output_){
 # output$infected_X_time
 # 
 # 
-# 
+

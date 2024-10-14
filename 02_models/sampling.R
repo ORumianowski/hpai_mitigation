@@ -22,6 +22,7 @@ library(stringr)
 
 source("param_ranges.R")
 source("scenarios.R")
+scenarios = scenarios[c(2,4,5),]
 
 # Convert LHS samples  ----------------------------------------------------
 
@@ -92,7 +93,8 @@ run_simulations = function(samples,
       theta = samples[[i, 24]],
       psi = samples[[i, 25]],
       hatching_sd = samples[[i, 26]],
-      reaching_repro_prob = samples[[i, 27]]
+      reaching_repro_prob = samples[[i, 27]],
+      prob_detection = samples[[i, 28]]
     )
   
     output_bank = rbind(output_bank,
@@ -111,7 +113,7 @@ run_simulations = function(samples,
 }
 
 # Number of samples
-nb_samples = 100
+nb_samples = 4
 
 # Total number of parameters 
 nb_params = length(param_ranges)
@@ -124,6 +126,8 @@ colnames(samples) = names(param_ranges)
 
 
 # Get outputs for all scenarios -------------------------------------------
+
+
 
 simulation_dt = data.frame()
 
@@ -144,7 +148,7 @@ for (i in 1:nrow(scenarios)){
 }
 
 
-save(simulation_dt, file = "simulation_dt_modelv21_100_1.RData")
+#save(simulation_dt, file = "simulation_dt_modelv21_100_1.RData")
 #save(simulation_dt, file = "simulation_dt_2000_cluster_1.RData")
 
 

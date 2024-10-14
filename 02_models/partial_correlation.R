@@ -191,7 +191,7 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
 #   -----------------------------------------------------------------------
 
 ################################################################
-N_BINS = 6
+N_BINS = 5
 evaluated_parameter = c("theta", "beta_I_colony")
 SELECTED_OUTPUT = "nb_adults_equi"
 
@@ -231,60 +231,38 @@ plot_data_binned = create_binned_data(data = simulation_dt %>% subset(., scenari
 p0 = plot_heatmap_binned(plot_data_binned, evaluated_parameter, param_ranges)+
   ggtitle("BO")
   #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
-p1 = plot_heatmap_binned_diff(all_diff_results$BO_vs_HS, evaluated_parameter, param_ranges)+
-  ggtitle("BO - HS")
- #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
 p2 = plot_heatmap_binned_diff(all_diff_results$BO_vs_RS, evaluated_parameter, param_ranges)+
   ggtitle("BO - RS")
   #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
-p3 = plot_heatmap_binned_diff(all_diff_results$BO_vs_PS, evaluated_parameter, param_ranges)+
-  ggtitle("BO - PS")
- #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
 p4 = plot_heatmap_binned_diff(all_diff_results$BO_vs_P2, evaluated_parameter, param_ranges)+
   ggtitle("BO - P2")
   #+labs(x = "Transmission rate", y = "P(Fledging->Breeder)")
 
 
-# gridExtra::grid.arrange(p0, grid::rectGrob(gp = grid::gpar(col = NA)),
-#                         p1, p2,
-#                         p3, p4,
-#                         ncol = 2, nrow = 3,
-#                         top = " ")
 
 gridExtra::grid.arrange(p0, p2,
-                        p3, p4,
+                        p4,
                         ncol = 2, nrow = 2,
                         top = " ")
 
 
-best_strat_dt = 
-  data.frame(
-  x_mid = all_diff_results$BO_vs_HS$x_mid,
-  y_mid = all_diff_results$BO_vs_HS$y_mid,
-  BO_vs_RS = all_diff_results$BO_vs_RS$diff,
-  #BO_vs_PS = all_diff_results$BO_vs_PS$diff,
-  BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>% 
-  mutate(
-    best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
-      if (all(row < 0)) {
-        return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
-      } else {
-        return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
-      }
-    })
-    )
+# -------------------------------------------------------------------------
 
-best_strat_dt
-
-
-plot_heatmap_best_strat = function(data, params, param_ranges) {
-  
+# Function to create a heatmap with dynamic block sizes
+plot_heatmap_binned_diff = function(data, params, param_ranges) {
   p = ggplot(data) +
-    geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
+    geom_tile(aes(x = x_mid, y = y_mid, fill = diff)
     ) +
+    scale_fill_gradient2(low = "red", mid = "white", high = "green",
+                         midpoint = 0,
+                         limits = c(-20, 40))+
     theme_minimal() +
-    theme(panel.background = element_rect(fill = "lightgray", color = NA))+
-    labs(x = params[1], y = params[2], fill = "Best \n Strategy")
+    theme(panel.background = element_rect(fill = "lightgray", color = NA)) +
+    labs(
+      #x = params[1], y = params[2],
+      x = NULL, y = NULL,
+         fill = "ENLA")+
+    guides(fill = "none") 
   
   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
     p = p + scale_x_log10()
@@ -296,39 +274,198 @@ plot_heatmap_best_strat = function(data, params, param_ranges) {
   return(p)
 }
 
-plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
+N_BINS = 10
+evaluated_parameter = c("beta_I_colony", 
+                        "hatching_date", 
+                        "prop_dispersal",
+                        "adult_mortality",
+                        "reaching_repro_prob",
+                        "initial_number_infected_breeders_A")
+
+SELECTED_OUTPUT = "nb_adults_equi"
 
 
-# Plot boxplots -----------------------------------------------------------
+library(gridExtra)
+library(grid)
+
+# List of parameters
+
+# Empty list to store results
+all_diff_results <- list()
+
+
+# Loop through scenarios and calculate differences
+for (index_param_1 in 1:(length(evaluated_parameter))) {
+  for (index_param_2 in 1:(length(evaluated_parameter))) {  
+    
+    
+    diff_result <- create_diff_between_scenarios("BO",
+                                                 "P2", 
+                                                 simulation_dt, 
+                                                 c(evaluated_parameter[index_param_1],
+                                                   evaluated_parameter[index_param_2]),
+                                                 param_ranges, 
+                                                 selected_output = SELECTED_OUTPUT, 
+                                                 n_bins = N_BINS)
+    all_diff_results[[paste(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2], sep = "__")]] <- list(value = diff_result,
+                                                                                                                          param = c(evaluated_parameter[index_param_1],
+                                                                                                                                    evaluated_parameter[index_param_2])                                                                                                                          )
+  }
+}
+
+
+plot_heatmap_binned_diff(all_diff_results[[1]]$value, all_diff_results[[1]]$param, param_ranges)+
+  ggtitle("BO - P2")
+
+
+# Create a list of plots with lapply
+plots <- lapply(1:length(all_diff_results), function(i) {
+  plot_heatmap_binned_diff(all_diff_results[[i]]$value,
+                           all_diff_results[[i]]$param,
+                           param_ranges)
+})
+
+library(gridExtra)
+library(grid)
+
+# List of column labels
+col_labels_ <- c("Transmission rate", "Hatching date", "% dispersed", 
+                 "Adult mortality", "Demography", "Initial infected in A")
+
+# List of row labels
+row_labels_ <- col_labels_
+
+# Create text grobs for column labels (rotated 45 degrees)
+col_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
+  textGrob(label = col_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
+})
+
+# Create text grobs for row labels (rotated 45 degrees for the left side)
+row_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
+  textGrob(label = row_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
+})
+
+# Create layout matrix
+n <- length(evaluated_parameter)
+
+# Create an empty matrix for layout with n+1 rows and columns for the labels and plots
+layout_matrix <- matrix(0, nrow = n+1, ncol = n+1)
+
+# Fill the layout matrix
+layout_matrix[1, 2:(n+1)] <- 1:n   # Top row for column labels
+layout_matrix[2:(n+1), 1] <- (n+1):(2*n)  # First column for row labels
+layout_matrix[2:(n+1), 2:(n+1)] <- (2*n+1):(n*n+2*n)  # The rest for the plots
+
+# Combine nullGrob, row labels, col labels, and plots into a single list of grobs
+all_grobs <- c(list(nullGrob()), col_labels, row_labels, plots)
+
+# Arrange the plots with both row and column labels
+grid.arrange(
+  grobs = all_grobs,  # All grobs (nullGrob for empty top-left, col_labels, row_labels, and plots)
+  layout_matrix = layout_matrix,  # The matrix specifying where to place each grob
+  top = "BO - P2"
+)
 
 
 
 
-interval_size = 0.5
-evaluated_parameter = "initial_number_infected_breeders_A"
-
-
-boxplot_dt = simulation_dt  %>%
-  subset(., scenario == "P2")%>%
-  mutate(parameter = cut(
-    get(evaluated_parameter),
-    breaks = seq(
-      param_ranges[[evaluated_parameter]][[1]][[1]],
-      param_ranges[[evaluated_parameter]][[1]][[2]],
-      by = interval_size
-    ),
-    include.lowest = TRUE
-  )) %>%
-  na.omit()
-
-
-ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
-  geom_boxplot(fill = "lightblue", color = "darkblue") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = evaluated_parameter, y = "ENLA")
+# empty_plot <- ggplot() + theme_void()
+# 
+# gridExtra::grid.arrange(grobs = list(plots[[1]], plots[[2]],plots[[3]],plots[[4]],plots[[5]],
+#                                      empty_plot,
+#                                      plots[[6]], plots[[7]],plots[[8]],plots[[9]],
+#                                      empty_plot, empty_plot,
+#                                      plots[[10]], plots[[11]],plots[[12]],
+#                                      empty_plot, empty_plot, empty_plot,
+#                                      plots[[13]], plots[[14]],plots[[15]]
+#                                      ),
+#                         ncol = (length(evaluated_parameter)-1)
+#                         , nrow = 5, top = " ")
 
 
 
 
 
+# -------------------------------------------------------------------------
+
+
+
+
+
+
+
+# best_strat_dt = 
+#   data.frame(
+#   x_mid = all_diff_results$BO_vs_P2$x_mid,
+#   y_mid = all_diff_results$BO_vs_P2$y_mid,
+#   BO_vs_RS = all_diff_results$BO_vs_RS$diff,
+#   #BO_vs_PS = all_diff_results$BO_vs_PS$diff,
+#   BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>% 
+#   mutate(
+#     best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
+#       if (all(row < 0)) {
+#         return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
+#       } else {
+#         return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
+#       }
+#     })
+#     )
+# 
+# best_strat_dt
+# 
+# 
+# plot_heatmap_best_strat = function(data, params, param_ranges) {
+#   
+#   p = ggplot(data) +
+#     geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
+#     ) +
+#     theme_minimal() +
+#     theme(panel.background = element_rect(fill = "lightgray", color = NA))+
+#     labs(x = params[1], y = params[2], fill = "Best \n Strategy")
+#   
+#   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+#     p = p + scale_x_log10()
+#   }
+#   if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+#     p = p + scale_y_log10()
+#   }
+#   
+#   return(p)
+# }
+# 
+# plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
+# 
+# 
+# # Plot boxplots -----------------------------------------------------------
+# 
+# 
+# 
+# 
+# interval_size = 0.5
+# evaluated_parameter = "initial_number_infected_breeders_A"
+# 
+# 
+# boxplot_dt = simulation_dt  %>%
+#   subset(., scenario == "P2")%>%
+#   mutate(parameter = cut(
+#     get(evaluated_parameter),
+#     breaks = seq(
+#       param_ranges[[evaluated_parameter]][[1]][[1]],
+#       param_ranges[[evaluated_parameter]][[1]][[2]],
+#       by = interval_size
+#     ),
+#     include.lowest = TRUE
+#   )) %>%
+#   na.omit()
+# 
+# 
+# ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
+#   geom_boxplot(fill = "lightblue", color = "darkblue") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   labs(x = evaluated_parameter, y = "ENLA")
+# 
+# 
+# 
+# 
+# 
