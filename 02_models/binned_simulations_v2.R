@@ -274,13 +274,14 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
   return(p)
 }
 
+
+
 N_BINS = 10
 evaluated_parameter = c("beta_I_colony", 
-                        "hatching_date", 
-                        "prop_dispersal",
-                        "adult_mortality",
-                        "reaching_repro_prob",
-                        "initial_number_infected_breeders_A")
+                        "initial_number_infected_breeders_A", 
+                        "theta",
+                        "avrg_stay_NB_sea",
+                        "infectious_period")
 
 SELECTED_OUTPUT = "nb_adults_equi"
 
@@ -329,8 +330,11 @@ library(gridExtra)
 library(grid)
 
 # List of column labels
-col_labels_ <- c("Transmission rate", "Hatching date", "% dispersed", 
-                 "Adult mortality", "Demography", "Initial infected in A")
+col_labels_ <- c("Transmission rate", 
+                 "Inital infected", 
+                 "Connectivity",
+                 "Avrg stay NB sea",
+                 "Infectious period")
 
 # List of row labels
 row_labels_ <- col_labels_
@@ -359,12 +363,17 @@ layout_matrix[2:(n+1), 2:(n+1)] <- (2*n+1):(n*n+2*n)  # The rest for the plots
 # Combine nullGrob, row labels, col labels, and plots into a single list of grobs
 all_grobs <- c(list(nullGrob()), col_labels, row_labels, plots)
 
+all_grobs[[12]] = p0
+
+all_grobs[[19]] = p0
+
 # Arrange the plots with both row and column labels
 grid.arrange(
   grobs = all_grobs,  # All grobs (nullGrob for empty top-left, col_labels, row_labels, and plots)
   layout_matrix = layout_matrix,  # The matrix specifying where to place each grob
   top = "BO - P2"
 )
+
 
 
 
@@ -394,78 +403,77 @@ grid.arrange(
 
 
 
-# best_strat_dt = 
-#   data.frame(
-#   x_mid = all_diff_results$BO_vs_P2$x_mid,
-#   y_mid = all_diff_results$BO_vs_P2$y_mid,
-#   BO_vs_RS = all_diff_results$BO_vs_RS$diff,
-#   #BO_vs_PS = all_diff_results$BO_vs_PS$diff,
-#   BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>% 
-#   mutate(
-#     best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
-#       if (all(row < 0)) {
-#         return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
-#       } else {
-#         return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
-#       }
-#     })
-#     )
-# 
-# best_strat_dt
-# 
-# 
-# plot_heatmap_best_strat = function(data, params, param_ranges) {
-#   
-#   p = ggplot(data) +
-#     geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
-#     ) +
-#     theme_minimal() +
-#     theme(panel.background = element_rect(fill = "lightgray", color = NA))+
-#     labs(x = params[1], y = params[2], fill = "Best \n Strategy")
-#   
-#   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
-#     p = p + scale_x_log10()
-#   }
-#   if (param_ranges[[params[2]]][[2]] == "logarithmic"){
-#     p = p + scale_y_log10()
-#   }
-#   
-#   return(p)
-# }
-# 
-# plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
-# 
-# 
-# # Plot boxplots -----------------------------------------------------------
-# 
-# 
-# 
-# 
-# interval_size = 0.5
-# evaluated_parameter = "initial_number_infected_breeders_A"
-# 
-# 
-# boxplot_dt = simulation_dt  %>%
-#   subset(., scenario == "P2")%>%
-#   mutate(parameter = cut(
-#     get(evaluated_parameter),
-#     breaks = seq(
-#       param_ranges[[evaluated_parameter]][[1]][[1]],
-#       param_ranges[[evaluated_parameter]][[1]][[2]],
-#       by = interval_size
-#     ),
-#     include.lowest = TRUE
-#   )) %>%
-#   na.omit()
-# 
-# 
-# ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
-#   geom_boxplot(fill = "lightblue", color = "darkblue") +
-#   theme_minimal() +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(x = evaluated_parameter, y = "ENLA")
-# 
-# 
-# 
-# 
-# 
+best_strat_dt =
+  data.frame(
+  x_mid = all_diff_results$BO_vs_P2$x_mid,
+  y_mid = all_diff_results$BO_vs_P2$y_mid,
+  BO_vs_RS = all_diff_results$BO_vs_RS$diff,
+  BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>%
+  mutate(
+    best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
+      if (all(row < 0)) {
+        return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
+      } else {
+        return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
+      }
+    })
+    )
+
+best_strat_dt
+
+
+plot_heatmap_best_strat = function(data, params, param_ranges) {
+
+  p = ggplot(data) +
+    geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
+    ) +
+    theme_minimal() +
+    theme(panel.background = element_rect(fill = "lightgray", color = NA))+
+    labs(x = params[1], y = params[2], fill = "Best \n Strategy")
+
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+
+  return(p)
+}
+
+plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
+
+
+# Plot boxplots -----------------------------------------------------------
+
+
+
+
+interval_size = 0.5
+evaluated_parameter = "initial_number_infected_breeders_A"
+
+
+boxplot_dt = simulation_dt  %>%
+  subset(., scenario == "P2")%>%
+  mutate(parameter = cut(
+    get(evaluated_parameter),
+    breaks = seq(
+      param_ranges[[evaluated_parameter]][[1]][[1]],
+      param_ranges[[evaluated_parameter]][[1]][[2]],
+      by = interval_size
+    ),
+    include.lowest = TRUE
+  )) %>%
+  na.omit()
+
+
+ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = evaluated_parameter, y = "ENLA")
+
+
+
+
+
