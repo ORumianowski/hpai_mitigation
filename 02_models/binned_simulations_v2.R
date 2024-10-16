@@ -4,20 +4,12 @@ setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models
 
 
 
-# Downloading model -------------------------------------------------------
-
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
 library(abind)
 library(cowplot)
-
-source("model.R")
-
-# LHS ---------------------------------------------------------------------
-
 library(lhs)
-library(ggplot2)
 library(dplyr)
 library(stringr)
 library(rlang)
@@ -26,27 +18,20 @@ source("param_ranges.R")
 source("scenarios.R")
 scenarios = scenarios[c(2,4,5),]
 
-# source("sampling.R")
-# load("simulation_dt/simulation_dt_50_2.RData")
-# simulation_dt1 = simulation_dt
-# load("simulation_dt/simulation_dt_150_2.RData")
-# simulation_dt2 = simulation_dt
-# load("simulation_dt/simulation_dt_300_2.RData")
-# simulation_dt3 = simulation_dt
-# load("simulation_dt/simulation_dt_500_2.RData")
-# simulation_dt4 = simulation_dt
-# 
-# simulation_dt = rbind(simulation_dt1,
-#                       simulation_dt2,
-#                       simulation_dt3,
-#                       simulation_dt4)
+
 
 load("simulation_dt/simulation_dt_1000it_cluster_1.RData")
 simulation_dt1 = simulation_dt
 load("simulation_dt/simulation_dt_1000it_ordi_1.RData")
 simulation_dt2 = simulation_dt
+load("simulation_dt/simulation_dt_10000it_cluster_1.RData")
+simulation_dt3 = simulation_dt
+load("simulation_dt/simulation_dt_2000it_cluster_1.RData")
+simulation_dt4 = simulation_dt
 simulation_dt = rbind(simulation_dt1,
-                      simulation_dt2)
+                      simulation_dt2,
+                      simulation_dt3,
+                      simulation_dt4)
 
 
 # Plot binned heatmap -----------------------------------------------------
@@ -255,7 +240,7 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
     ) +
     scale_fill_gradient2(low = "red", mid = "white", high = "green",
                          midpoint = 0,
-                         limits = c(-20, 40))+
+                         limits = c(-10, 35))+
     theme_minimal() +
     theme(panel.background = element_rect(fill = "lightgray", color = NA)) +
     labs(
@@ -363,16 +348,6 @@ layout_matrix[2:(n+1), 2:(n+1)] <- (2*n+1):(n*n+2*n)  # The rest for the plots
 # Combine nullGrob, row labels, col labels, and plots into a single list of grobs
 all_grobs <- c(list(nullGrob()), col_labels, row_labels, plots)
 
-all_grobs[[12]] = p0
-
-all_grobs[[19]] = p0
-
-# Arrange the plots with both row and column labels
-grid.arrange(
-  grobs = all_grobs,  # All grobs (nullGrob for empty top-left, col_labels, row_labels, and plots)
-  layout_matrix = layout_matrix,  # The matrix specifying where to place each grob
-  top = "BO - P2"
-)
 
 
 
@@ -401,79 +376,99 @@ grid.arrange(
 
 
 
-
-
-best_strat_dt =
-  data.frame(
-  x_mid = all_diff_results$BO_vs_P2$x_mid,
-  y_mid = all_diff_results$BO_vs_P2$y_mid,
-  BO_vs_RS = all_diff_results$BO_vs_RS$diff,
-  BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>%
-  mutate(
-    best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
-      if (all(row < 0)) {
-        return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
-      } else {
-        return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
-      }
-    })
-    )
-
-best_strat_dt
-
-
-plot_heatmap_best_strat = function(data, params, param_ranges) {
-
-  p = ggplot(data) +
-    geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
-    ) +
-    theme_minimal() +
-    theme(panel.background = element_rect(fill = "lightgray", color = NA))+
-    labs(x = params[1], y = params[2], fill = "Best \n Strategy")
-
-  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
-    p = p + scale_x_log10()
-  }
-  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
-    p = p + scale_y_log10()
-  }
-
-  return(p)
-}
-
-plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
-
+# 
+# 
+# best_strat_dt =
+#   data.frame(
+#   x_mid = all_diff_results$BO_vs_P2$x_mid,
+#   y_mid = all_diff_results$BO_vs_P2$y_mid,
+#   BO_vs_RS = all_diff_results$BO_vs_RS$diff,
+#   BO_vs_P2 = all_diff_results$BO_vs_P2$diff) %>%
+#   mutate(
+#     best_strat = apply(.[, 3:ncol(.)], 1, function(row) {
+#       if (all(row < 0)) {
+#         return("BO")  # Retourne "BO" si toutes les valeurs sont négatives
+#       } else {
+#         return(colnames(.)[which.max(row) + 2])  # Retourne le nom de la colonne avec la valeur max
+#       }
+#     })
+#     )
+# 
+# best_strat_dt
+# 
+# 
+# plot_heatmap_best_strat = function(data, params, param_ranges) {
+# 
+#   p = ggplot(data) +
+#     geom_tile(aes(x = x_mid, y = y_mid, fill = best_strat)
+#     ) +
+#     theme_minimal() +
+#     theme(panel.background = element_rect(fill = "lightgray", color = NA))+
+#     labs(x = params[1], y = params[2], fill = "Best \n Strategy")
+# 
+#   if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+#     p = p + scale_x_log10()
+#   }
+#   if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+#     p = p + scale_y_log10()
+#   }
+# 
+#   return(p)
+# }
+# 
+# plot_heatmap_best_strat(best_strat_dt,evaluated_parameter,param_ranges)
+# 
 
 # Plot boxplots -----------------------------------------------------------
 
 
+plot_one_param = function(df, evaluated_scenario, evaluated_param){
+  
+  # Filter and process the data
+  mono_dt = df  %>%
+    subset(., scenario == evaluated_scenario) 
+  
+  # Dynamic plotting based on the evaluated parameter
+  p = ggplot() +
+    geom_point(data=mono_dt,
+               aes_string(x = evaluated_param, y = "nb_adults_equi"),  # Couleur dans aes()
+               size = 0.4, alpha = 0.14) +  # Transparence appliquée
+    #geom_smooth(method = "loess") +
+    theme_minimal() +
+    labs(x = NULL, y = NULL)
+  
+  return(p)
+}
+
+plot_one_param(df = simulation_dt,
+               evaluated_scenario = "P2",
+               evaluated_param = evaluated_parameter[1])
 
 
-interval_size = 0.5
-evaluated_parameter = "initial_number_infected_breeders_A"
+
+plot_one_param_bank = list()
+
+for (i in 1:length(evaluated_parameter)){
+  
+  plot_one_param_bank[[i]] = plot_one_param(df = simulation_dt,
+                           evaluated_scenario = "P2",
+                           evaluated_param = evaluated_parameter[i])
+}
 
 
-boxplot_dt = simulation_dt  %>%
-  subset(., scenario == "P2")%>%
-  mutate(parameter = cut(
-    get(evaluated_parameter),
-    breaks = seq(
-      param_ranges[[evaluated_parameter]][[1]][[1]],
-      param_ranges[[evaluated_parameter]][[1]][[2]],
-      by = interval_size
-    ),
-    include.lowest = TRUE
-  )) %>%
-  na.omit()
+
+#   -----------------------------------------------------------------------
+
+for (i in 1:length(evaluated_parameter)){
+  all_grobs[[6+(6*i)]] = plot_one_param_bank[[i]]
+}
 
 
-ggplot(boxplot_dt, aes(x = parameter, y = nb_adults_equi)) +
-  geom_boxplot(fill = "lightblue", color = "darkblue") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = evaluated_parameter, y = "ENLA")
-
-
+grid.arrange(
+  grobs = all_grobs,  
+  layout_matrix = layout_matrix, 
+  top = "BO - P2"
+)
 
 
 
