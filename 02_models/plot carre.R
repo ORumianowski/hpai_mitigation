@@ -67,7 +67,7 @@ dt2 <- dt %>%
 
 # -------------------------------------------------------------------------
 
-SELECTED_OUTPUT = "BO_RS_nb_adults_equi"
+SELECTED_OUTPUT = "BO_P2_nb_adults_equi"
 
 SCENARIO = "RS"
 
@@ -78,15 +78,22 @@ evaluated_parameter = c(
   "initial_number_infected_breeders_A", 
   "theta",
   "avrg_stay_NB_sea",
-  "infectious_period"
+  "hatching_date",
+  "reaching_repro_prob"
 )
+
+
 
 graph_param_name = c(
   "Transmission rate", 
   "Inital infected", 
   "Connectivity",
-  "Avrg stay NB sea",
+  "hatching_date",
   "Infectious period")
+
+graph_param_name = evaluated_parameter
+
+dt2 = dt2 %>% subset(., initial_number_infected_breeders_A!=0)
 
 
 
@@ -280,8 +287,10 @@ for (i in 1:length(evaluated_parameter)){
 
 #   -----------------------------------------------------------------------
 
+nb_param = length(evaluated_parameter)
+
 for (i in 1:length(evaluated_parameter)){
-  all_grobs[[6+(6*i)]] = plot_one_param_bank[[i]]
+  all_grobs[[(nb_param+1)+((nb_param+1)*i)]] = plot_one_param_bank[[i]]
 }
 
 
