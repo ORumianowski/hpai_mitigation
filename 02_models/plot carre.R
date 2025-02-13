@@ -22,18 +22,8 @@ scenarios = scenarios[c(2,4,5),]
 
 
 
-load("simulation_dt/simulation_dt_1000it_cluster_1.RData")
-simulation_dt1 = simulation_dt
-load("simulation_dt/simulation_dt_1000it_ordi_1.RData")
-simulation_dt2 = simulation_dt
-load("simulation_dt/simulation_dt_10000it_cluster_1.RData")
-simulation_dt3 = simulation_dt
-load("simulation_dt/simulation_dt_2000it_cluster_1.RData")
-simulation_dt4 = simulation_dt
-simulation_dt = rbind(simulation_dt1,
-                      simulation_dt2,
-                      simulation_dt3,
-                      simulation_dt4)
+
+load("simulation_dt/dt_cluster_3_1E4_for_v2.RData")
 
 param = c("initial_number_infected_breeders_A", "initial_number_infected_breeders_B", "initial_number_infected_breeders_C", "initial_number_breeders_A",         
           "initial_number_breeders_B",          "initial_number_breeders_C",          "dispersal_reaction_time",            "dispersal_date",                    
@@ -55,6 +45,8 @@ param_evaluated = c("BO_P2_nb_adults_equi",
 dt = simulation_dt[,1:32]
 
 
+dt %>% subset(., prop_dispersal>=0.99)
+
 dt2 <- dt %>%
   pivot_wider(
     names_from = scenario,  
@@ -69,18 +61,21 @@ dt2 <- dt %>%
 
 SELECTED_OUTPUT = "BO_P2_nb_adults_equi"
 
-SCENARIO = "RS"
+SCENARIO = "P2"
 
 N_BINS = 10
 
+
 evaluated_parameter = c(
   "beta_I_colony", 
+  # "prob_detection",
+  # "dispersal_reaction_time",
   "initial_number_infected_breeders_A", 
   "theta",
+  "prop_dispersal",
   "avrg_stay_NB_sea",
   "hatching_date",
-  "reaching_repro_prob"
-)
+  "reaching_repro_prob")
 
 
 
@@ -88,10 +83,12 @@ graph_param_name = c(
   "Transmission rate", 
   "Inital infected", 
   "Connectivity",
-  "hatching_date",
-  "Infectious period")
+  "Prop. dispersed",
+  "Avrg. stay. NB sea",
+  "Hatching date",
+  "Reaching Repro. Prob.")
 
-graph_param_name = evaluated_parameter
+# graph_param_name = evaluated_parameter
 
 dt2 = dt2 %>% subset(., initial_number_infected_breeders_A!=0)
 
