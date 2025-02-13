@@ -834,8 +834,26 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
       I_a_N = I_a_N - 1
       D_a_N = D_a_N + 1
       
-      # If the nestling is dead, both parents become non-breeders.
-
+      # If all nestlings are dead, both parents become non-breeders.
+      ## Does the pair has only one chick ?
+      
+      mean_number_chick_per_pair = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)/(S_a_N + E_a_N + I_a_N + R_a_N)
+      
+      one_chick = T
+      if (mean_number_chick_per_pair > 1){
+        ## Does the pair has only one chick ?
+        if (rbinom(1, size = 1, prob = (mean_number_chick_per_pair-1)/mean_number_chick_per_pair )){
+          one_chick = F
+        } 
+        else{
+          one_chick = T
+        }
+      }
+      else{
+        one_chick = T
+      }
+      
+      if (one_chick){
         if (S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B >= 2){
           parent1 = sample(c(rep("S_a_B", S_a_B), rep("E_a_B", E_a_B),rep("I_a_B", I_a_B),rep("R_a_B", R_a_B),
                              rep("S_sea_a_B", S_sea_a_B), rep("E_sea_a_B", E_sea_a_B),rep("I_sea_a_B", I_sea_a_B),rep("R_sea_a_B", R_sea_a_B)),
@@ -894,7 +912,7 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
             R_sea_a_NB = R_sea_a_NB + 1
           }
         }
-      
+      }
       
       
       ### In B
@@ -1832,24 +1850,30 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
          S_a_B = S_a_B - 1
          S_a_NB = S_a_NB + 1
          # The nestling of the pair become died 
+         number_chick_this_pair = rpois(1, 
+               lambda = round((S_a_B + E_a_B + I_a_B + R_a_B + S_sea_a_B + E_sea_a_B + I_sea_a_B + R_sea_a_B)/2)
+               /(S_a_N + E_a_N + I_a_N + R_a_N)
+        )
          
-         if (S_a_N + E_a_N + I_a_N + R_a_N >= 1){
+         if (S_a_N + E_a_N + I_a_N + R_a_N >= number_chick_this_pair){
            nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
-                             size = 1)
-
-           if (nestling == "S_a_N") {
-             S_a_N = S_a_N - 1
-             D_a_N = D_a_N + 1
-           } else if (nestling == "E_a_N") {
-             E_a_N = E_a_N - 1
-             D_a_N = D_a_N + 1
-           } else if (nestling == "I_a_N") {
-             I_a_N = I_a_N - 1
-             D_a_N = D_a_N + 1
-           } else if (nestling == "R_a_N") {
-             R_a_N = R_a_N - 1
-             D_a_N = D_a_N + 1
-           }
+                             size = number_chick_this_pair
+                             )
+           for (k in 1:length(nestling)){
+             if (nestling[k] == "S_a_N"){
+               S_a_N = S_a_N - 1
+               D_a_N = D_a_N + 1
+             } else if (nestling[k] == "E_a_N"){
+               E_a_N = E_a_N - 1
+               D_a_N = D_a_N + 1
+             } else if (nestling[k] == "I_a_N"){
+               I_a_N = I_a_N - 1
+               D_a_N = D_a_N + 1
+             } else if (nestling[k] == "R_a_N"){
+               R_a_N = R_a_N - 1
+               D_a_N = D_a_N + 1
+             }
+           } 
 
          }
          # The partner becomes a non-breeder
@@ -2502,77 +2526,8 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
           R_sea_c_B = R_sea_c_B - 1
           R_sea_c_NB = R_sea_c_NB + 1
         }
-        
-        # Nestling dies if breeders left or are dead
-        a_N = S_a_N+E_a_N+I_a_N+R_a_N
-        b_N = S_b_N+E_b_N+I_b_N+R_b_N
-        c_N = S_c_N+E_c_N+I_c_N+R_c_N
-        a_B = S_a_B+E_a_B+I_a_B+R_a_B+S_sea_a_B+E_sea_a_B+I_sea_a_B+R_sea_a_B
-        b_B = S_b_B+E_b_B+I_b_B+R_b_B+S_sea_b_B+E_sea_b_B+I_sea_b_B+R_sea_b_B
-        c_B = S_c_B+E_c_B+I_c_B+R_c_B+S_sea_c_B+E_sea_c_B+I_sea_c_B+R_sea_c_B
-        
-        if (a_N > a_B/2){
-          nestling = sample(c(rep("S_a_N", S_a_N), rep("E_a_N", E_a_N),rep("I_a_N", I_a_N),rep("R_a_N", R_a_N)),
-                            size = trunc((a_b/2)-a_N))
-          for (k in 1:length(nestling)){
-            if (nestling[k] == "S_a_N"){
-              S_a_N = S_a_N - 1
-              D_a_N = D_a_N + 1
-            } else if (nestling[k] == "E_a_N"){
-              E_a_N = E_a_N - 1
-              D_a_N = D_a_N + 1
-            } else if (nestling[k] == "I_a_N"){
-              I_a_N = I_a_N - 1
-              D_a_N = D_a_N + 1
-            } else if (nestling[k] == "R_a_N"){
-              R_a_N = R_a_N - 1
-              D_a_N = D_a_N + 1
-            }
-          }
-        }
-        if (b_N > b_B/2){
-          nestling = sample(c(rep("S_b_N", S_b_N), rep("E_b_N", E_b_N),rep("I_b_N", I_b_N),rep("R_b_N", R_b_N)),
-                            size = trunc((b_b/2)-b_N))
-          for (k in 1:length(nestling)){
-            if (nestling[k] == "S_b_N"){
-              S_b_N = S_b_N - 1
-              D_b_N = D_b_N + 1
-            } else if (nestling[k] == "E_b_N"){
-              E_b_N = E_b_N - 1
-              D_b_N = D_b_N + 1
-            } else if (nestling[k] == "I_b_N"){
-              I_b_N = I_b_N - 1
-              D_b_N = D_b_N + 1
-            } else if (nestling[k] == "R_b_N"){
-              R_b_N = R_b_N - 1
-              D_b_N = D_b_N + 1
-            }
-          }
-        }
-        if (c_N > c_B/2){
-          nestling = sample(c(rep("S_c_N", S_c_N), rep("E_c_N", E_c_N),rep("I_c_N", I_c_N),rep("R_c_N", R_c_N)),
-                            size = trunc((c_b/2)-c_N))
-          for (k in 1:length(nestling)){
-            if (nestling[k] == "S_c_N"){
-              S_c_N = S_c_N - 1
-              D_c_N = D_c_N + 1
-            } else if (nestling[k] == "E_c_N"){
-              E_c_N = E_c_N - 1
-              D_c_N = D_c_N + 1
-            } else if (nestling[k] == "I_c_N"){
-              I_c_N = I_c_N - 1
-              D_c_N = D_c_N + 1
-            } else if (nestling[k] == "R_c_N"){
-              R_c_N = R_c_N - 1
-              D_c_N = D_c_N + 1
-            }
-          }
-        }
-      }
-        
-        if (S_c_N + E_c_N + I_c_N + R_c_N >= 1){
-          
-          
+         
+
          
          
          
