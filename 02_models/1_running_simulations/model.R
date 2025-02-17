@@ -1,17 +1,16 @@
 
 
 
-setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
+# setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
 
-# livraries and plot to comment for general use
 
 # Library -----------------------------------------------------------------
 
-library(tidyverse)
-library(ggplot2) 
-library(reshape2)
-library(abind)
-library(cowplot)
+# library(tidyverse)
+# library(ggplot2) 
+# library(reshape2)
+# library(abind)
+# library(cowplot)
 
 
 # Model description -------------------------------------------------------
@@ -422,8 +421,8 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
                                   initial_state_sea_c_B,
                                   initial_state_c_NB,
                                   
-                                  initial_state_sea_b_NB,
                                   initial_state_sea_a_NB,
+                                  initial_state_sea_b_NB,
                                   initial_state_sea_c_NB
                             
                                   ), 
@@ -542,9 +541,11 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
 
     
     # Rates of each possible event
-    rates = calculate_rates(beta_E_colony, beta_I_colony,
+    rates = calculate_rates(# Model parameters
+                            beta_E_colony, beta_I_colony,
                             sigma,eta, gamma, mu_adult, mu_nestling,
                             zeta_to_colony, zeta_to_sea, psi, rho_to_colony, rho_to_sea,theta,
+                            # States
                             # A
                             S_a_N, E_a_N, I_a_N, R_a_N, D_a_N,
                             S_a_B, E_a_B, I_a_B, R_a_B,  D_a_B, 
@@ -780,7 +781,6 @@ gillespie_seir = function(# Parameter of the taul-leap algorithm
     # Continuation of the script if there is no special event (dispersal or hatching)
     
     times = c(times, next_time)
-    
     nb_events <- rpois(1, total_rate * time_step) 
     
     # if (nb_events == 0) {
