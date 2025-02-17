@@ -1,6 +1,6 @@
 
 
-setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models")
+setwd("C:/Data/1_Adminitratif/Emploi/cornell/02_projet/hpai_mitigation/02_models/shared_files")
 
 
 
@@ -99,10 +99,10 @@ simulation_dt = dt2
 
 # Function to create binned data with dynamic parameters and variable block sizes
 create_binned_data = function(data,
-                              params,
-                              param_ranges_,
-                              selected_output,
-                              n_bins) {
+                                   params,
+                                   param_ranges_,
+                                   selected_output,
+                                   n_bins) {
   
   # Apply log transformation if specified
   if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
@@ -136,7 +136,8 @@ create_binned_data = function(data,
       V2 = cut(data$var2, breaks = seq(min_y, max_y, by = block_size_y), include.lowest = TRUE)
     ) %>%
     group_by(V1, V2) %>%
-    summarise(output_avg = mean(!!selected_output_sym, na.rm = TRUE), .groups = 'drop') %>%
+    summarise(output_q = quantile(!!selected_output_sym, na.rm = TRUE, probs = 0.5),
+              output_avg = mean(!!selected_output_sym, na.rm = TRUE), .groups = 'drop') %>%
     ungroup() %>%
     mutate(
       # Use str_extract to extract the first numeric value from V1 and V2
@@ -158,25 +159,52 @@ create_binned_data = function(data,
   }
   
   res = res %>% 
-    dplyr::select(x_mid, y_mid, output_avg)
+    dplyr::select(x_mid, y_mid, output_q, output_avg)
   
   return(res)
 }
 
 
 
+
 # Function to create a heatmap with dynamic block sizes
-plot_heatmap_binned_diff = function(data, params, param_ranges) {
+plot_heatmap_binned_diff_mean = function(data_, params, param_ranges) {
   
   
-  p = ggplot(data) +
-    geom_tile(aes(x = x_mid, y = y_mid, fill = output_avg)
+  p = ggplot() +
+    geom_tile(data = data_, aes(x = x_mid, y = y_mid, fill = output_avg)
     ) +
     scale_fill_gradient2(low = "brown3", mid = "white", high = "chartreuse4",
                          midpoint = 0,
-                         limits = c(min(data$output_avg), max(data$output_avg)))+
+                         limits = c(min(data_$output_avg), max(data_$output_avg)))+
     labs(
-      #x = params[1], y = params[2],
+      x = graph_param_name[1], y = graph_param_name[2],
+      x = NULL, y = NULL,
+      fill = "ENLA")+
+    guides(fill = "none") +
+    theme_minimal()
+  
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+  
+  return(p)
+}
+
+plot_heatmap_binned_diff_q = function(data_, params, param_ranges) {
+  
+  
+  p = ggplot() +
+    geom_tile(data = data_, aes(x = x_mid, y = y_mid, fill = output_q)
+    ) +
+    scale_fill_gradient2(low = "deepskyblue4", mid = "white", high = "chartreuse4",
+                         midpoint = 0,
+                         limits = c(min(data_$output_q), max(data_$output_q)))+
+    labs(
+      x = graph_param_name[1], y = graph_param_name[2],
       x = NULL, y = NULL,
       fill = "ENLA")+
     guides(fill = "none") +
@@ -193,69 +221,10 @@ plot_heatmap_binned_diff = function(data, params, param_ranges) {
 }
 
 
-# Empty list to store results
-all_diff_results <- list()
-
-# Loop through scenarios and calculate differences
-for (index_param_1 in 1:(length(evaluated_parameter))) {
-  for (index_param_2 in 1:(length(evaluated_parameter))) {  
-    
-
-    
-    diff_result = create_binned_data(data = simulation_dt,
-                       params = c(evaluated_parameter[index_param_1],
-                                  evaluated_parameter[index_param_2]),
-                       param_ranges_ = param_ranges ,
-                       selected_output = SELECTED_OUTPUT,
-                       n_bins = N_BINS)
-    
-    all_diff_results[[paste(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2], sep = "__")]] <- list(value = diff_result,
-                                                                                                                          param = c(evaluated_parameter[index_param_1],
-                                                                                                                                    evaluated_parameter[index_param_2])                                                                                                                          )
-  }
-}
-
-
-# Create a list of plots with lapply
-plots <- lapply(1:length(all_diff_results), function(i) {
-  plot_heatmap_binned_diff(all_diff_results[[i]]$value,
-                           all_diff_results[[i]]$param,
-                           param_ranges)
-})
-
-# List of column labels
-col_labels_ <- graph_param_name
-
-# List of row labels
-row_labels_ <- col_labels_
-
-# Create text grobs for column labels (rotated 45 degrees)
-col_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
-  textGrob(label = col_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
-})
-
-# Create text grobs for row labels (rotated 45 degrees for the left side)
-row_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
-  textGrob(label = row_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
-})
-
-# Create layout matrix
-n <- length(evaluated_parameter)
-
-# Create an empty matrix for layout with n+1 rows and columns for the labels and plots
-layout_matrix <- matrix(0, nrow = n+1, ncol = n+1)
-
-# Fill the layout matrix
-layout_matrix[1, 2:(n+1)] <- 1:n   # Top row for column labels
-layout_matrix[2:(n+1), 1] <- (n+1):(2*n)  # First column for row labels
-layout_matrix[2:(n+1), 2:(n+1)] <- (2*n+1):(n*n+2*n)  # The rest for the plots
-
-# Combine nullGrob, row labels, col labels, and plots into a single list of grobs
-all_grobs <- c(list(nullGrob()), col_labels, row_labels, plots)
 
 
 plot_one_param = function(df, evaluated_param){
-
+  
   
   # Dynamic plotting based on the evaluated parameter
   p = ggplot() +
@@ -280,27 +249,73 @@ for (i in 1:length(evaluated_parameter)){
 
 
 
-#   -----------------------------------------------------------------------
 
-nb_param = length(evaluated_parameter)
 
-for (i in 1:length(evaluated_parameter)){
-  all_grobs[[(nb_param+1)+((nb_param+1)*i)]] = plot_one_param_bank[[i]]
+
+# Empty list to store results
+all_diff_results <- list()
+
+for (index_param_1 in 1:(length(evaluated_parameter))) {
+  for (index_param_2 in 1:(length(evaluated_parameter))) {  
+    if (index_param_1 <= index_param_2) {
+      diff_result = create_binned_data(data = simulation_dt,
+                                         params = c(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2]),
+                                         param_ranges_ = param_ranges,
+                                         selected_output = SELECTED_OUTPUT,
+                                         n_bins = N_BINS)
+    } else {
+      diff_result = create_binned_data(data = simulation_dt,
+                                            params = c(evaluated_parameter[index_param_2], evaluated_parameter[index_param_1]),
+                                            param_ranges_ = param_ranges,
+                                            selected_output = SELECTED_OUTPUT,
+                                            n_bins = N_BINS)
+    }
+    
+    all_diff_results[[paste(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2], sep = "__")]] <- list(value = diff_result,
+                                                                                                                          param = c(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2]))
+  }
 }
 
+# Create the heatmap matrix layout with correct functions
+plots <- list()
+nb_param <- length(evaluated_parameter)
+for (i in 1:nb_param) {
+  for (j in 1:nb_param) {
+    if (i == j) {
+      # Diagonal: Scatterplots
+      plots[[length(plots) + 1]] <- plot_one_param_bank[[i]]
+    } else if (i < j) {
+      # Upper triangle: Mean heatmaps
+      plots[[length(plots) + 1]] <- plot_heatmap_binned_diff_q(
+        all_diff_results[[paste(evaluated_parameter[i], evaluated_parameter[j], sep = "__")]]$value,
+        c(evaluated_parameter[i], evaluated_parameter[j]),
+        param_ranges
+      )
+    } else {
+      # Lower triangle: 5th percentile quantile heatmaps
+      plots[[length(plots) + 1]] <- plot_heatmap_binned_diff_mean(
+        all_diff_results[[paste(evaluated_parameter[i], evaluated_parameter[j], sep = "__")]]$value,
+        c(evaluated_parameter[j], evaluated_parameter[i]),
+        param_ranges
+      )
+    }
+  }
+}
 
+# # Define the layout matrix
+layout_matrix <- matrix(1:(nb_param*nb_param), nrow = nb_param, ncol = nb_param )
+# layout_matrix[1, 2:(nb_param)] <- 1:nb_param   # Column labels
+# layout_matrix[2:(nb_param), 1] <- (nb_param + 1):(2 * nb_param)  # Row labels
+# layout_matrix[2:(nb_param), 2:(nb_param + 1)] <- (2 * nb_param + 1):(nb_param * nb_param + 2 * nb_param)
+# 
+
+
+
+# Generate the final plot
 p = grid.arrange(
-  grobs = all_grobs,  
+  grobs = plots, #all_grobs,  
   layout_matrix = layout_matrix, 
-  top = paste0("BO - ", SCENARIO)
+  top = paste0("", SCENARIO)
 )
 
 plot(p)
-
-
-
-# Rajout pour un graphe ---------------------------------------------------
-
-
-
-
