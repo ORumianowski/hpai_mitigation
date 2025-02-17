@@ -10,6 +10,9 @@ library(partykit)				# Convert rpart object to BinaryTree
 library(caret)	
 
 
+
+my_tuneLength = 100
+
 load("simulation_dt/simulation_dt_50_2.RData")
 simulation_dt1 = simulation_dt
 load("simulation_dt/simulation_dt_150_2.RData")
@@ -27,13 +30,10 @@ simulation_dt = rbind(simulation_dt1,
 x = simulation_dt[, 1:26]
 
 y = data.frame(
-  
   nb_adults_equi_BO = simulation_dt %>% subset(., scenario == "BO") %>% dplyr::select(nb_adults_equi) %>% unlist() %>% as.vector(),
   nb_adults_equi_RS = simulation_dt %>% subset(., scenario == "RS") %>% dplyr::select(nb_adults_equi) %>% unlist() %>% as.vector(),
-  nb_adults_equi_P2 = simulation_dt %>% subset(., scenario == "P2") %>% dplyr::select(nb_adults_equi) %>% unlist() %>% as.vector()
-  
-)%>% 
-  mutate(best_strat = apply(y, 1, function(row) {colnames(y)[which.min(row)]}
+  nb_adults_equi_P2 = simulation_dt %>% subset(., scenario == "P2") %>% dplyr::select(nb_adults_equi) %>% unlist() %>% as.vector())%>% 
+  mutate(best_strat = apply(., 1, function(row) {colnames(.)[which.min(row)]}
   ))
   
 
@@ -54,11 +54,11 @@ fit.cv <- train(best_strat ~ beta_I_colony
                 + dispersal_reaction_time,
                 data = dt.trn, method = "rpart", # k nearest neighbors
                 trControl = ctrl,
-                tuneLength = 100)
+                tuneLength = my_tuneLength)
 
 print(fit.cv) # Plot the results. See at the end the chosen value of "k"
 plot(fit.cv) # Plot the Cross-validation output
-# plot(fit.cv$finalModel) #3000 pixels
-# text(fit.cv$finalModel)
+plot(fit.cv$finalModel) #3000 pixels
+text(fit.cv$finalModel)
 library(rpart.plot)
 rpart.plot(fit.cv$finalModel, fallen.leaves = F)

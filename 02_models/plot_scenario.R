@@ -20,6 +20,8 @@ source("model.R")
 
 
 
+
+
 # stat_model --------------------------------------------------------------
 
 nb_iterations = 3
@@ -35,15 +37,14 @@ stat_model = function(nb_iterations_ = nb_iterations,
                       initial_number_breeders_A_ = 100,
                       initial_number_breeders_B_ = 100,
                       initial_number_breeders_C_ = 10,
-                      
                       # Do we induce dispersion ?
                       induced_dispersal_,
                       # Induced dispersion mode (deterministic or stochastic)
-                      dispersal_stochactic_,
-                      # Transmission rate from exposed individuals and from infectious individuals in a colony
-                      BETA_,
-                      # Time at sea before returning to a colony (non-breeders)
-                      TIME_AT_SEA_NB_,
+                      dispersal_stochastic_,
+                      # Transmission rate from infectious individuals in a colony
+                      beta_I_colony = beta_I_colony_,
+                      ## Average stay of Non-Breeders at colony
+                      avrg_stay_NB_colony = avrg_stay_NB_colony_,
                       # Parameter of the tau-leap algorithm
                       tau_,
                       # Probability of a nestling becoming a breeder
@@ -54,16 +55,15 @@ stat_model = function(nb_iterations_ = nb_iterations,
   for (i in 1:nb_iterations_){
     
     output = gillespie_seir(induced_dispersal = induced_dispersal_,
-                            dispersal_stochactic = dispersal_stochactic_,
-                            dispersal_reaction_time = dispersal_reaction_time_,
-                            initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
-                            initial_number_breeders_A = initial_number_breeders_A_,
-                            initial_number_breeders_B = initial_number_breeders_B_,
-                            initial_number_breeders_C = initial_number_breeders_C_,
-                            TIME_AT_SEA_NB = TIME_AT_SEA_NB_,
-                            BETA = BETA_,
-                            total_time = total_time_,
-                            tau = tau_)
+                   dispersal_stochastic = dispersal_stochastic_,
+                   initial_number_infected_breeders_A = initial_number_infected_breeders_A_,
+                   initial_number_breeders_A = initial_number_breeders_A_,
+                   initial_number_breeders_B = initial_number_breeders_B_,
+                   initial_number_breeders_C = initial_number_breeders_C_,
+                   avrg_stay_NB_colony = avrg_stay_NB_colony_,
+                   beta_I_colony = BETA_,
+                   total_time = total_time_,
+                   tau = tau_)
     
     response_list = rbind(response_list, summary_output(output, reaching.repro.prob_))
     
@@ -86,45 +86,45 @@ scenario_dt = function(beta_context,
                induced_dispersal_ = F,
                initial_number_infected_breeders_A_ = 0,
                tau_ = tau,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context,
+               beta_I_colony =  beta_context,  
+               avrg_stay_NB_colony = time_at_sea_NB_context,
                reaching.repro.prob_ = reaching.repro.prob)
   
   baseline_outbreak = 
     stat_model(induced_dispersal_ = F,
                initial_number_infected_breeders_A_ = 1,
                tau_ = tau,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context,
+               beta_I_colony =  beta_context,  
+               avrg_stay_NB_colony = time_at_sea_NB_context,
                reaching.repro.prob_ = reaching.repro.prob)
   
   proactive_strategy = 
     stat_model(nb_iterations_ = 1,
                induced_dispersal_ = T,
                initial_number_infected_breeders_A_ = 0,
-               dispersal_stochactic_ = F,
+               dispersal_stochastic_ = F,
                tau_ = tau,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context,
+               beta_I_colony =  beta_context,  
+               avrg_stay_NB_colony = time_at_sea_NB_context,
                reaching.repro.prob_ = reaching.repro.prob)
   
   proactive_strategy_toolate = 
     stat_model(induced_dispersal_ = T,
                initial_number_infected_breeders_A_ = 1,
-               dispersal_stochactic_ = F,
+               dispersal_stochastic_ = F,
                tau_ = tau,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context,
+               beta_I_colony =  beta_context,  
+               avrg_stay_NB_colony = time_at_sea_NB_context,
                reaching.repro.prob_ = reaching.repro.prob)
   
   reactive_strategy = 
     stat_model(induced_dispersal_ = T,
                initial_number_infected_breeders_A_ = 1,
-               dispersal_stochactic_ = T,
+               dispersal_stochastic_ = T,
                dispersal_reaction_time_ = 2,
                tau_ = tau,
-               BETA_ =  beta_context,  
-               TIME_AT_SEA_NB_ = time_at_sea_NB_context,
+               beta_I_colony =  beta_context,  
+               avrg_stay_NB_colony = time_at_sea_NB_context,
                reaching.repro.prob_ = reaching.repro.prob)
   
   dt = 
@@ -335,7 +335,7 @@ variation_dt = function(beta_context = 0.2,
     
     res = stat_model(induced_dispersal_ = T,
                initial_number_infected_breeders_A_ = 1,
-               dispersal_stochactic_ = T,
+               dispersal_stochastic_ = T,
                dispersal_reaction_time_ = dispersal_reaction_time_bank[2],
                tau_ = tau,
                BETA_ =  beta_context,  

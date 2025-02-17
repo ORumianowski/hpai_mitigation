@@ -1,0 +1,10 @@
+name: InteractiveHeatmapHPAI2
+title:
+username: orumianowski
+account: orumianowski
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14009314
+bundleId: 9804869
+url: https://orumianowski.shinyapps.io/InteractiveHeatmapHPAI2/
+version: 1

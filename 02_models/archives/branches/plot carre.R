@@ -68,11 +68,13 @@ N_BINS = 10
 
 evaluated_parameter = c(
   "beta_I_colony", 
+  # "prob_detection",
+  # "dispersal_reaction_time",
   "initial_number_infected_breeders_A", 
-  # "theta",
-  # "prop_dispersal",
-  # "avrg_stay_NB_sea",
-  # "hatching_date",
+  "theta",
+  "prop_dispersal",
+  "avrg_stay_NB_sea",
+  "hatching_date",
   "reaching_repro_prob")
 
 
@@ -80,10 +82,10 @@ evaluated_parameter = c(
 graph_param_name = c(
   "Transmission rate", 
   "Inital infected", 
-  # "Connectivity",
-  # "Prop. dispersed",
-  # "Avrg. stay. NB sea",
-  # "Hatching date",
+  "Connectivity",
+  "Prop. dispersed",
+  "Avrg. stay. NB sea",
+  "Hatching date",
   "Reaching Repro. Prob.")
 
 # graph_param_name = evaluated_parameter
@@ -289,18 +291,11 @@ for (i in 1:length(evaluated_parameter)){
 }
 
 
-p = grid.arrange(
+grid.arrange(
   grobs = all_grobs,  
   layout_matrix = layout_matrix, 
   top = paste0("BO - ", SCENARIO)
 )
-
-plot(p)
-
-
-
-# Rajout pour un graphe ---------------------------------------------------
-
 
 
 
