@@ -38,14 +38,12 @@ simulation_dt <- simulation_dt[,1:32] %>%
 
 SELECTED_OUTPUT = "BO_P2_nb_adults_equi"
 
-SCENARIO = "P2"
-
 N_BINS = 10
 
 evaluated_parameter = c(
   "beta_I_colony", 
   "initial_number_infected_breeders_A", 
-  # "theta",
+  "theta",
   # "prop_dispersal",
   # "avrg_stay_NB_sea",
   # "hatching_date",
@@ -73,6 +71,23 @@ graph_param_name = c(
   "Hatching date",
   "Reaching Repro. Prob.")
 
+
+analyse_quantile <- function(echantillon) {
+  
+  q5 <- quantile(echantillon, 0.05)
+  q20 <- quantile(echantillon, 0.025)
+  q50 <- quantile(echantillon, 0.50)
+  
+  if (q5 > 0) {
+    return("q5")
+  } else if (q20 > 0) {
+    return("q20")
+  } else if (q50 > 0) {
+    return("q50")
+  } else {
+    return("none")
+  }
+}
 
 
 # Function to create binned data with dynamic parameters and variable block sizes
@@ -114,7 +129,7 @@ create_binned_data = function(data,
       V2 = cut(data$var2, breaks = seq(min_y, max_y, by = block_size_y), include.lowest = TRUE)
     ) %>%
     group_by(V1, V2) %>%
-    summarise(output_q = (quantile(!!selected_output_sym, na.rm = TRUE, probs = 0.25)>0),
+    summarise(output_q = analyse_quantile(!!selected_output_sym),
               output_avg = mean(!!selected_output_sym, na.rm = TRUE), .groups = 'drop') %>%
     ungroup() %>%
     mutate(
@@ -180,7 +195,7 @@ plot_heatmap_binned_diff_q = function(data_, params, param_ranges) {
   p = ggplot() +
     geom_tile(data = data_, aes(x = x_mid, y = y_mid, fill = output_q)
     ) +
-    scale_fill_manual(values = c("TRUE" = "darkolivegreen3", "FALSE" = "ivory3")) +
+    scale_fill_manual(values = c("q5" = "darkolivegreen", "q20" = "darkolivegreen3", "q50" = "darkolivegreen1", "none" = "ivory3")) +
     labs(
       x = graph_param_name[parameter_number[1]], y = graph_param_name[parameter_number[2]],
       fill = "ENLA")+
@@ -287,7 +302,7 @@ layout_matrix <- matrix(1:(nb_param*nb_param), nrow = nb_param, ncol = nb_param 
 p = grid.arrange(
   grobs = plots, #all_grobs,  
   layout_matrix = layout_matrix, 
-  top = paste0("", SCENARIO)
+  top = paste0("")
 )
 
 plot(p)

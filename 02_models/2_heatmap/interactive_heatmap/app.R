@@ -74,21 +74,82 @@ scenarios = scenarios[c(2,4,5),]
 
 load("simulation_dt/dt_cluster_3_1E4_for_v2.RData")
 
-param = c("initial_number_infected_breeders_A", "initial_number_infected_breeders_B", "initial_number_infected_breeders_C", "initial_number_breeders_A",         
-          "initial_number_breeders_B",          "initial_number_breeders_C",          "dispersal_reaction_time",            "dispersal_date",                    
-          "hatching_date",                      "tau",                                "total_time",                         "prop_dispersal",                    
-          "beta_E_colony",                      "beta_I_colony",                      "incubation_period",                  "eta",                               
-          "infectious_period",                  "adult_mortality",                    "nestling_mortality",                 "avrg_stay_B_colony",                
-          "avrg_stay_B_sea",                    "avrg_stay_NB_colony",                "avrg_stay_NB_sea",                   "theta",                             
-          "psi",                                "hatching_sd",                        "reaching_repro_prob",                "prob_detection"  )
 
-param_evaluated = c("initial_number_infected_breeders_A",        
-                    "hatching_date",                      "prop_dispersal",                    
-                    "beta_I_colony",                                                                 
-                    "infectious_period",                  "adult_mortality",   
-                    "nestling_mortality",                         
-                    "avrg_stay_NB_sea",                   "theta",                             
-                    "reaching_repro_prob",                "prob_detection"  )
+
+
+Output = c("Population impact", "Infected X time", "Number of infected colonies")
+
+Scenario = c("P2", "RS")
+
+combined_output = c("BO_RS_nb_adults_equi", "BO_P2_nb_adults_equi",
+                    "BO_RS_infected_X_time", "BO_P2_infected_X_time",
+                    "O_RS_nb_infected_colonies", "BO_P2_nb_infected_colonies")
+
+
+get_correct_string <- function(output, scenario, combined_output=combined_output) {
+  output_map <- c("Population impact" = "nb_adults_equi", 
+                  "Infected X time" = "infected_X_time",
+                  "Number of infected colonies" = "nb_infected_colonies")
+
+  output_key <- output_map[output]
+  pattern <- paste0("BO_", scenario, "_", output_key)
+  
+  
+  return(pattern)
+}
+
+
+parameter_bank = c(      
+  "beta_I_colony",  
+  "initial_number_infected_breeders_A",  
+  "hatching_date",
+  
+  "theta", 
+  "avrg_stay_NB_sea", 
+  "adult_mortality",  
+  
+  "nestling_mortality", 
+  "reaching_repro_prob",
+  "infectious_period", 
+  
+  "prop_dispersal",    
+  "prob_detection"
+  )
+
+graph_param_name = c(
+  
+  "Transmission rate", 
+  "Initial number of infection", 
+  "Hatching date",
+  
+  "Connectivity",
+  "Avrg. stay. NB sea",
+  "Adult mortality",
+  
+  "Nestling mortality",
+  "Reaching Repro. Prob.",
+  "Infectious period",
+  
+  "Prop. dispersed",
+  "Prob. detection")
+
+
+analyse_quantile <- function(echantillon) {
+  
+  q5 <- quantile(echantillon, 0.05)
+  q20 <- quantile(echantillon, 0.25)
+  q50 <- quantile(echantillon, 0.50)
+  
+  if (q5 > 0) {
+    return("q5")
+  } else if (q20 > 0) {
+    return("q20")
+  } else if (q50 > 0) {
+    return("q50")
+  } else {
+    return("none")
+  }
+}
 
 dt = simulation_dt[,1:32]
 
@@ -100,107 +161,284 @@ dt2 <- dt %>%
   ) %>% 
   unnest(cols = everything()) %>% 
   mutate(BO_P2_nb_adults_equi = BO_nb_adults_equi - P2_nb_adults_equi) %>% 
-  mutate(BO_RS_nb_adults_equi = BO_nb_adults_equi - RS_nb_adults_equi)
+  mutate(BO_RS_nb_adults_equi = BO_nb_adults_equi - RS_nb_adults_equi) %>% 
+  mutate(BO_P2_infected_X_time = BO_infected_X_time - P2_infected_X_time) %>% 
+  mutate(BO_RS_infected_X_time = BO_infected_X_time - RS_infected_X_time)%>% 
+  mutate(BO_P2_nb_infected_colonies = BO_nb_infected_colonies - P2_nb_infected_colonies) %>% 
+  mutate(BO_RS_nb_infected_colonies = BO_nb_infected_colonies - RS_nb_infected_colonies)
 
+
+
+
+# Function to create binned data with dynamic parameters and variable block sizes
+create_binned_data = function(data,
+                              params,
+                              param_ranges_,
+                              selected_output,
+                              n_bins) {
+  
+  # Apply log transformation if specified
+  if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
+    data$var1 = log(data[[params[1]]])
+  } else {
+    data$var1 = data[[params[1]]]
+  }
+  
+  if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
+    data$var2 = log(data[[params[2]]])
+  } else {
+    data$var2 = data[[params[2]]]
+  }
+  
+  # Calculate min and max for both parameters
+  min_x = min(data$var1, na.rm = TRUE)
+  max_x = max(data$var1, na.rm = TRUE)
+  min_y = min(data$var2, na.rm = TRUE)
+  max_y = max(data$var2, na.rm = TRUE)
+  
+  # Define dynamic block sizes
+  block_size_x = (max_x - min_x) / n_bins
+  block_size_y = (max_y - min_y) / n_bins
+  
+  # Convert selected_output to a symbol
+  selected_output_sym = sym(selected_output)
+  
+  res = data %>%
+    mutate(
+      V1 = cut(data$var1, breaks = seq(min_x, max_x, by = block_size_x), include.lowest = TRUE),
+      V2 = cut(data$var2, breaks = seq(min_y, max_y, by = block_size_y), include.lowest = TRUE)
+    ) %>%
+    group_by(V1, V2) %>%
+    summarise(output_q = analyse_quantile(!!selected_output_sym),
+              output_avg = mean(!!selected_output_sym, na.rm = TRUE), .groups = 'drop') %>%
+    ungroup() %>%
+    mutate(
+      # Use str_extract to extract the first numeric value from V1 and V2
+      x_mid = as.numeric(str_extract(V1, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_x / 2,
+      y_mid = as.numeric(str_extract(V2, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_y / 2
+    )
+  
+  # Apply exp transformation if specified
+  if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
+    res$x_mid = exp(res$x_mid)
+  } else {
+    res$x_mid = res$x_mid
+  }
+  
+  if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
+    res$y_mid = exp(res$y_mid)
+  } else {
+    res$y_mid = res$y_mid
+  }
+  
+  res = res %>% 
+    dplyr::select(x_mid, y_mid, output_q, output_avg)
+  
+  return(res)
+}
+
+
+
+
+# Function to create a heatmap with dynamic block sizes
+plot_heatmap_binned_diff_mean = function(data_, params, param_ranges) {
+  
+  
+  parameter_number = match(params, parameter_bank)
+  
+  p = ggplot() +
+    geom_tile(data = data_, aes(x = x_mid, y = y_mid, fill = output_avg)
+    ) +
+    scale_fill_gradient2(low = "brown3", mid = "white", high = "chartreuse4",
+                         midpoint = 0,
+                         limits = c(min(data_$output_avg), max(data_$output_avg)))+
+    labs(
+      x = graph_param_name[parameter_number[1]], y = graph_param_name[parameter_number[2]],
+      fill = "ENLA")+
+    guides(fill = "none") +
+    theme_minimal()
+  
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+  
+  return(p)
+}
+
+plot_heatmap_binned_diff_q = function(data_, params, param_ranges) {
+  
+  parameter_number = match(params, parameter_bank)
+  
+  p = ggplot() +
+    geom_tile(data = data_, aes(x = x_mid, y = y_mid, fill = output_q)
+    ) +
+    scale_fill_manual(values = c("q5" = "darkolivegreen4", "q20" = "darkolivegreen3", "q50" = "darkolivegreen2", "none" = "ivory3")) +
+    labs(
+      x = graph_param_name[parameter_number[1]], y = graph_param_name[parameter_number[2]],
+      fill = "ENLA")+
+    guides(fill = "none") +
+    theme_minimal() 
+  
+  if (param_ranges[[params[1]]][[2]] == "logarithmic"){
+    p = p + scale_x_log10()
+  }
+  if (param_ranges[[params[2]]][[2]] == "logarithmic"){
+    p = p + scale_y_log10()
+  }
+  
+  return(p)
+}
+
+
+
+
+plot_one_param = function(df, evaluated_param, output_){
+  
+  parameter_number = match(evaluated_param, parameter_bank)
+  
+  # Dynamic plotting based on the evaluated parameter
+  p = ggplot() +
+    geom_point(data=df,
+               aes_string(x = evaluated_param, y = output_),  # Couleur dans aes()
+               size = 0.4, alpha = 0.14) +  # Transparence appliquée
+    theme_minimal() +
+    labs(x = graph_param_name[parameter_number], y = "Output")
+  
+  return(p)
+}
 
 ui <- fluidPage(
   theme = shinytheme("cyborg"), 
   
-  titlePanel("Interactive Heatmap"),
+  titlePanel("Testing HPAI mitigation scenario"),
   
   sidebarLayout(
     sidebarPanel(
       chooseSliderSkin("Modern"),
-      sliderInput("n_bins", "Number of Bins:", 
+      
+      # helpText("Representation of response variables of the mitigation model", br(), br(), 
+      #          style = "font-size: 16px; text-align: center; color: grey;"),
+      
+      helpText("In the upper part of the graph, the averages of the data are shown. In the lower part, the smallest quantile greater than 0 is displayed, from among the 5%, 25% or 50% quantiles.", 
+               style = "font-size: 16px; text-align: left; color: grey;"),
+      
+      sliderInput("n_bins", "Graphic resolution (number of pixels across the width):", 
                   min = 4, 
                   max = 20, 
                   value = 10, 
                   step = 1),
       
-      selectInput("selected_output", "Select Output:", 
-                  choices = c(#"BO_nb_adults_equi", 
-                              "BO_RS_nb_adults_equi", "BO_P2_nb_adults_equi"),
-                  selected = "BO_P2_nb_adults_equi"),
+      selectInput("selected_scenario", "Select scenario:", 
+                  choices = Scenario,
+                  selected = "P2"),
       
-      checkboxGroupInput("selected_params", "Select the parameters :", choices = param_evaluated, 
-                         selected = c("beta_I_colony", "initial_number_infected_breeders_A", "adult_mortality")),
+      selectInput("selected_output", "Select response variable:", 
+                  choices = Output,
+                  selected = "Population impact"),
+
       
-      sliderInput("initial_number_infected_breeders_A_range", 
-                  "Number of infected breeders introduced initially", 
-                  min = min(dt2$initial_number_infected_breeders_A), 
-                  max = max(dt2$initial_number_infected_breeders_A), 
-                  value = c(min(dt2$initial_number_infected_breeders_A), max(dt2$initial_number_infected_breeders_A)), 
-                  step = 1),
+      checkboxGroupInput("selected_params", "Select the parameters :", choices = graph_param_name, 
+                         selected = c("Transmission rate", "Initial number of infection", "Hatching date", "Adult mortality")),
+      
+      helpText("Ranges of parameters", 
+               style = "font-size: 16px; text-align: left; color: grey;"),
       
       sliderInput("beta_I_colony_range", 
                   "Transmission rate", 
                   min = 0.02, 
                   max = 0.75, 
                   value = c(min(dt2$beta_I_colony), max(dt2$beta_I_colony)), 
-                  step = diff(range(dt2$beta_I_colony))/20),
+                  step = diff(range(dt2$beta_I_colony))/20,
+                  ticks = FALSE),
+      
+      sliderInput("initial_number_infected_breeders_A_range", 
+                  "Number of infected breeders introduced initially", 
+                  min = 1, # min(dt2$initial_number_infected_breeders_A), 
+                  max = max(dt2$initial_number_infected_breeders_A), 
+                  value = c(1, max(dt2$initial_number_infected_breeders_A)), 
+                  step = 1,
+                  ticks = FALSE),
+      
       
       sliderInput("hatching_date",
                   "Hatching date",
                   min = min(dt2$hatching_date),
                   max = max(dt2$hatching_date),
                   value = c(min(dt2$hatching_date), max(dt2$hatching_date)),
-                  step = diff(range(dt2$hatching_date))/20),
+                  step = diff(range(dt2$hatching_date))/20,
+                  ticks = FALSE),
       
-      sliderInput("prop_dispersal",
-                  "Proportion of breeders dispersed",
-                  min = 0.9,
-                  max = 0.999,
-                  value = c(min(dt2$prop_dispersal), max(dt2$prop_dispersal)),
-                  step = diff(range(dt2$prop_dispersal))/20),
+      sliderInput("theta",
+                  "Connectivity",
+                  min = min(dt2$theta),
+                  max = max(dt2$theta),
+                  value = c(min(dt2$theta), max(dt2$theta)),
+                  step = diff(range(dt2$theta))/20,
+                  ticks = FALSE),
       
-      sliderInput("infectious_period",
-                  "Infectious period",
-                  min = min(dt2$infectious_period),
-                  max = max(dt2$infectious_period),
-                  value = c(min(dt2$infectious_period), max(dt2$infectious_period)),
-                  step = diff(range(dt2$infectious_period))/20),
+      sliderInput("avrg_stay_NB_sea",
+                  "Avrg. stay. NB sea",
+                  min = min(dt2$avrg_stay_NB_sea),
+                  max = max(dt2$avrg_stay_NB_sea),
+                  value = c(min(dt2$avrg_stay_NB_sea), max(dt2$avrg_stay_NB_sea)),
+                  step = diff(range(dt2$avrg_stay_NB_sea))/20,
+                  ticks = FALSE),
       
       sliderInput("adult_mortality",
                   "Adult mortality",
                   min = min(dt2$adult_mortality),
                   max = max(dt2$adult_mortality),
                   value = c(min(dt2$adult_mortality), max(dt2$adult_mortality)),
-                  step = diff(range(dt2$adult_mortality))/20),
+                  step = diff(range(dt2$adult_mortality))/20,
+                  ticks = FALSE),
       
       sliderInput("nestling_mortality",
                   "Nestling mortality",
                   min = min(dt2$nestling_mortality),
                   max = max(dt2$nestling_mortality),
                   value = c(min(dt2$nestling_mortality), max(dt2$nestling_mortality)),
-                  step = diff(range(dt2$nestling_mortality))/20),
-      
-      sliderInput("avrg_stay_NB_sea",
-                  "avrg_stay_NB_sea period",
-                  min = min(dt2$avrg_stay_NB_sea),
-                  max = max(dt2$avrg_stay_NB_sea),
-                  value = c(min(dt2$avrg_stay_NB_sea), max(dt2$avrg_stay_NB_sea)),
-                  step = diff(range(dt2$avrg_stay_NB_sea))/20),
-      
-      sliderInput("theta",
-                  "theta mortality",
-                  min = min(dt2$theta),
-                  max = max(dt2$theta),
-                  value = c(min(dt2$theta), max(dt2$theta)),
-                  step = diff(range(dt2$theta))/20),
+                  step = diff(range(dt2$nestling_mortality))/20,
+                  ticks = FALSE),
       
       sliderInput("reaching_repro_prob",
-                  "reaching_repro_prob mortality",
+                  "Reaching Repro. Prob.",
                   min = min(dt2$reaching_repro_prob),
                   max = max(dt2$reaching_repro_prob),
                   value = c(min(dt2$reaching_repro_prob), max(dt2$reaching_repro_prob)),
-                  step = diff(range(dt2$reaching_repro_prob))/20),
+                  step = diff(range(dt2$reaching_repro_prob))/20,
+                  ticks = FALSE),
       
+      
+      sliderInput("infectious_period",
+                  "Infectious period",
+                  min = min(dt2$infectious_period),
+                  max = max(dt2$infectious_period),
+                  value = c(min(dt2$infectious_period), max(dt2$infectious_period)),
+                  step = diff(range(dt2$infectious_period))/20,
+                  ticks = FALSE),
+      
+      
+      
+      sliderInput("prop_dispersal",
+                  "Proportion of breeders dispersed",
+                  min = 0.9,
+                  max = 0.999,
+                  value = c(min(dt2$prop_dispersal), max(dt2$prop_dispersal)),
+                  step = diff(range(dt2$prop_dispersal))/20,
+                  ticks = FALSE),
+      
+
+
       sliderInput("prob_detection",
-                  "prob_detection mortality",
+                  "Probability to detect and to test coorectly a found dead body",
                   min = min(dt2$prob_detection),
                   max = max(dt2$prob_detection),
                   value = c(min(dt2$prob_detection), max(dt2$prob_detection)),
-                  step = diff(range(dt2$prob_detection))/20),
+                  step = diff(range(dt2$prob_detection))/20,
+                  ticks = FALSE),
       
 
       
@@ -225,15 +463,19 @@ ui <- fluidPage(
 server <- function(input, output) {
   output$heatmapPlot <- renderPlot({
     
+    evaluated_parameter = parameter_bank[match(input$selected_params, graph_param_name)]
     
-    SELECTED_OUTPUT = input$selected_output
     
     N_BINS = input$n_bins
     
-    SCENARIO = ""
+  
+    SELECTED_OUTPUT = get_correct_string(output = input$selected_output, scenario = input$selected_scenario)
     
     
-    dt2 = dt2 %>% 
+    graph_param_name = input$selected_params
+    
+    
+    simulation_dt = dt2 %>% 
       subset(., beta_I_colony >= input$beta_I_colony_range[1])%>% 
       subset(., beta_I_colony <= input$beta_I_colony_range[2]) %>% 
       subset(., initial_number_infected_breeders_A >= input$initial_number_infected_breeders_A_range[1]) %>% 
@@ -256,201 +498,6 @@ server <- function(input, output) {
       subset(., prob_detection <= input$prob_detection[2])%>%
       subset(., theta >= input$theta[1]) %>%
       subset(., theta <= input$theta[2])
-
-    
-    # c("initial_number_infected_breeders_A",        
-    #   "hatching_date",                      "prop_dispersal",                    
-    #   "beta_I_colony",                                                                 
-    #   "infectious_period",                  "adult_mortality",   
-    #   "nestling_mortality",                         
-    #   "avrg_stay_NB_sea",                   "theta",                             
-    #   "reaching_repro_prob",                "prob_detection"  )
-    # 
-    
-    evaluated_parameter = input$selected_params
-    
-    graph_param_name = input$selected_params
-    
-    dt2 = dt2 %>% subset(., initial_number_infected_breeders_A!=0)
-    
-    
-    
-    # -------------------------------------------------------------------------
-    
-    simulation_dt = dt2
-    
-    
-    # Function to create binned data with dynamic parameters and variable block sizes
-    create_binned_data = function(data,
-                                  params,
-                                  param_ranges_,
-                                  selected_output,
-                                  n_bins) {
-      
-      # Apply log transformation if specified
-      if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
-        data$var1 = log(data[[params[1]]])
-      } else {
-        data$var1 = data[[params[1]]]
-      }
-      
-      if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
-        data$var2 = log(data[[params[2]]])
-      } else {
-        data$var2 = data[[params[2]]]
-      }
-      
-      # Calculate min and max for both parameters
-      min_x = min(data$var1, na.rm = TRUE)
-      max_x = max(data$var1, na.rm = TRUE)
-      min_y = min(data$var2, na.rm = TRUE)
-      max_y = max(data$var2, na.rm = TRUE)
-      
-      # Define dynamic block sizes
-      block_size_x = (max_x - min_x) / n_bins
-      block_size_y = (max_y - min_y) / n_bins
-      
-      # Convert selected_output to a symbol
-      selected_output_sym = sym(selected_output)
-      
-      res = data %>%
-        mutate(
-          V1 = cut(data$var1, breaks = seq(min_x, max_x, by = block_size_x), include.lowest = TRUE),
-          V2 = cut(data$var2, breaks = seq(min_y, max_y, by = block_size_y), include.lowest = TRUE)
-        ) %>%
-        group_by(V1, V2) %>%
-        summarise(output_avg = mean(!!selected_output_sym, na.rm = TRUE), .groups = 'drop') %>%
-        ungroup() %>%
-        mutate(
-          # Use str_extract to extract the first numeric value from V1 and V2
-          x_mid = as.numeric(str_extract(V1, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_x / 2,
-          y_mid = as.numeric(str_extract(V2, "[-+]?[0-9]*\\.?[0-9]+")) + block_size_y / 2
-        )
-      
-      # Apply exp transformation if specified
-      if (param_ranges_[[params[1]]][[2]] == "logarithmic") {
-        res$x_mid = exp(res$x_mid)
-      } else {
-        res$x_mid = res$x_mid
-      }
-      
-      if (param_ranges_[[params[2]]][[2]] == "logarithmic") {
-        res$y_mid = exp(res$y_mid)
-      } else {
-        res$y_mid = res$y_mid
-      }
-      
-      res = res %>% 
-        dplyr::select(x_mid, y_mid, output_avg)
-      
-      return(res)
-    }
-    
-    
-    
-    # Function to create a heatmap with dynamic block sizes
-    plot_heatmap_binned_diff = function(data, params, param_ranges) {
-      
-      
-      p = ggplot(data) +
-        geom_tile(aes(x = x_mid, y = y_mid, fill = output_avg)
-        ) +
-        scale_fill_gradient2(low = "brown3", mid = "white", high = "chartreuse4",
-                             midpoint = 0,
-                             limits = c(min(data$output_avg), max(data$output_avg)))+
-        labs(
-          #x = params[1], y = params[2],
-          x = NULL, y = NULL,
-          fill = "ENLA")+
-        guides(fill = "none") +
-        theme_minimal()
-      
-      if (param_ranges[[params[1]]][[2]] == "logarithmic"){
-        p = p + scale_x_log10()
-      }
-      if (param_ranges[[params[2]]][[2]] == "logarithmic"){
-        p = p + scale_y_log10()
-      }
-      
-      return(p)
-    }
-    
-    
-    # Empty list to store results
-    all_diff_results <- list()
-    
-    # Loop through scenarios and calculate differences
-    for (index_param_1 in 1:(length(evaluated_parameter))) {
-      for (index_param_2 in 1:(length(evaluated_parameter))) {  
-        
-        
-        
-        diff_result = create_binned_data(data = simulation_dt,
-                                         params = c(evaluated_parameter[index_param_1],
-                                                    evaluated_parameter[index_param_2]),
-                                         param_ranges_ = param_ranges ,
-                                         selected_output = SELECTED_OUTPUT,
-                                         n_bins = N_BINS)
-        
-        all_diff_results[[paste(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2], sep = "__")]] <- list(value = diff_result,
-                                                                                                                              param = c(evaluated_parameter[index_param_1],
-                                                                                                                                        evaluated_parameter[index_param_2])                                                                                                                          )
-      }
-    }
-    
-    
-    # Create a list of plots with lapply
-    plots <- lapply(1:length(all_diff_results), function(i) {
-      plot_heatmap_binned_diff(all_diff_results[[i]]$value,
-                               all_diff_results[[i]]$param,
-                               param_ranges)
-    })
-    
-    # List of column labels
-    col_labels_ <- graph_param_name
-    
-    # List of row labels
-    row_labels_ <- col_labels_
-    
-    # Create text grobs for column labels (rotated 45 degrees)
-    col_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
-      textGrob(label = col_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
-    })
-    
-    # Create text grobs for row labels (rotated 45 degrees for the left side)
-    row_labels <- lapply(1:(length(evaluated_parameter)), function(i) {
-      textGrob(label = row_labels_[i], rot = 45, gp = gpar(fontsize = 10, fontface = "bold"))
-    })
-    
-    # Create layout matrix
-    n <- length(evaluated_parameter)
-    
-    # Create an empty matrix for layout with n+1 rows and columns for the labels and plots
-    layout_matrix <- matrix(0, nrow = n+1, ncol = n+1)
-    
-    # Fill the layout matrix
-    layout_matrix[1, 2:(n+1)] <- 1:n   # Top row for column labels
-    layout_matrix[2:(n+1), 1] <- (n+1):(2*n)  # First column for row labels
-    layout_matrix[2:(n+1), 2:(n+1)] <- (2*n+1):(n*n+2*n)  # The rest for the plots
-    
-    # Combine nullGrob, row labels, col labels, and plots into a single list of grobs
-    all_grobs <- c(list(nullGrob()), col_labels, row_labels, plots)
-    
-    
-    plot_one_param = function(df, evaluated_param){
-      
-      
-      # Dynamic plotting based on the evaluated parameter
-      p = ggplot() +
-        geom_point(data=df,
-                   aes_string(x = evaluated_param, y = SELECTED_OUTPUT),  # Couleur dans aes()
-                   size = 0.4, alpha = 0.14) +  # Transparence appliquée
-        #geom_smooth(method = "loess") +
-        theme_minimal() +
-        labs(x = NULL, y = NULL)
-      
-      return(p)
-    }
     
     
     plot_one_param_bank = list()
@@ -458,27 +505,85 @@ server <- function(input, output) {
     for (i in 1:length(evaluated_parameter)){
       
       plot_one_param_bank[[i]] = plot_one_param(df = simulation_dt,
-                                                evaluated_param = evaluated_parameter[i])
+                                                evaluated_param = evaluated_parameter[i],
+                                                output_ = SELECTED_OUTPUT)
     }
     
     
     
-    #   -----------------------------------------------------------------------
     
-    nb_param = length(evaluated_parameter)
     
-    for (i in 1:length(evaluated_parameter)){
-      all_grobs[[(nb_param+1)+((nb_param+1)*i)]] = plot_one_param_bank[[i]]
+    
+    # Empty list to store results
+    all_diff_results <- list()
+    
+    for (index_param_1 in 1:(length(evaluated_parameter))) {
+      for (index_param_2 in 1:(length(evaluated_parameter))) {  
+        if (index_param_1 <= index_param_2) {
+          diff_result = create_binned_data(data = simulation_dt,
+                                           params = c(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2]),
+                                           param_ranges_ = param_ranges,
+                                           selected_output = SELECTED_OUTPUT,
+                                           n_bins = N_BINS)
+        } else {
+          diff_result = create_binned_data(data = simulation_dt,
+                                           params = c(evaluated_parameter[index_param_2], evaluated_parameter[index_param_1]),
+                                           param_ranges_ = param_ranges,
+                                           selected_output = SELECTED_OUTPUT,
+                                           n_bins = N_BINS)
+        }
+        
+        all_diff_results[[paste(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2], sep = "__")]] <- list(value = diff_result,
+                                                                                                                              param = c(evaluated_parameter[index_param_1], evaluated_parameter[index_param_2]))
+      }
     }
     
+    # Create the heatmap matrix layout with correct functions
+    plots <- list()
+    nb_param <- length(evaluated_parameter)
+    for (i in 1:nb_param) {
+      for (j in 1:nb_param) {
+        if (i == j) {
+          # Diagonal: Scatterplots
+          plots[[length(plots) + 1]] <- plot_one_param_bank[[i]]
+        } else if (i < j) {
+          # Upper triangle: Mean heatmaps
+          plots[[length(plots) + 1]] <- plot_heatmap_binned_diff_q(
+            all_diff_results[[paste(evaluated_parameter[i], evaluated_parameter[j], sep = "__")]]$value,
+            c(evaluated_parameter[i], evaluated_parameter[j]),
+            param_ranges
+          )
+        } else {
+          # Lower triangle: 5th percentile quantile heatmaps
+          plots[[length(plots) + 1]] <- plot_heatmap_binned_diff_mean(
+            all_diff_results[[paste(evaluated_parameter[i], evaluated_parameter[j], sep = "__")]]$value,
+            c(evaluated_parameter[j], evaluated_parameter[i]),
+            param_ranges
+          )
+        }
+      }
+    }
     
+    # # Define the layout matrix
+    layout_matrix <- matrix(1:(nb_param*nb_param), nrow = nb_param, ncol = nb_param )
+    
+    
+    # Generate the final plot
     p = grid.arrange(
-      grobs = all_grobs,  
+      grobs = plots, #all_grobs,  
       layout_matrix = layout_matrix, 
-      top = paste0(" ", SCENARIO)
+      top = paste0("")
     )
     
     plot(p)
+    
+
+
+    
+
+    
+    
+    
     
   })
 }
