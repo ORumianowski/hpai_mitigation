@@ -42,12 +42,14 @@ dt <- simulation_dt %>%
 
 ####################   Caret with CV
 
+#set.seed(111)
+
 train <- createDataPartition(1:nrow(dt),p=0.80,list=FALSE) 
 dt.trn <- dt[train,]
 dt.tst <- dt[-train,] 
-ctrl  <- trainControl(method  = "cv", number  = 50)
+ctrl  <- trainControl(method  = "repeatedcv", number  = 10, repeats = 30)
 
-fit.cv <- train(RS_good ~  
+fit.cv <- train(P2_good ~  
                   initial_number_infected_breeders_A +
                   hatching_date +                      
                   prop_dispersal +                    
@@ -64,7 +66,13 @@ fit.cv <- train(RS_good ~
                 data = dt.trn,
                 method = "rpart", 
                 trControl = ctrl,  
-                tuneLength = 6)
+                tuneLength = 6,
+                # control = rpart.control(
+                #   minsplit = 20,
+                #   minbucket = 10,
+                #   cp = 0.0001,
+                #   maxdepth = 5)
+                )
 
 # Plot the final tree model
 par(xpd = NA) # Avoid clipping the text in some device
@@ -85,7 +93,10 @@ plot(fit.cv) # Plot the Cross-validation output
 # plot(fit.cv$finalModel)
 # text(fit.cv$finalModel)
 
-rpart.plot(fit.cv$finalModel, fallen.leaves = T)
+rpart.plot(fit.cv$finalModel,
+           fallen.leaves = T,
+           tweak = 1.6,
+           box.palette="RdGn")
 
 
 
